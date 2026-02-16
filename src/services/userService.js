@@ -28,14 +28,12 @@ export async function getProfilesByIds(ids) {
 export async function updateProfileRole(id, role) {
   const roleVal = role && String(role).trim();
   if (!roleVal) throw new Error('Role is required');
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('profiles')
     .update({ role: roleVal, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+    .eq('id', id);
   if (error) throw error;
-  return data;
+  return null;
 }
 
 const PROFILE_UPDATE_FIELDS = ['full_name', 'address', 'phone_number'];
@@ -48,14 +46,12 @@ export async function updateProfile(id, updates) {
       payload[key] = val === '' || val === undefined ? null : String(val);
     }
   }
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('profiles')
     .update(payload)
-    .eq('id', id)
-    .select()
-    .single();
+    .eq('id', id);
   if (error) throw error;
-  return data;
+  return null;
 }
 
 export async function deleteProfile(id) {
