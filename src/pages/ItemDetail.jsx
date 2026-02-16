@@ -225,18 +225,6 @@ export function ItemDetail() {
 				</div>
 			</div>
 
-			{item.status === "out" && (
-				<div className="p-4 rounded-lg bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-					<div>
-						<p className="font-semibold text-amber-800">Item already checked out</p>
-						<p className="text-sm text-amber-700 mt-0.5">
-							This item is currently out. Check it back in to return to inventory.
-						</p>
-					</div>
-					<Button onClick={() => setShowCheckIn(true)}>Check In to Inventory</Button>
-				</div>
-			)}
-
 			{/* Section 1: Item overview - ordered for clarity */}
 			<Card className="p-6">
 				<div className="flex flex-col sm:flex-row gap-6">
