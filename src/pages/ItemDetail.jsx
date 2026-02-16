@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getItemById, getTransactions, updateItem, createTransaction } from '../services/itemService';
@@ -22,6 +22,7 @@ export function ItemDetail() {
   const [performerNames, setPerformerNames] = useState({});
   const [loading, setLoading] = useState(true);
   const [showCheckOut, setShowCheckOut] = useState(false);
+  const hasRetried = useRef(false);
 
   const load = async () => {
     setLoading(true);
@@ -32,14 +33,18 @@ export function ItemDetail() {
       ]);
       setItem(itemData);
       setTransactions(txData);
-      const ids = new Set([
-        itemData?.added_by,
-        itemData?.last_used_by,
-        ...txData.map((t) => t.performed_by).filter(Boolean),
-      ]);
-      if (ids.size > 0) {
-        const names = await getProfilesByIds([...ids]);
-        setPerformerNames(names);
+      if (itemData) {
+        const ids = [
+          ...new Set([
+            itemData.added_by,
+            itemData.last_used_by,
+            ...txData.map((t) => t.performed_by),
+          ]),
+        ].filter((id) => id != null);
+        if (ids.length > 0) {
+          const names = await getProfilesByIds(ids);
+          setPerformerNames(names);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -50,8 +55,20 @@ export function ItemDetail() {
   };
 
   useEffect(() => {
+    if (!id) return;
+    hasRetried.current = false;
     load();
   }, [id]);
+
+  // Retry once after 2s if item not found (handles read-after-write delay after add)
+  useEffect(() => {
+    if (!id || loading || item || hasRetried.current) return;
+    const timer = setTimeout(() => {
+      hasRetried.current = true;
+      load();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [id, loading, item]);
 
   useEffect(() => {
     if (item && searchParams.get('checkout') === '1' && item.status === 'in_stock') {
@@ -118,74 +135,104 @@ export function ItemDetail() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6 md:col-span-2">
-          <div className="flex gap-6">
+      {/* Section 1: Item overview - ordered for clarity */}
+      <Card className="p-6">
+        <div className="flex flex-col sm:flex-row gap-6">
+          {/* Photo - left on desktop, top on mobile */}
+          <div className="shrink-0">
             {item.photo_url ? (
               <img
                 src={item.photo_url}
                 alt={item.name}
-                className="w-32 h-32 rounded-xl object-cover"
+                className="w-full sm:w-36 h-36 rounded-xl object-cover"
               />
             ) : (
-              <div className="w-32 h-32 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400">
+              <div className="w-full sm:w-36 h-36 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400">
                 <NavIcon name="package" className="w-16 h-16" />
               </div>
             )}
-            <div className="flex-1">
+          </div>
+          {/* Details - right on desktop, below photo on mobile */}
+          <div className="flex-1 min-w-0 space-y-4">
+            <div>
               <h2 className="text-2xl font-bold text-slate-800">{item.name}</h2>
-              <p className="text-slate-600 mt-1">{item.description || 'No description'}</p>
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex items-center gap-2 mt-2">
                 <StatusBadge status={item.status} />
                 <span className="text-sm text-slate-500">Qty: {item.quantity}</span>
-                {item.category && (
-                  <span className="text-sm text-slate-500">• {item.category}</span>
-                )}
-                {item.store_location && (
-                  <span className="text-sm text-slate-500 inline-flex items-center gap-1">
-                    • <NavIcon name="mapPin" className="w-3.5 h-3.5" /> {item.store_location}
-                  </span>
-                )}
-                {item.vehicle_model && (
-                  <span className="text-sm text-slate-500 inline-flex items-center gap-1">
-                    • <NavIcon name="car" className="w-3.5 h-3.5" /> {item.vehicle_model}
-                  </span>
-                )}
-                {item.model_name && (
-                  <span className="text-sm text-slate-500">• Model: {item.model_name}</span>
-                )}
-                {item.sku_code && (
-                  <span className="text-sm text-slate-500">• SKU: {item.sku_code}</span>
-                )}
-              </div>
-              <div className="text-sm text-slate-500 mt-2 space-y-1">
-                {item.added_date && (
-                  <p>Added: {new Date(item.added_date).toLocaleDateString()}
-                    {item.added_by && performerNames[item.added_by] && (
-                      <span className="ml-1">by {performerNames[item.added_by]}</span>
-                    )}
-                  </p>
-                )}
-                {item.last_used_date && (
-                  <p>Last used: {new Date(item.last_used_date).toLocaleDateString()}
-                    {item.last_used_by && performerNames[item.last_used_by] && (
-                      <span className="ml-1">by {performerNames[item.last_used_by]}</span>
-                    )}
-                  </p>
-                )}
-              </div>
-              <div className="mt-4 flex gap-2">
-                {item.status === 'in_stock' && (
-                  <Button onClick={() => setShowCheckOut(true)}>Check Out</Button>
-                )}
-                {item.status === 'out' && (
-                  <Button onClick={handleCheckIn}>Check In</Button>
-                )}
               </div>
             </div>
+            <p className="text-slate-600 text-sm">{item.description || 'No description'}</p>
+            {/* Key details - clean list */}
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              {item.category && (
+                <>
+                  <dt className="text-slate-500">Category</dt>
+                  <dd className="text-slate-800">{item.category}</dd>
+                </>
+              )}
+              {item.store_location && (
+                <>
+                  <dt className="text-slate-500 flex items-center gap-1">
+                    <NavIcon name="mapPin" className="w-3.5 h-3.5" /> Location
+                  </dt>
+                  <dd className="text-slate-800">{item.store_location}</dd>
+                </>
+              )}
+              {item.vehicle_model && (
+                <>
+                  <dt className="text-slate-500 flex items-center gap-1">
+                    <NavIcon name="car" className="w-3.5 h-3.5" /> Vehicle
+                  </dt>
+                  <dd className="text-slate-800">{item.vehicle_model}</dd>
+                </>
+              )}
+              {item.model_name && (
+                <>
+                  <dt className="text-slate-500">Model</dt>
+                  <dd className="text-slate-800">{item.model_name}</dd>
+                </>
+              )}
+              {item.sku_code && (
+                <>
+                  <dt className="text-slate-500">SKU</dt>
+                  <dd className="text-slate-800 font-mono">{item.sku_code}</dd>
+                </>
+              )}
+            </dl>
+            {/* Metadata */}
+            <div className="text-sm text-slate-500 space-y-1 pt-2 border-t border-slate-100">
+              {item.added_date && (
+                <p>
+                  Added {new Date(item.added_date).toLocaleDateString()}
+                  {item.added_by && performerNames[item.added_by] && (
+                    <span> by {performerNames[item.added_by]}</span>
+                  )}
+                </p>
+              )}
+              {item.last_used_date && (
+                <p>
+                  Last used {new Date(item.last_used_date).toLocaleDateString()}
+                  {item.last_used_by && performerNames[item.last_used_by] && (
+                    <span> by {performerNames[item.last_used_by]}</span>
+                  )}
+                </p>
+              )}
+            </div>
+            {/* Actions */}
+            <div className="flex gap-2 pt-2">
+              {item.status === 'in_stock' && (
+                <Button onClick={() => setShowCheckOut(true)}>Check Out</Button>
+              )}
+              {item.status === 'out' && (
+                <Button onClick={handleCheckIn}>Check In</Button>
+              )}
+            </div>
           </div>
-        </Card>
+        </div>
+      </Card>
 
+      {/* Section 2: QR & Barcode - grouped together */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="font-semibold text-slate-800 mb-4">QR Code</h3>
           <QRCodeDisplay qrId={item.qr_id} itemName={item.name} />

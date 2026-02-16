@@ -250,6 +250,8 @@ export function AddItem() {
         performed_by: user?.id,
       });
       success('Item added. Download QR code PDF from the item page.');
+      // Brief delay before navigate to allow DB read-after-write consistency
+      await new Promise((r) => setTimeout(r, 300));
       navigate(`/inventory/${item.id}`);
     } catch (err) {
       const msg = err.message || 'Failed to add item';

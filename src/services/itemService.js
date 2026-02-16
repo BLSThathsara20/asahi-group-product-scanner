@@ -7,7 +7,8 @@ export async function createItem(item) {
 }
 
 export async function getItemById(id) {
-  const { data, error } = await supabase.from('items').select('*').eq('id', id).single();
+  if (!id || typeof id !== 'string') return null;
+  const { data, error } = await supabase.from('items').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   return data;
 }

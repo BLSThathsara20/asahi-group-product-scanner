@@ -11,11 +11,12 @@ export async function getProfiles() {
 
 /** Returns { [id]: "full_name or email" } for display */
 export async function getProfilesByIds(ids) {
-  if (!ids?.length) return {};
+  const validIds = (ids || []).filter((id) => id != null && id !== '');
+  if (!validIds.length) return {};
   const { data, error } = await supabase
     .from('profiles')
     .select('id, full_name, email')
-    .in('id', ids);
+    .in('id', validIds);
   if (error) throw error;
   const map = {};
   (data || []).forEach((p) => {

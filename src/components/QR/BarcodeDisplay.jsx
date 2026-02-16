@@ -50,7 +50,7 @@ export function BarcodeDisplay({ barcodeId, itemName }) {
       </div>
       <p className="font-mono text-sm font-medium text-slate-600">Product Code: {barcodeId}</p>
       <Button variant="outline" onClick={downloadPDF}>
-        Download PDF
+        Download Barcode PDF
       </Button>
     </div>
   );

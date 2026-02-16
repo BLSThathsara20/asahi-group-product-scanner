@@ -34,7 +34,7 @@ export function QRCodeDisplay({ qrId, itemName }) {
       </div>
       <p className="font-mono text-sm font-medium text-slate-600">Product Code: {qrId}</p>
       <Button variant="outline" onClick={downloadPDF}>
-        Download PDF
+        Download QR PDF
       </Button>
     </div>
   );
