@@ -22,18 +22,18 @@ export function Dashboard() {
 		<div className="space-y-6">
 			<h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<Card className="p-6">
-					<p className="text-sm text-slate-500">Total Items</p>
-					<p className="text-3xl font-bold text-asahi mt-1">{items.length}</p>
+			<div className="grid grid-cols-3 gap-2 sm:gap-4">
+				<Card className="p-3 sm:p-6 text-center">
+					<p className="text-xs sm:text-sm text-slate-500 truncate">Total Items</p>
+					<p className="text-xl sm:text-3xl font-bold text-asahi mt-0.5 sm:mt-1">{items.length}</p>
 				</Card>
-				<Card className="p-6">
-					<p className="text-sm text-slate-500">In Stock</p>
-					<p className="text-3xl font-bold text-emerald-600 mt-1">{inStock}</p>
+				<Card className="p-3 sm:p-6 text-center">
+					<p className="text-xs sm:text-sm text-slate-500 truncate">In Stock</p>
+					<p className="text-xl sm:text-3xl font-bold text-emerald-600 mt-0.5 sm:mt-1">{inStock}</p>
 				</Card>
-				<Card className="p-6">
-					<p className="text-sm text-slate-500">Out</p>
-					<p className="text-3xl font-bold text-amber-600 mt-1">{out}</p>
+				<Card className="p-3 sm:p-6 text-center">
+					<p className="text-xs sm:text-sm text-slate-500 truncate">Out</p>
+					<p className="text-xl sm:text-3xl font-bold text-amber-600 mt-0.5 sm:mt-1">{out}</p>
 				</Card>
 			</div>
 
@@ -42,7 +42,7 @@ export function Dashboard() {
 					<h3 className="font-semibold text-slate-800">Recent Items</h3>
 				</div>
 				<div className="divide-y divide-slate-100">
-					{items.slice(0, 5).map((item) => (
+					{items.slice(0, 6).map((item) => (
 						<Link
 							key={item.id}
 							to={`/inventory/${item.id}`}

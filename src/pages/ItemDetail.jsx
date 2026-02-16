@@ -15,7 +15,7 @@ export function ItemDetail() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { success: notifySuccess } = useNotification();
   const [item, setItem] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -77,28 +77,40 @@ export function ItemDetail() {
   }, [item, searchParams]);
 
   const handleCheckOut = async (data) => {
+    const qty = data.quantity ?? 1;
+    const newQty = Math.max(0, (item?.quantity ?? 0) - qty);
+    const recordedAt = new Date().toISOString();
     await createTransaction({
       item_id: id,
       type: 'out',
+      quantity: qty,
       recipient_name: data.recipientName,
       purpose: data.purpose,
       responsible_person: data.responsiblePerson,
       vehicle_model: data.vehicleModel || null,
       notes: data.notes,
       performed_by: user?.id,
+      created_at: recordedAt,
     });
-    await updateItem(id, { status: 'out', last_used_date: new Date().toISOString(), last_used_by: user?.id });
+    await updateItem(id, {
+      quantity: newQty,
+      status: newQty === 0 ? 'out' : 'in_stock',
+      last_used_date: recordedAt,
+      last_used_by: user?.id,
+    });
     notifySuccess('Item checked out');
     setShowCheckOut(false);
     load();
   };
 
   const handleCheckIn = async () => {
+    const recordedAt = new Date().toISOString();
     await createTransaction({
       item_id: id,
       type: 'in',
       notes: 'Item returned to inventory',
       performed_by: user?.id,
+      created_at: recordedAt,
     });
     await updateItem(id, { status: 'in_stock', last_used_date: new Date().toISOString(), last_used_by: user?.id });
     notifySuccess('Item checked in');
@@ -126,13 +138,19 @@ export function ItemDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <button
           onClick={() => navigate(-1)}
           className="text-slate-600 hover:text-slate-800 text-sm font-medium"
         >
           ← Back
         </button>
+        {item.status === 'in_stock' && (
+          <Button onClick={() => setShowCheckOut(true)}>Check Out</Button>
+        )}
+        {item.status === 'out' && (
+          <Button onClick={handleCheckIn}>Check In</Button>
+        )}
       </div>
 
       {/* Section 1: Item overview - ordered for clarity */}
@@ -154,78 +172,84 @@ export function ItemDetail() {
           </div>
           {/* Details - right on desktop, below photo on mobile */}
           <div className="flex-1 min-w-0 space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">{item.name}</h2>
-              <div className="flex items-center gap-2 mt-2">
-                <StatusBadge status={item.status} />
-                <span className="text-sm text-slate-500">Qty: {item.quantity}</span>
-              </div>
-            </div>
-            <p className="text-slate-600 text-sm">{item.description || 'No description'}</p>
-            {/* Key details - clean list */}
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              {item.category && (
-                <>
-                  <dt className="text-slate-500">Category</dt>
-                  <dd className="text-slate-800">{item.category}</dd>
-                </>
-              )}
-              {item.store_location && (
-                <>
-                  <dt className="text-slate-500 flex items-center gap-1">
-                    <NavIcon name="mapPin" className="w-3.5 h-3.5" /> Location
-                  </dt>
-                  <dd className="text-slate-800">{item.store_location}</dd>
-                </>
-              )}
-              {item.vehicle_model && (
-                <>
-                  <dt className="text-slate-500 flex items-center gap-1">
-                    <NavIcon name="car" className="w-3.5 h-3.5" /> Vehicle
-                  </dt>
-                  <dd className="text-slate-800">{item.vehicle_model}</dd>
-                </>
-              )}
-              {item.model_name && (
-                <>
-                  <dt className="text-slate-500">Model</dt>
-                  <dd className="text-slate-800">{item.model_name}</dd>
-                </>
-              )}
-              {item.sku_code && (
-                <>
-                  <dt className="text-slate-500">SKU</dt>
-                  <dd className="text-slate-800 font-mono">{item.sku_code}</dd>
-                </>
-              )}
-            </dl>
-            {/* Metadata */}
-            <div className="text-sm text-slate-500 space-y-1 pt-2 border-t border-slate-100">
-              {item.added_date && (
-                <p>
-                  Added {new Date(item.added_date).toLocaleDateString()}
-                  {item.added_by && performerNames[item.added_by] && (
-                    <span> by {performerNames[item.added_by]}</span>
+            <h2 className="text-2xl font-bold text-slate-800">{item.name}</h2>
+            <p className="text-slate-600 text-sm mt-1">{item.description || 'No description'}</p>
+            {/* Key details - table format */}
+            <div className="overflow-x-auto rounded-lg border border-slate-200">
+              <table className="w-full text-sm">
+                <tbody className="divide-y divide-slate-100">
+                  <tr>
+                    <td className="py-2 pr-4 text-slate-500 font-medium w-32">Status</td>
+                    <td className="py-2">
+                      <StatusBadge status={item.status} />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-4 text-slate-500 font-medium">Quantity</td>
+                    <td className="py-2 text-slate-800">{item.quantity ?? 0}</td>
+                  </tr>
+                  {item.category && (
+                    <tr>
+                      <td className="py-2 pr-4 text-slate-500 font-medium">Category</td>
+                      <td className="py-2 text-slate-800">{item.category}</td>
+                    </tr>
                   )}
-                </p>
-              )}
-              {item.last_used_date && (
-                <p>
-                  Last used {new Date(item.last_used_date).toLocaleDateString()}
-                  {item.last_used_by && performerNames[item.last_used_by] && (
-                    <span> by {performerNames[item.last_used_by]}</span>
+                  {item.store_location && (
+                    <tr>
+                      <td className="py-2 pr-4 text-slate-500 font-medium">
+                        <span className="inline-flex items-center gap-1">
+                          <NavIcon name="mapPin" className="w-3.5 h-3.5" /> Location
+                        </span>
+                      </td>
+                      <td className="py-2 text-slate-800">{item.store_location}</td>
+                    </tr>
                   )}
-                </p>
-              )}
-            </div>
-            {/* Actions */}
-            <div className="flex gap-2 pt-2">
-              {item.status === 'in_stock' && (
-                <Button onClick={() => setShowCheckOut(true)}>Check Out</Button>
-              )}
-              {item.status === 'out' && (
-                <Button onClick={handleCheckIn}>Check In</Button>
-              )}
+                  {item.vehicle_model && (
+                    <tr>
+                      <td className="py-2 pr-4 text-slate-500 font-medium">
+                        <span className="inline-flex items-center gap-1">
+                          <NavIcon name="car" className="w-3.5 h-3.5" /> Vehicle
+                        </span>
+                      </td>
+                      <td className="py-2 text-slate-800">{item.vehicle_model}</td>
+                    </tr>
+                  )}
+                  {item.model_name && (
+                    <tr>
+                      <td className="py-2 pr-4 text-slate-500 font-medium">Model</td>
+                      <td className="py-2 text-slate-800">{item.model_name}</td>
+                    </tr>
+                  )}
+                  {item.sku_code && (
+                    <tr>
+                      <td className="py-2 pr-4 text-slate-500 font-medium">SKU</td>
+                      <td className="py-2 text-slate-800 font-mono">{item.sku_code}</td>
+                    </tr>
+                  )}
+                  {item.added_date && (
+                    <tr>
+                      <td className="py-2 pr-4 text-slate-500 font-medium">Added</td>
+                      <td className="py-2 text-slate-800">
+                        {new Date(item.added_date).toLocaleDateString()}
+                        {item.added_by && performerNames[item.added_by] && (
+                          <span className="text-slate-500"> by {performerNames[item.added_by]}</span>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                  {item.last_used_date && (
+                    <tr>
+                      <td className="py-2 pr-4 text-slate-500 font-medium">Last used</td>
+                      <td className="py-2 text-slate-800">
+                        {new Date(item.last_used_date).toLocaleDateString()}
+                        {item.last_used_by && performerNames[item.last_used_by] && (
+                          <span className="text-slate-500"> by {performerNames[item.last_used_by]}</span>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -247,6 +271,9 @@ export function ItemDetail() {
         <CheckOutForm
           onSubmit={handleCheckOut}
           onCancel={() => setShowCheckOut(false)}
+          item={item}
+          currentUserId={user?.id}
+          currentUserDisplay={profile?.full_name || user?.email}
         />
       )}
 
@@ -264,6 +291,7 @@ export function ItemDetail() {
                   }`}
                 >
                   {tx.type === 'in' ? 'In' : 'Out'}
+                  {(tx.quantity ?? 1) > 1 && ` ×${tx.quantity}`}
                 </span>
                 <p className="mt-1 text-slate-800 font-medium">
                   {tx.type === 'out' && tx.recipient_name && `To: ${tx.recipient_name}`}

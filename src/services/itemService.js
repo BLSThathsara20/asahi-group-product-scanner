@@ -19,6 +19,24 @@ export async function getItemByQrId(qrId) {
   return data;
 }
 
+const AGL_INV_PREFIX = 'AGL-INV-';
+const AGL_INV_REGEX = /^AGL-INV-(\d+)$/;
+
+/** Get next sequential product code: AGL-INV-1, AGL-INV-2, ... */
+export async function getNextItemCode() {
+  const { data, error } = await supabase
+    .from('items')
+    .select('qr_id')
+    .ilike('qr_id', `${AGL_INV_PREFIX}%`);
+  if (error) throw error;
+  let maxNum = 0;
+  (data || []).forEach((row) => {
+    const m = (row.qr_id || '').match(AGL_INV_REGEX);
+    if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
+  });
+  return `${AGL_INV_PREFIX}${maxNum + 1}`;
+}
+
 /** Check if QR/barcode already exists (for duplicate prevention) */
 export async function checkQrIdExists(qrId) {
   const normalized = String(qrId || '').trim();

@@ -29,8 +29,9 @@ DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- 3. Recreate using get_my_role() (no profiles subquery = no recursion)
+-- inventory_manager included so they can select users in checkout dropdown
 CREATE POLICY "Admins can read all profiles" ON profiles FOR SELECT
-  USING (public.get_my_role() IN ('super_admin', 'admin'));
+  USING (public.get_my_role() IN ('super_admin', 'admin', 'inventory_manager'));
 
 CREATE POLICY "Admins can insert profiles" ON profiles FOR INSERT
   WITH CHECK (public.get_my_role() IN ('super_admin', 'admin'));

@@ -16,7 +16,7 @@ import { NavIcon } from '../components/icons/NavIcons';
 
 export function InventoryList() {
   const { items, loading, error, refetch } = useItems();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { success, error: notifyError } = useNotification();
   const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(null);
@@ -109,19 +109,25 @@ export function InventoryList() {
   const handleCheckOut = async (data) => {
     if (!checkoutItem) return;
     try {
+      const qty = data.quantity ?? 1;
+      const newQty = Math.max(0, (checkoutItem.quantity ?? 0) - qty);
+      const recordedAt = new Date().toISOString();
       await createTransaction({
         item_id: checkoutItem.id,
         type: 'out',
+        quantity: qty,
         recipient_name: data.recipientName,
         purpose: data.purpose,
         responsible_person: data.responsiblePerson || null,
         vehicle_model: data.vehicleModel || null,
         notes: data.notes || null,
         performed_by: user?.id,
+        created_at: recordedAt,
       });
       await updateItem(checkoutItem.id, {
-        status: 'out',
-        last_used_date: new Date().toISOString(),
+        quantity: newQty,
+        status: newQty === 0 ? 'out' : 'in_stock',
+        last_used_date: recordedAt,
         last_used_by: user?.id,
       });
       success('Item checked out');
@@ -136,15 +142,17 @@ export function InventoryList() {
     if (!checkinItem) return;
     const targetStatus = checkinTargetStatus || 'in_stock';
     try {
+      const recordedAt = new Date().toISOString();
       await createTransaction({
         item_id: checkinItem.id,
         type: 'in',
         notes: data.notes || 'Item returned to inventory',
         performed_by: user?.id,
+        created_at: recordedAt,
       });
       await updateItem(checkinItem.id, {
         status: targetStatus,
-        last_used_date: new Date().toISOString(),
+        last_used_date: recordedAt,
         last_used_by: user?.id,
       });
       success('Item checked in');
@@ -357,15 +365,13 @@ export function InventoryList() {
       )}
 
       {checkoutItem && (
-        <Modal onBackdropClick={() => setCheckoutItem(null)}>
-          <div>
-            <p className="text-sm text-slate-600 mb-2">Check out: {checkoutItem.name}</p>
-            <CheckOutForm
-              onSubmit={handleCheckOut}
-              onCancel={() => setCheckoutItem(null)}
-            />
-          </div>
-        </Modal>
+        <CheckOutForm
+          onSubmit={handleCheckOut}
+          onCancel={() => setCheckoutItem(null)}
+          item={checkoutItem}
+          currentUserId={user?.id}
+          currentUserDisplay={profile?.full_name || user?.email}
+        />
       )}
 
       {checkinItem && (

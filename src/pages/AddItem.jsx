@@ -3,9 +3,8 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createWorker } from 'tesseract.js';
 import { useAuth } from '../context/AuthContext';
-import { generateQrId } from '../lib/utils';
 import { parseOcrForProduct } from '../lib/ocrParse';
-import { createItem, createTransaction, checkQrIdExists } from '../services/itemService';
+import { createItem, createTransaction, checkQrIdExists, getNextItemCode } from '../services/itemService';
 import { compressAndUploadImage } from '../services/imageService';
 import { useNotification } from '../context/NotificationContext';
 import { QRScanner } from '../components/QR/QRScanner';
@@ -39,6 +38,8 @@ export function AddItem() {
   const [showOcrCamera, setShowOcrCamera] = useState(false);
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [cameraError, setCameraError] = useState('');
+  const [barcodeError, setBarcodeError] = useState('');
+  const [barcodeChecking, setBarcodeChecking] = useState(false);
   const videoRef = useRef(null);
   const ocrVideoRef = useRef(null);
   const streamRef = useRef(null);
@@ -51,6 +52,7 @@ export function AddItem() {
       ...prev,
       [name]: type === 'number' ? parseInt(value, 10) || 0 : value,
     }));
+    if (name === 'barcode') setBarcodeError('');
   };
 
   const handleDateChange = (e) => {
@@ -147,6 +149,28 @@ export function AddItem() {
     }
   }, [searchParams]);
 
+  // Validate barcode when scanned or entered - check if already registered
+  useEffect(() => {
+    const barcode = (form.barcode || '').trim();
+    if (!barcode) {
+      setBarcodeError('');
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setBarcodeChecking(true);
+      setBarcodeError('');
+      try {
+        const exists = await checkQrIdExists(barcode);
+        setBarcodeError(exists ? 'This barcode/QR code is already registered. Use a different code or find the existing item.' : '');
+      } catch {
+        setBarcodeError('');
+      } finally {
+        setBarcodeChecking(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [form.barcode]);
+
   useEffect(() => {
     if (showCamera && streamRef.current && videoRef.current) {
       const video = videoRef.current;
@@ -211,9 +235,13 @@ export function AddItem() {
       setError('Item name is required');
       return;
     }
+    if (barcodeError) {
+      setError('Fix the barcode error before adding.');
+      return;
+    }
     setLoading(true);
     try {
-      const qrId = (form.barcode || '').trim() || generateQrId();
+      const qrId = (form.barcode || '').trim() || (await getNextItemCode());
 
       const exists = await checkQrIdExists(qrId);
       if (exists) {
@@ -327,17 +355,31 @@ export function AddItem() {
               Use product&apos;s existing barcode, scan, or click Auto Generate for a unique code. Duplicates are blocked.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                name="barcode"
-                value={form.barcode}
-                onChange={handleChange}
-                placeholder="Scan or enter barcode/QR code"
-                className="sm:flex-1 min-w-0"
-              />
+              <div className="sm:flex-1 min-w-0">
+                <Input
+                  name="barcode"
+                  value={form.barcode}
+                  onChange={handleChange}
+                  placeholder="Scan or enter barcode/QR code"
+                  error={barcodeError}
+                  className={barcodeChecking ? 'opacity-70' : ''}
+                />
+                {barcodeChecking && (
+                  <p className="mt-1 text-xs text-slate-500">Checking if barcode exists...</p>
+                )}
+              </div>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setForm((prev) => ({ ...prev, barcode: generateQrId() }))}
+                onClick={async () => {
+                  try {
+                    const code = await getNextItemCode();
+                    setForm((prev) => ({ ...prev, barcode: code }));
+                    setBarcodeError('');
+                  } catch (err) {
+                    notifyError(err.message || 'Failed to generate code');
+                  }
+                }}
                 className="shrink-0"
               >
                 Auto Generate
@@ -357,6 +399,7 @@ export function AddItem() {
                   scannerId="add-item-barcode-scanner"
                   onScan={(code) => {
                     setForm((prev) => ({ ...prev, barcode: code }));
+                    setBarcodeError('');
                     setShowBarcodeScanner(false);
                   }}
                   onError={(msg) => notifyError(msg)}
