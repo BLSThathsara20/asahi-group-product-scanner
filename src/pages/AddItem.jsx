@@ -261,7 +261,7 @@ export function AddItem() {
         name: form.name.trim(),
         description: form.description.trim() || null,
         category: form.category.trim() || null,
-        quantity: 1,
+        quantity: form.quantity || 1,
         store_location: form.store_location.trim() || null,
         vehicle_model: form.vehicle_model.trim() || null,
         model_name: form.model_name?.trim() || null,
@@ -456,9 +456,9 @@ export function AddItem() {
             label="Quantity"
             name="quantity"
             type="number"
-            value={1}
-            disabled
-            title="Each item has quantity 1"
+            min={1}
+            value={form.quantity}
+            onChange={handleChange}
           />
 
           <div className="min-w-0">

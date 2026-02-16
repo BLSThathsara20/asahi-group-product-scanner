@@ -11,11 +11,15 @@ export function EditItemForm({ item, onSave, onCancel }) {
     vehicle_model: item.vehicle_model || '',
     model_name: item.model_name || '',
     sku_code: item.sku_code || '',
+    quantity: item.quantity ?? 1,
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === 'number' ? parseInt(value, 10) || 0 : value,
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -28,7 +32,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
       vehicle_model: form.vehicle_model?.trim() || null,
       model_name: form.model_name?.trim() || null,
       sku_code: form.sku_code?.trim() || null,
-      quantity: 1,
+      quantity: form.quantity || 1,
     });
   };
 
@@ -50,6 +54,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
       <Input label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} />
       <Input label="Model Name" name="model_name" value={form.model_name} onChange={handleChange} />
       <Input label="SKU Code" name="sku_code" value={form.sku_code} onChange={handleChange} />
+      <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
       <div className="flex gap-2 pt-2">
         <Button type="submit">Save</Button>
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
