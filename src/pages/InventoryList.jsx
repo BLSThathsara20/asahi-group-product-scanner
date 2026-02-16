@@ -10,7 +10,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Pagination } from '../components/ui/Pagination';
-import { CheckOutForm, CheckInForm } from '../components/Inventory';
+import { CheckOutForm, CheckInForm, EditItemForm } from '../components/Inventory';
 import { Modal } from '../components/ui/Modal';
 import { NavIcon } from '../components/icons/NavIcons';
 
@@ -307,7 +307,11 @@ export function InventoryList() {
                     <select
                       value={item.status}
                       onChange={(e) => handleStatusChange(item, e.target.value)}
-                      className="px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-asahi/30"
+                      disabled={item.status === 'out'}
+                      className={`px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-asahi/30 ${
+                        item.status === 'out' ? 'bg-slate-100 cursor-not-allowed' : ''
+                      }`}
+                      title={item.status === 'out' ? 'Check in from item detail to change status' : ''}
                     >
                       <option value="in_stock">In Stock</option>
                       <option value="out">Out</option>
@@ -316,13 +320,16 @@ export function InventoryList() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        className="text-sm py-1.5"
-                        onClick={() => setEditingItem({ ...item })}
-                      >
-                        Edit
-                      </Button>
+                      {item.status === 'in_stock' && (
+                        <Button
+                          variant="outline"
+                          className="text-sm py-1.5"
+                          onClick={() => setEditingItem({ ...item })}
+                          title="Edit item"
+                        >
+                          <NavIcon name="pencil" className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Link to={`/inventory/${item.id}`}>
                         <Button variant="outline" className="text-sm py-1.5">
                           View
@@ -351,7 +358,7 @@ export function InventoryList() {
         )}
       </Card>
 
-      {editingItem && (
+      {editingItem && editingItem.status === 'in_stock' && (
         <Modal onBackdropClick={() => setEditingItem(null)}>
           <Card className="p-6">
             <h3 className="font-semibold text-slate-800 mb-4">Edit Item</h3>
@@ -386,66 +393,5 @@ export function InventoryList() {
         </Modal>
       )}
     </div>
-  );
-}
-
-function EditItemForm({ item, onSave, onCancel }) {
-  const [form, setForm] = useState({
-    name: item.name || '',
-    description: item.description || '',
-    category: item.category || '',
-    store_location: item.store_location || '',
-    vehicle_model: item.vehicle_model || '',
-    model_name: item.model_name || '',
-    sku_code: item.sku_code || '',
-    quantity: item.quantity ?? 1,
-  });
-
-  const handleChange = (e) => {
-    const { name, value, type } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === 'number' ? parseInt(value, 10) || 0 : value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({
-      name: form.name.trim(),
-      description: form.description?.trim() || null,
-      category: form.category?.trim() || null,
-      store_location: form.store_location?.trim() || null,
-      vehicle_model: form.vehicle_model?.trim() || null,
-      model_name: form.model_name?.trim() || null,
-      sku_code: form.sku_code?.trim() || null,
-      quantity: form.quantity || 1,
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input label="Name *" name="name" value={form.name} onChange={handleChange} required />
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          rows={2}
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
-        />
-      </div>
-      <Input label="Category" name="category" value={form.category} onChange={handleChange} />
-      <Input label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} />
-      <Input label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} />
-      <Input label="Model Name" name="model_name" value={form.model_name} onChange={handleChange} />
-      <Input label="SKU Code" name="sku_code" value={form.sku_code} onChange={handleChange} />
-      <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
-      <div className="flex gap-2 pt-2">
-        <Button type="submit">Save</Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-      </div>
-    </form>
   );
 }

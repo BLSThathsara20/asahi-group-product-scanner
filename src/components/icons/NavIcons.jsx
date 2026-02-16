@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Check,
   Info,
+  Pencil,
 } from 'lucide-react';
 
 export const NavIcons = {
@@ -34,6 +35,7 @@ export const NavIcons = {
   warning: AlertTriangle,
   check: Check,
   info: Info,
+  pencil: Pencil,
 };
 
 export function NavIcon({ name, className = 'w-5 h-5' }) {

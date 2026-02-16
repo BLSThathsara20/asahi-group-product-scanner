@@ -1,3 +1,4 @@
+
 -- Add user activation flow: admin creates invite with temp password, user opens link to activate
 -- Run in Supabase SQL Editor
 

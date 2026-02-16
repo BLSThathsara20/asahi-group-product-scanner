@@ -5,23 +5,25 @@ import { getItemById, getTransactions, updateItem, createTransaction } from '../
 import { getProfilesByIds } from '../services/userService';
 import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
+import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { QRCodeDisplay, BarcodeDisplay } from '../components/QR';
 import { NavIcon } from '../components/icons/NavIcons';
-import { CheckOutForm } from '../components/Inventory/CheckOutForm';
+import { CheckOutForm, EditItemForm } from '../components/Inventory';
 
 export function ItemDetail() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { success: notifySuccess } = useNotification();
+  const { success: notifySuccess, error: notifyError } = useNotification();
   const [item, setItem] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [performerNames, setPerformerNames] = useState({});
   const [loading, setLoading] = useState(true);
   const [showCheckOut, setShowCheckOut] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const hasRetried = useRef(false);
 
   const load = async () => {
@@ -103,6 +105,17 @@ export function ItemDetail() {
     load();
   };
 
+  const handleSaveEdit = async (updates) => {
+    try {
+      await updateItem(id, updates);
+      notifySuccess('Item updated');
+      setShowEdit(false);
+      load();
+    } catch (err) {
+      notifyError(err.message || 'Update failed');
+    }
+  };
+
   const handleCheckIn = async () => {
     const recordedAt = new Date().toISOString();
     await createTransaction({
@@ -145,12 +158,24 @@ export function ItemDetail() {
         >
           ← Back
         </button>
-        {item.status === 'in_stock' && (
-          <Button onClick={() => setShowCheckOut(true)}>Check Out</Button>
-        )}
-        {item.status === 'out' && (
-          <Button onClick={handleCheckIn}>Check In</Button>
-        )}
+        <div className="flex gap-2">
+          {item.status === 'in_stock' && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowEdit(true)}
+                title="Edit item"
+                className="p-2"
+              >
+                <NavIcon name="pencil" className="w-4 h-4" />
+              </Button>
+              <Button onClick={() => setShowCheckOut(true)}>Check Out</Button>
+            </>
+          )}
+          {item.status === 'out' && (
+            <Button onClick={handleCheckIn}>Check In</Button>
+          )}
+        </div>
       </div>
 
       {/* Section 1: Item overview - ordered for clarity */}
@@ -266,6 +291,19 @@ export function ItemDetail() {
           <BarcodeDisplay barcodeId={item.qr_id} itemName={item.name} />
         </Card>
       </div>
+
+      {showEdit && (
+        <Modal onBackdropClick={() => setShowEdit(false)}>
+          <Card className="p-6">
+            <h3 className="font-semibold text-slate-800 mb-4">Edit Item</h3>
+            <EditItemForm
+              item={item}
+              onSave={handleSaveEdit}
+              onCancel={() => setShowEdit(false)}
+            />
+          </Card>
+        </Modal>
+      )}
 
       {showCheckOut && (
         <CheckOutForm
