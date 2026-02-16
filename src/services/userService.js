@@ -65,29 +65,37 @@ export async function createInvite(email, role) {
   return `${baseUrl}/invite?invite=${token}`;
 }
 
-/** Create invite record for add-user flow; returns token for signUp metadata */
-async function createInviteForAddUser(email, role) {
+/** Add user via activation link. Creates invite with temp password, returns activation URL. */
+export async function addUser(email, fullName, role, tempPassword) {
   const token = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
   const { error } = await supabase.from('user_invites').insert({
     email,
     role,
     token,
+    full_name: fullName || null,
+    temp_password: tempPassword,
     created_by: (await supabase.auth.getUser()).data.user?.id,
   });
   if (error) throw error;
-  return token;
+  const base = typeof window !== 'undefined'
+    ? `${window.location.origin}${(import.meta.env?.BASE_URL || '').replace(/\/$/, '')}`
+    : '';
+  return { activationLink: `${base}/activate?token=${token}` };
 }
 
-/** Add user directly with temp password. Admin only. */
-export async function addUser(email, fullName, role, tempPassword) {
-  const token = await createInviteForAddUser(email, role);
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password: tempPassword,
-    options: {
-      data: { full_name: fullName || email, invite_token: token },
-    },
+/** Get invite by token (for activation page) */
+export async function getInviteByToken(token) {
+  const { data, error } = await supabase.rpc('get_invite_by_token', { t: token });
+  if (error) throw error;
+  return data?.[0] || null;
+}
+
+/** Verify temp password for activation */
+export async function verifyInviteTempPassword(token, tempPassword) {
+  const { data, error } = await supabase.rpc('verify_invite_temp_password', {
+    t: token,
+    pwd: tempPassword,
   });
   if (error) throw error;
-  return data;
+  return !!data;
 }

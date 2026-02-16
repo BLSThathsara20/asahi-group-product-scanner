@@ -33,6 +33,7 @@ export function UserManagement() {
     role: 'worker',
     temp_password: '',
   });
+  const [generatedLink, setGeneratedLink] = useState(null);
   const [editingProfile, setEditingProfile] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -102,19 +103,31 @@ export function UserManagement() {
       return;
     }
     try {
-      await addUser(
+      const { activationLink } = await addUser(
         addUserForm.email,
         addUserForm.full_name || addUserForm.email,
         addUserForm.role,
         addUserForm.temp_password
       );
-      success('User added. They can log in with the temporary password and change it in their profile.');
-      setShowAddUser(false);
-      setAddUserForm({ email: '', full_name: '', role: 'worker', temp_password: '' });
-      load();
+      setGeneratedLink(activationLink);
+      success('Invite created. Send the link to the user.');
     } catch (err) {
       error(err.message);
     }
+  };
+
+  const handleCopyLink = () => {
+    if (generatedLink) {
+      navigator.clipboard.writeText(generatedLink);
+      success('Link copied to clipboard');
+    }
+  };
+
+  const handleCloseAddUser = () => {
+    setShowAddUser(false);
+    setGeneratedLink(null);
+    setAddUserForm({ email: '', full_name: '', role: 'worker', temp_password: '' });
+    load();
   };
 
   if (!isAdmin) {
@@ -174,54 +187,72 @@ export function UserManagement() {
       )}
 
       {showAddUser && (
-        <Modal onBackdropClick={() => setShowAddUser(false)}>
+        <Modal onBackdropClick={handleCloseAddUser}>
           <Card className="p-6">
               <h3 className="font-semibold text-slate-800 mb-4">Add User</h3>
-              <p className="text-sm text-slate-500 mb-4">
-                Create a user with a temporary password. They can change it after logging in.
-              </p>
-              <form onSubmit={handleAddUser} className="space-y-4">
-                <Input
-                  label="Email"
-                  type="email"
-                  value={addUserForm.email}
-                  onChange={(e) => setAddUserForm((p) => ({ ...p, email: e.target.value }))}
-                  required
-                />
-                <Input
-                  label="Full Name"
-                  value={addUserForm.full_name}
-                  onChange={(e) => setAddUserForm((p) => ({ ...p, full_name: e.target.value }))}
-                  placeholder="Optional"
-                />
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                  <select
-                    value={addUserForm.role}
-                    onChange={(e) => setAddUserForm((p) => ({ ...p, role: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-                  >
-                    {ROLES.filter((r) => r.value !== 'super_admin' || isSuperAdmin).map((r) => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
-                    ))}
-                  </select>
+              {generatedLink ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-emerald-600 font-medium">User invite created. Send this link to the user:</p>
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-sm text-slate-600 break-all font-mono">{generatedLink}</p>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    User opens the link → enters temporary password → sets new password → account activated.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button onClick={handleCopyLink}>Copy link</Button>
+                    <Button variant="secondary" onClick={handleCloseAddUser}>Done</Button>
+                  </div>
                 </div>
-                <Input
-                  label="Temporary Password"
-                  type="password"
-                  value={addUserForm.temp_password}
-                  onChange={(e) => setAddUserForm((p) => ({ ...p, temp_password: e.target.value }))}
-                  placeholder="Min 6 characters"
-                  required
-                  minLength={6}
-                />
-                <div className="flex gap-2">
-                  <Button type="submit">Add User</Button>
-                  <Button type="button" variant="secondary" onClick={() => setShowAddUser(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </form>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-500 mb-4">
+                    Create a user with a temporary password. A link will be generated to send to them.
+                  </p>
+                  <form onSubmit={handleAddUser} className="space-y-4">
+                    <Input
+                      label="Email"
+                      type="email"
+                      value={addUserForm.email}
+                      onChange={(e) => setAddUserForm((p) => ({ ...p, email: e.target.value }))}
+                      required
+                    />
+                    <Input
+                      label="Full Name"
+                      value={addUserForm.full_name}
+                      onChange={(e) => setAddUserForm((p) => ({ ...p, full_name: e.target.value }))}
+                      placeholder="Optional"
+                    />
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                      <select
+                        value={addUserForm.role}
+                        onChange={(e) => setAddUserForm((p) => ({ ...p, role: e.target.value }))}
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+                      >
+                        {ROLES.filter((r) => r.value !== 'super_admin' || isSuperAdmin).map((r) => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <Input
+                      label="Temporary Password"
+                      type="password"
+                      value={addUserForm.temp_password}
+                      onChange={(e) => setAddUserForm((p) => ({ ...p, temp_password: e.target.value }))}
+                      placeholder="Min 6 characters"
+                      required
+                      minLength={6}
+                    />
+                    <div className="flex gap-2">
+                      <Button type="submit">Add User</Button>
+                      <Button type="button" variant="secondary" onClick={handleCloseAddUser}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </>
+              )}
           </Card>
         </Modal>
       )}

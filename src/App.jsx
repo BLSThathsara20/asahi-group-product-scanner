@@ -7,6 +7,7 @@ import { AppLayout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Setup } from './pages/Setup';
 import { AcceptInvite } from './pages/AcceptInvite';
+import { Activate } from './pages/Activate';
 import { Dashboard } from './pages/Dashboard';
 import { InventoryList } from './pages/InventoryList';
 import { AddItem } from './pages/AddItem';
@@ -26,6 +27,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/setup" element={<Setup />} />
             <Route path="/invite" element={<AcceptInvite />} />
+            <Route path="/activate" element={<Activate />} />
             <Route
               path="/"
               element={
