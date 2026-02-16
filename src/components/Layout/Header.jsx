@@ -7,6 +7,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Modal } from '../ui/Modal';
 
 const roleLabels = {
   super_admin: 'Super Admin',
@@ -136,10 +137,8 @@ export function Header() {
       </header>
 
       {showProfile && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setShowProfile(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <Modal onBackdropClick={() => setShowProfile(false)}>
+          <Card className="p-6">
               <h3 className="font-semibold text-slate-800 mb-4">Update Profile</h3>
               <p className="text-sm text-slate-500 mb-4">Email cannot be changed.</p>
               <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -167,16 +166,13 @@ export function Header() {
                   </Button>
                 </div>
               </form>
-            </Card>
-          </div>
-        </>
+          </Card>
+        </Modal>
       )}
 
       {showPassword && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setShowPassword(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <Modal onBackdropClick={() => setShowPassword(false)}>
+          <Card className="p-6">
               <h3 className="font-semibold text-slate-800 mb-4">Change Password</h3>
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <Input
@@ -203,9 +199,8 @@ export function Header() {
                   </Button>
                 </div>
               </form>
-            </Card>
-          </div>
-        </>
+          </Card>
+        </Modal>
       )}
     </>
   );

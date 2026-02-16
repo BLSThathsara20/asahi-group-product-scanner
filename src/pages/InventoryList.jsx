@@ -11,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Pagination } from '../components/ui/Pagination';
 import { CheckOutForm, CheckInForm } from '../components/Inventory';
+import { Modal } from '../components/ui/Modal';
 import { NavIcon } from '../components/icons/NavIcons';
 
 export function InventoryList() {
@@ -343,49 +344,40 @@ export function InventoryList() {
       </Card>
 
       {editingItem && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setEditingItem(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <Card className="w-full max-w-md p-6 my-8" onClick={(e) => e.stopPropagation()}>
-              <h3 className="font-semibold text-slate-800 mb-4">Edit Item</h3>
-              <EditItemForm
-                item={editingItem}
-                onSave={handleSaveEdit}
-                onCancel={() => setEditingItem(null)}
-              />
-            </Card>
-          </div>
-        </>
+        <Modal onBackdropClick={() => setEditingItem(null)}>
+          <Card className="p-6">
+            <h3 className="font-semibold text-slate-800 mb-4">Edit Item</h3>
+            <EditItemForm
+              item={editingItem}
+              onSave={handleSaveEdit}
+              onCancel={() => setEditingItem(null)}
+            />
+          </Card>
+        </Modal>
       )}
 
       {checkoutItem && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setCheckoutItem(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-              <p className="text-sm text-slate-600 mb-2">Check out: {checkoutItem.name}</p>
-              <CheckOutForm
-                onSubmit={handleCheckOut}
-                onCancel={() => setCheckoutItem(null)}
-              />
-            </div>
+        <Modal onBackdropClick={() => setCheckoutItem(null)}>
+          <div>
+            <p className="text-sm text-slate-600 mb-2">Check out: {checkoutItem.name}</p>
+            <CheckOutForm
+              onSubmit={handleCheckOut}
+              onCancel={() => setCheckoutItem(null)}
+            />
           </div>
-        </>
+        </Modal>
       )}
 
       {checkinItem && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setCheckinItem(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-              <p className="text-sm text-slate-600 mb-2">Check in: {checkinItem.name}</p>
-              <CheckInForm
-                onSubmit={handleCheckIn}
-                onCancel={() => setCheckinItem(null)}
-              />
-            </div>
+        <Modal onBackdropClick={() => setCheckinItem(null)}>
+          <div>
+            <p className="text-sm text-slate-600 mb-2">Check in: {checkinItem.name}</p>
+            <CheckInForm
+              onSubmit={handleCheckIn}
+              onCancel={() => setCheckinItem(null)}
+            />
           </div>
-        </>
+        </Modal>
       )}
     </div>
   );

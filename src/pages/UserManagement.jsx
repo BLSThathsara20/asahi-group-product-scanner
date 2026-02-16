@@ -12,6 +12,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Pagination } from '../components/ui/Pagination';
+import { Modal } from '../components/ui/Modal';
 
 const ROLES = [
   { value: 'worker', label: 'Worker' },
@@ -140,10 +141,8 @@ export function UserManagement() {
       </div>
 
       {editingProfile && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setEditingProfile(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <Modal onBackdropClick={() => setEditingProfile(null)}>
+          <Card className="p-6">
               <h3 className="font-semibold text-slate-800 mb-4">Edit User</h3>
               <p className="text-sm text-slate-500 mb-4">
                 {editingProfile.email} {editingProfile.full_name && `(${editingProfile.full_name})`}
@@ -170,16 +169,13 @@ export function UserManagement() {
                   </Button>
                 </div>
               </div>
-            </Card>
-          </div>
-        </>
+          </Card>
+        </Modal>
       )}
 
       {showAddUser && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setShowAddUser(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <Modal onBackdropClick={() => setShowAddUser(false)}>
+          <Card className="p-6">
               <h3 className="font-semibold text-slate-800 mb-4">Add User</h3>
               <p className="text-sm text-slate-500 mb-4">
                 Create a user with a temporary password. They can change it after logging in.
@@ -226,9 +222,8 @@ export function UserManagement() {
                   </Button>
                 </div>
               </form>
-            </Card>
-          </div>
-        </>
+          </Card>
+        </Modal>
       )}
 
       <Card className="overflow-hidden">

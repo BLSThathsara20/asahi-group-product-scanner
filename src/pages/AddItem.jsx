@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createWorker } from 'tesseract.js';
 import { useAuth } from '../context/AuthContext';
@@ -455,64 +456,68 @@ export function AddItem() {
             )}
           </div>
 
-          {showCamera && (
-            <>
-              <div className="fixed inset-0 z-50 bg-black/80" onClick={stopCamera} />
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="bg-slate-900 rounded-xl overflow-hidden max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full aspect-video object-cover"
-                  />
-                  {cameraError && (
-                    <p className="p-4 text-amber-400 text-sm">{cameraError}</p>
-                  )}
-                  <div className="flex gap-2 p-4 bg-slate-800">
-                    <Button onClick={capturePhoto} className="flex-1">
-                      Capture
-                    </Button>
-                    <Button variant="secondary" onClick={stopCamera}>
-                      Cancel
-                    </Button>
+          {showCamera &&
+            createPortal(
+              <>
+                <div className="fixed inset-0 z-[100] bg-black/80" onClick={stopCamera} />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-24 pb-20 overflow-y-auto">
+                  <div className="bg-slate-900 rounded-xl overflow-hidden max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full aspect-video object-cover"
+                    />
+                    {cameraError && (
+                      <p className="p-4 text-amber-400 text-sm">{cameraError}</p>
+                    )}
+                    <div className="flex gap-2 p-4 bg-slate-800">
+                      <Button onClick={capturePhoto} className="flex-1">
+                        Capture
+                      </Button>
+                      <Button variant="secondary" onClick={stopCamera}>
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>,
+              document.body
+            )}
 
-          {showOcrCamera && (
-            <>
-              <div className="fixed inset-0 z-50 bg-black/80" onClick={stopOcrCamera} />
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="bg-slate-900 rounded-xl overflow-hidden max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-                  <p className="p-3 text-sm text-slate-300 text-center">
-                    Point camera at product label (name, model, SKU)
-                  </p>
-                  <video
-                    ref={ocrVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full aspect-video object-cover"
-                  />
-                  {cameraError && (
-                    <p className="p-4 text-amber-400 text-sm">{cameraError}</p>
-                  )}
-                  <div className="flex gap-2 p-4 bg-slate-800">
-                    <Button onClick={captureAndScanOcr} className="flex-1" disabled={ocrProcessing}>
-                      {ocrProcessing ? 'Scanning...' : 'Capture & Scan'}
-                    </Button>
-                    <Button variant="secondary" onClick={stopOcrCamera} disabled={ocrProcessing}>
-                      Cancel
-                    </Button>
+          {showOcrCamera &&
+            createPortal(
+              <>
+                <div className="fixed inset-0 z-[100] bg-black/80" onClick={stopOcrCamera} />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-24 pb-20 overflow-y-auto">
+                  <div className="bg-slate-900 rounded-xl overflow-hidden max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+                    <p className="p-3 text-sm text-slate-300 text-center">
+                      Point camera at product label (name, model, SKU)
+                    </p>
+                    <video
+                      ref={ocrVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full aspect-video object-cover"
+                    />
+                    {cameraError && (
+                      <p className="p-4 text-amber-400 text-sm">{cameraError}</p>
+                    )}
+                    <div className="flex gap-2 p-4 bg-slate-800">
+                      <Button onClick={captureAndScanOcr} className="flex-1" disabled={ocrProcessing}>
+                        {ocrProcessing ? 'Scanning...' : 'Capture & Scan'}
+                      </Button>
+                      <Button variant="secondary" onClick={stopOcrCamera} disabled={ocrProcessing}>
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>,
+              document.body
+            )}
 
           <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
             <Button type="submit" disabled={loading} className="w-full sm:w-auto">
