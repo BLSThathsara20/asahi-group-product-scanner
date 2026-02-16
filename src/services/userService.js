@@ -26,9 +26,11 @@ export async function getProfilesByIds(ids) {
 }
 
 export async function updateProfileRole(id, role) {
+  const roleVal = role && String(role).trim();
+  if (!roleVal) throw new Error('Role is required');
   const { data, error } = await supabase
     .from('profiles')
-    .update({ role, updated_at: new Date().toISOString() })
+    .update({ role: roleVal, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();
@@ -36,10 +38,19 @@ export async function updateProfileRole(id, role) {
   return data;
 }
 
+const PROFILE_UPDATE_FIELDS = ['full_name', 'address', 'phone_number'];
+
 export async function updateProfile(id, updates) {
+  const payload = { updated_at: new Date().toISOString() };
+  for (const key of PROFILE_UPDATE_FIELDS) {
+    if (key in updates) {
+      const val = updates[key];
+      payload[key] = val === '' || val === undefined ? null : String(val);
+    }
+  }
   const { data, error } = await supabase
     .from('profiles')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update(payload)
     .eq('id', id)
     .select()
     .single();

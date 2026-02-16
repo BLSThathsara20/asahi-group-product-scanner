@@ -163,13 +163,13 @@ export function UserManagement() {
               <div className="space-y-4">
                 <Input
                   label="Phone"
-                  value={editingProfile.phone_number}
+                  value={editingProfile.phone_number ?? ''}
                   onChange={(e) => setEditingProfile((prev) => ({ ...prev, phone_number: e.target.value }))}
                   placeholder="Optional"
                 />
                 <Input
                   label="Address"
-                  value={editingProfile.address}
+                  value={editingProfile.address ?? ''}
                   onChange={(e) => setEditingProfile((prev) => ({ ...prev, address: e.target.value }))}
                   placeholder="Optional"
                 />
@@ -284,7 +284,7 @@ export function UserManagement() {
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      value={p.role}
+                      value={p.role || 'worker'}
                       onChange={(e) => handleRoleChange(p.id, e.target.value)}
                       disabled={p.id === user?.id}
                       className="px-3 py-1.5 border rounded-lg text-sm"
