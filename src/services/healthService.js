@@ -44,16 +44,34 @@ export async function checkAuth() {
   }
 }
 
+export async function getDatabaseStats() {
+  try {
+    const { data, error } = await withTimeout(
+      supabase.rpc('get_database_stats')
+    );
+    if (error) throw error;
+    return { ok: true, data };
+  } catch (err) {
+    return {
+      ok: false,
+      data: null,
+      error: err.message || 'Failed to fetch DB stats',
+    };
+  }
+}
+
 export async function runHealthCheck() {
-  const [supabaseResult, authResult] = await Promise.all([
+  const [supabaseResult, authResult, dbStatsResult] = await Promise.all([
     checkSupabaseConnection(),
     checkAuth(),
+    getDatabaseStats(),
   ]);
 
   const healthy = supabaseResult.ok;
   const checks = {
     supabase: supabaseResult,
     auth: authResult,
+    dbStats: dbStatsResult,
   };
 
   return {

@@ -1,11 +1,13 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { NavIcon } from '../icons/NavIcons';
 import { compressAndUploadImage } from '../../services/imageService';
 
 export function EditItemForm({ item, onSave, onCancel }) {
-  const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
   const [form, setForm] = useState({
     name: item.name || '',
     description: item.description || '',
@@ -18,6 +20,66 @@ export function EditItemForm({ item, onSave, onCancel }) {
     photo: null,
   });
   const [uploading, setUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+
+  useEffect(() => {
+    if (showCamera && streamRef.current && videoRef.current) {
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      video.play().catch(() => {});
+    }
+    return () => {
+      if (showCamera) {
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [showCamera]);
+
+  const startCamera = async () => {
+    setCameraError('');
+    try {
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+      streamRef.current = stream;
+      setShowCamera(true);
+    } catch (err) {
+      setCameraError(err.message || 'Camera access denied');
+    }
+  };
+
+  const stopCamera = () => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setShowCamera(false);
+    setCameraError('');
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          setForm((prev) => ({ ...prev, photo: file }));
+          stopCamera();
+        }
+      },
+      'image/jpeg',
+      0.9
+    );
+  };
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -25,12 +87,6 @@ export function EditItemForm({ item, onSave, onCancel }) {
       ...prev,
       [name]: type === 'number' ? parseInt(value, 10) || 0 : value,
     }));
-  };
-
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) setForm((prev) => ({ ...prev, photo: file }));
-    e.target.value = '';
   };
 
   const handleSubmit = async (e) => {
@@ -100,25 +156,48 @@ export function EditItemForm({ item, onSave, onCancel }) {
             )}
           </div>
           <div className="flex gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="hidden"
-            />
             <Button
               type="button"
               variant="outline"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={startCamera}
               className="text-sm inline-flex items-center gap-1.5"
             >
-              <NavIcon name="folder" className="w-4 h-4" />
+              <NavIcon name="camera" className="w-4 h-4" />
               {item.photo_url || form.photo ? 'Replace image' : 'Add image'}
             </Button>
           </div>
         </div>
       </div>
+
+      {showCamera &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-[100] bg-black/80" onClick={stopCamera} />
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-24 pb-20 overflow-y-auto">
+              <div className="bg-slate-900 rounded-xl overflow-hidden max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full aspect-video object-cover"
+                />
+                {cameraError && (
+                  <p className="p-4 text-amber-400 text-sm">{cameraError}</p>
+                )}
+                <div className="flex gap-2 p-4 bg-slate-800">
+                  <Button onClick={capturePhoto} className="flex-1">
+                    Capture
+                  </Button>
+                  <Button variant="secondary" onClick={stopCamera}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>,
+          document.body
+        )}
 
       <div className="flex gap-2 pt-2">
         <Button type="submit" disabled={uploading}>

@@ -97,6 +97,32 @@ export function HealthCheck() {
               )}
             </span>
           </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50">
+            <div>
+              <p className="font-medium text-slate-800">Database Storage</p>
+              <p className="text-sm text-slate-500">
+                {checks.dbStats?.ok && checks.dbStats?.data
+                  ? (() => {
+                      const d = checks.dbStats.data;
+                      const usedMb = (d.db_size_bytes / (1024 * 1024)).toFixed(2);
+                      const limitMb = d.free_tier_limit_mb ?? 500;
+                      const pct = Math.min(100, (d.db_size_bytes / (limitMb * 1024 * 1024)) * 100).toFixed(1);
+                      return `${d.db_size_pretty} used of ${limitMb} MB limit (${pct}%)`;
+                    })()
+                  : checks.dbStats?.error ?? '—'}
+              </p>
+            </div>
+            <span
+              className={`${checks.dbStats?.ok ? 'text-emerald-500' : 'text-amber-500'}`}
+            >
+              {checks.dbStats?.ok ? (
+                <Check className="w-6 h-6" strokeWidth={2} />
+              ) : (
+                <X className="w-6 h-6" strokeWidth={2} />
+              )}
+            </span>
+          </div>
         </div>
       </Card>
     </div>
