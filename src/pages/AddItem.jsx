@@ -246,7 +246,7 @@ export function AddItem() {
       const exists = await checkQrIdExists(qrId);
       if (exists) {
         setError(`This barcode/QR code is already registered: ${qrId}. Use a different code or find the existing item.`);
-        notifyError('Barcode/QR already exists in inventory');
+        notifyError('Barcode/QR already exists in spare parts');
         setLoading(false);
         return;
       }
@@ -274,7 +274,7 @@ export function AddItem() {
       await createTransaction({
         item_id: item.id,
         type: 'in',
-        notes: 'Item registered in inventory',
+        notes: 'Item registered in spare parts',
         performed_by: user?.id,
       });
       success('Item added. Download QR code PDF from the item page.');
@@ -566,7 +566,7 @@ export function AddItem() {
 
           <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
             <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-              {loading ? 'Adding...' : 'Add to Inventory'}
+              {loading ? 'Adding...' : 'Add Spare Part'}
             </Button>
             <Button type="button" variant="secondary" onClick={() => navigate(-1)} className="w-full sm:w-auto">
               Cancel

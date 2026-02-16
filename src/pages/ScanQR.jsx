@@ -80,7 +80,7 @@ export function ScanQR() {
       </Card>
 
       <p className="text-sm text-slate-500 text-center">
-        Scan a QR code — existing items open for checkout, new items open Add form.
+        Scan a QR code — existing spare parts open for checkout, new items open Add form.
       </p>
     </div>
   );

@@ -149,7 +149,7 @@ export function InventoryList() {
         item_id: checkinItem.id,
         type: 'in',
         quantity: qty,
-        notes: data.notes || 'Item returned to inventory',
+        notes: data.notes || 'Item returned to spare parts',
         performed_by: user?.id,
         created_at: recordedAt,
       });
@@ -200,7 +200,7 @@ export function InventoryList() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-800">Inventory</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Spare Parts</h2>
         <Link to="/inventory/add">
           <Button>+ Add Item</Button>
         </Link>
@@ -348,7 +348,7 @@ export function InventoryList() {
         </div>
         {filtered.length === 0 && (
           <div className="p-12 text-center text-slate-500">
-            No items found. Add your first item to get started.
+            No spare parts found. Add your first spare part to get started.
           </div>
         )}
         {filtered.length > 0 && (

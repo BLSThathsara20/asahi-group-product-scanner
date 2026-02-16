@@ -151,7 +151,7 @@ export function ItemDetail() {
 			item_id: id,
 			type: "in",
 			quantity: qty,
-			notes: data.notes || "Item returned to inventory",
+			notes: data.notes || "Item returned to spare parts",
 			performed_by: user?.id,
 			created_at: recordedAt,
 		});
@@ -179,7 +179,7 @@ export function ItemDetail() {
 			<Card className="p-6">
 				<p className="text-slate-600">Item not found.</p>
 				<Button className="mt-4" onClick={() => navigate("/inventory")}>
-					Back to Inventory
+					Back to Spare Parts
 				</Button>
 			</Card>
 		);

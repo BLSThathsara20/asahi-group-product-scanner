@@ -5,7 +5,7 @@ import { NavIcon } from '../icons/NavIcons';
 
 const mainNavItems = [
   { to: '/', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/inventory', label: 'Inventory', icon: 'inventory' },
+  { to: '/inventory', label: 'Spare Parts', icon: 'inventory' },
   { to: '/inventory/add', label: 'Add', icon: 'add' },
   { to: '/scan', label: 'Scan', icon: 'scan' },
 ];

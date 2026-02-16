@@ -44,12 +44,12 @@ export function Reports() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-800">Inventory Reports</h2>
+      <h2 className="text-2xl font-bold text-slate-800">Spare Parts Reports</h2>
 
       <Card className="p-6">
         <h3 className="font-semibold text-slate-800 mb-4">Export</h3>
         <p className="text-slate-500 text-sm mb-6">
-          Download your inventory as PDF or CSV. {items.length} items in inventory.
+          Download your spare parts as PDF or CSV. {items.length} items in spare parts.
         </p>
         <div className="flex flex-wrap gap-4">
           <Button

@@ -24,7 +24,7 @@ export function Dashboard() {
 
 			<div className="grid grid-cols-3 gap-2 sm:gap-4">
 				<Card className="p-3 sm:p-6 text-center">
-					<p className="text-xs sm:text-sm text-slate-500 truncate">Total Items</p>
+					<p className="text-xs sm:text-sm text-slate-500 truncate">Total Spare Parts</p>
 					<p className="text-xl sm:text-3xl font-bold text-asahi mt-0.5 sm:mt-1">{items.length}</p>
 				</Card>
 				<Card className="p-3 sm:p-6 text-center">
@@ -39,7 +39,7 @@ export function Dashboard() {
 
 			<Card>
 				<div className="p-4 border-b border-slate-200">
-					<h3 className="font-semibold text-slate-800">Recent Items</h3>
+					<h3 className="font-semibold text-slate-800">Recent Spare Parts</h3>
 				</div>
 				<div className="divide-y divide-slate-100">
 					{items.slice(0, 6).map((item) => (
@@ -70,9 +70,9 @@ export function Dashboard() {
 					))}
 					{items.length === 0 && (
 						<div className="p-8 text-center text-slate-500">
-							No items yet.{" "}
+							No spare parts yet.{" "}
 							<Link to="/inventory/add" className="text-asahi font-medium">
-								Add your first item
+								Add your first spare part
 							</Link>
 						</div>
 					)}

@@ -17,7 +17,7 @@ export function CheckInForm({ onSubmit, onCancel, item }) {
     setErrors({});
     onSubmit({
       quantity: qty,
-      notes: notes.trim() || 'Item returned to inventory',
+      notes: notes.trim() || 'Item returned to spare parts',
     });
   };
 

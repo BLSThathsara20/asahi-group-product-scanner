@@ -4,8 +4,8 @@ import { NavIcon } from '../icons/NavIcons';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/inventory', label: 'Inventory', icon: 'inventory' },
-  { to: '/inventory/add', label: 'Add Item', icon: 'add' },
+  { to: '/inventory', label: 'Spare Parts', icon: 'inventory' },
+  { to: '/inventory/add', label: 'Add Spare Part', icon: 'add' },
   { to: '/scan', label: 'Scan QR', icon: 'scan' },
 ];
 
