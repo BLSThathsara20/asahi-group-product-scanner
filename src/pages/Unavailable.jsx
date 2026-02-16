@@ -1,11 +1,14 @@
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { NavIcon } from '../components/icons/NavIcons';
 
 export function Unavailable({ error, onRetry }) {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
       <Card className="p-8 max-w-md text-center">
-        <div className="text-6xl mb-4">⚠️</div>
+        <div className="flex justify-center mb-4">
+          <NavIcon name="warning" className="w-16 h-16 text-amber-500" />
+        </div>
         <h1 className="text-2xl font-bold text-slate-800 mb-2">Database Unavailable</h1>
         <p className="text-slate-600 mb-4">
           Cannot connect to the database. Please check:

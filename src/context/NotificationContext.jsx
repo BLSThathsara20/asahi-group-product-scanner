@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { Check, X, Info } from 'lucide-react';
 
 const NotificationContext = createContext(null);
 
@@ -56,8 +57,14 @@ function NotificationContainer() {
                   : 'bg-slate-50 border-slate-200 text-slate-800'
             }`}
           >
-            <span className="text-lg">
-              {n.type === 'success' ? '✓' : n.type === 'error' ? '✕' : 'ℹ'}
+            <span className="shrink-0">
+              {n.type === 'success' ? (
+                <Check className="w-5 h-5 text-emerald-600" strokeWidth={2} />
+              ) : n.type === 'error' ? (
+                <X className="w-5 h-5 text-red-600" strokeWidth={2} />
+              ) : (
+                <Info className="w-5 h-5 text-slate-600" strokeWidth={2} />
+              )}
             </span>
             <p className="flex-1 text-sm font-medium">{n.message}</p>
             <button
@@ -65,7 +72,7 @@ function NotificationContainer() {
               className="text-slate-400 hover:text-slate-600 p-1"
               aria-label="Dismiss"
             >
-              ×
+              <X className="w-4 h-4" strokeWidth={2} />
             </button>
           </div>
         ))}

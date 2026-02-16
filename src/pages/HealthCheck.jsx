@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Check, X } from 'lucide-react';
 import { runHealthCheck } from '../services/healthService';
 import { Card } from '../components/ui/Card';
 
@@ -65,9 +66,13 @@ export function HealthCheck() {
               </p>
             </div>
             <span
-              className={`text-lg ${checks.supabase.ok ? 'text-emerald-500' : 'text-red-500'}`}
+              className={`${checks.supabase.ok ? 'text-emerald-500' : 'text-red-500'}`}
             >
-              {checks.supabase.ok ? '✓' : '✕'}
+              {checks.supabase.ok ? (
+                <Check className="w-6 h-6" strokeWidth={2} />
+              ) : (
+                <X className="w-6 h-6" strokeWidth={2} />
+              )}
             </span>
           </div>
 
@@ -83,9 +88,13 @@ export function HealthCheck() {
               </p>
             </div>
             <span
-              className={`text-lg ${checks.auth.ok ? 'text-emerald-500' : 'text-red-500'}`}
+              className={`${checks.auth.ok ? 'text-emerald-500' : 'text-red-500'}`}
             >
-              {checks.auth.ok ? '✓' : '✕'}
+              {checks.auth.ok ? (
+                <Check className="w-6 h-6" strokeWidth={2} />
+              ) : (
+                <X className="w-6 h-6" strokeWidth={2} />
+              )}
             </span>
           </div>
         </div>

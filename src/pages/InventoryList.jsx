@@ -11,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Pagination } from '../components/ui/Pagination';
 import { CheckOutForm, CheckInForm } from '../components/Inventory';
+import { NavIcon } from '../components/icons/NavIcons';
 
 export function InventoryList() {
   const { items, loading, error, refetch } = useItems();
@@ -283,7 +284,7 @@ export function InventoryList() {
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400">
-                          📦
+                          <NavIcon name="package" className="w-5 h-5" />
                         </div>
                       )}
                       <span className="font-medium text-slate-800">{item.name}</span>

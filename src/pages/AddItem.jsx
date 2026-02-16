@@ -11,6 +11,7 @@ import { QRScanner } from '../components/QR/QRScanner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { NavIcon } from '../components/icons/NavIcons';
 
 export function AddItem() {
   const navigate = useNavigate();
@@ -285,7 +286,7 @@ export function AddItem() {
                 className="shrink-0 p-2"
                 title="Scan label to auto-fill name, model, SKU"
               >
-                <span className="text-xl">📷</span>
+                <NavIcon name="camera" className="w-5 h-5" />
               </Button>
               <Input
                 name="name"
@@ -430,7 +431,7 @@ export function AddItem() {
                 className="ring-2 ring-asahi ring-offset-2 p-3"
                 title="Open Camera"
               >
-                <span className="text-2xl">📷</span>
+                <NavIcon name="camera" className="w-6 h-6" />
               </Button>
               <Button
                 type="button"
@@ -439,7 +440,7 @@ export function AddItem() {
                 className="p-3"
                 title="Choose from Library"
               >
-                <span className="text-2xl">📁</span>
+                <NavIcon name="folder" className="w-6 h-6" />
               </Button>
             </div>
             {form.photo && (

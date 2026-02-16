@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useItems } from "../hooks/useItems";
 import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { NavIcon } from "../components/icons/NavIcons";
 
 export function Dashboard() {
 	const { items, loading } = useItems();
@@ -56,7 +57,7 @@ export function Dashboard() {
 									/>
 								) : (
 									<div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400">
-										📦
+										<NavIcon name="package" className="w-6 h-6" />
 									</div>
 								)}
 								<div>

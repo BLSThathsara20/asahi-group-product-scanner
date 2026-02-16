@@ -86,10 +86,7 @@ export function Header() {
     <>
       <header className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 shadow-sm sticky top-0 z-30">
         <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Logo className="h-8 md:h-9 object-contain" fallbackText="AsahiGroup" />
-          <span className="text-slate-600 text-sm hidden sm:inline">Inventory</span>
-        </div>
+        <Logo className="h-8 md:h-10 object-contain" fallbackText="AsahiGroup" />
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}

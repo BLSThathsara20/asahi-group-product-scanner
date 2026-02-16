@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Logo } from './Logo';
+import { NavIcon } from '../icons/NavIcons';
 
 const mainNavItems = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/inventory', label: 'Inventory', icon: '📦' },
-  { to: '/inventory/add', label: 'Add Item', icon: '➕' },
-  { to: '/scan', label: 'Scan QR', icon: '📷' },
+  { to: '/', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/inventory', label: 'Inventory', icon: 'inventory' },
+  { to: '/inventory/add', label: 'Add Item', icon: 'add' },
+  { to: '/scan', label: 'Scan QR', icon: 'scan' },
 ];
 
 const moreNavItems = [
-  { to: '/reports', label: 'Reports', icon: '📄' },
-  { to: '/health', label: 'Health', icon: '❤️' },
-  { to: '/users', label: 'Users', icon: '👥', adminOnly: true },
+  { to: '/reports', label: 'Reports', icon: 'reports' },
+  { to: '/health', label: 'Health', icon: 'health' },
+  { to: '/users', label: 'Users', icon: 'users', adminOnly: true },
 ];
 
 export function DesktopNav() {
@@ -40,7 +41,7 @@ export function DesktopNav() {
               }`
             }
           >
-            <span className="text-lg">{icon}</span>
+            <NavIcon name={icon} className="w-5 h-5 shrink-0" />
             {label}
           </NavLink>
         ))}
@@ -49,7 +50,7 @@ export function DesktopNav() {
             onClick={() => setShowMore(!showMore)}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 w-full"
           >
-            <span className="text-lg">⊕</span>
+            <NavIcon name="more" className="w-5 h-5 shrink-0" />
             More
           </button>
           {showMore && (
@@ -61,7 +62,7 @@ export function DesktopNav() {
                   onClick={() => setShowMore(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
                 >
-                  <span>{icon}</span>
+                  <NavIcon name={icon} className="w-4 h-4 shrink-0" />
                   {label}
                 </NavLink>
               ))}

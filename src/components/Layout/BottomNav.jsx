@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { NavIcon } from '../icons/NavIcons';
 
 const mainNavItems = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/inventory', label: 'Inventory', icon: '📦' },
-  { to: '/inventory/add', label: 'Add', icon: '➕' },
-  { to: '/scan', label: 'Scan', icon: '📷' },
+  { to: '/', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/inventory', label: 'Inventory', icon: 'inventory' },
+  { to: '/inventory/add', label: 'Add', icon: 'add' },
+  { to: '/scan', label: 'Scan', icon: 'scan' },
 ];
 
 const moreNavItems = [
-  { to: '/reports', label: 'Reports', icon: '📄' },
-  { to: '/health', label: 'Health', icon: '❤️' },
-  { to: '/users', label: 'Users', icon: '👥', adminOnly: true },
+  { to: '/reports', label: 'Reports', icon: 'reports' },
+  { to: '/health', label: 'Health', icon: 'health' },
+  { to: '/users', label: 'Users', icon: 'users', adminOnly: true },
 ];
 
 export function BottomNav() {
@@ -36,7 +37,7 @@ export function BottomNav() {
                 }`
               }
             >
-              <span className="text-xl mb-0.5">{icon}</span>
+              <NavIcon name={icon} className="w-6 h-6 mb-0.5 shrink-0" />
               <span>{label}</span>
             </NavLink>
           ))}
@@ -46,7 +47,7 @@ export function BottomNav() {
               showMore ? 'text-asahi' : 'text-slate-500'
             }`}
           >
-            <span className="text-xl mb-0.5">⊕</span>
+            <NavIcon name="more" className="w-6 h-6 mb-0.5 shrink-0" />
             <span>More</span>
           </button>
         </div>
@@ -61,8 +62,8 @@ export function BottomNav() {
           <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl border-t border-slate-200 p-4 pb-8 safe-area-pb animate-slide-up">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-slate-800">More</h3>
-              <button onClick={() => setShowMore(false)} className="text-slate-400 hover:text-slate-600">
-                ✕
+              <button onClick={() => setShowMore(false)} className="text-slate-400 hover:text-slate-600 p-1">
+                <NavIcon name="close" className="w-5 h-5" />
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -73,7 +74,7 @@ export function BottomNav() {
                   onClick={() => setShowMore(false)}
                   className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
                 >
-                  <span className="text-2xl">{icon}</span>
+                  <NavIcon name={icon} className="w-6 h-6 shrink-0" />
                   <span className="font-medium text-slate-800">{label}</span>
                 </NavLink>
               ))}

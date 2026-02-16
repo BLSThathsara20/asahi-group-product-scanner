@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { QRCodeDisplay, BarcodeDisplay } from '../components/QR';
+import { NavIcon } from '../components/icons/NavIcons';
 import { CheckOutForm } from '../components/Inventory/CheckOutForm';
 
 export function ItemDetail() {
@@ -127,8 +128,8 @@ export function ItemDetail() {
                 className="w-32 h-32 rounded-xl object-cover"
               />
             ) : (
-              <div className="w-32 h-32 rounded-xl bg-slate-200 flex items-center justify-center text-4xl">
-                📦
+              <div className="w-32 h-32 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400">
+                <NavIcon name="package" className="w-16 h-16" />
               </div>
             )}
             <div className="flex-1">
@@ -141,10 +142,14 @@ export function ItemDetail() {
                   <span className="text-sm text-slate-500">• {item.category}</span>
                 )}
                 {item.store_location && (
-                  <span className="text-sm text-slate-500">• 📍 {item.store_location}</span>
+                  <span className="text-sm text-slate-500 inline-flex items-center gap-1">
+                    • <NavIcon name="mapPin" className="w-3.5 h-3.5" /> {item.store_location}
+                  </span>
                 )}
                 {item.vehicle_model && (
-                  <span className="text-sm text-slate-500">• 🚗 {item.vehicle_model}</span>
+                  <span className="text-sm text-slate-500 inline-flex items-center gap-1">
+                    • <NavIcon name="car" className="w-3.5 h-3.5" /> {item.vehicle_model}
+                  </span>
                 )}
                 {item.model_name && (
                   <span className="text-sm text-slate-500">• Model: {item.model_name}</span>

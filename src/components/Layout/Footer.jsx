@@ -2,7 +2,7 @@ import { DEVELOPER } from '../../lib/branding';
 
 export function Footer() {
   return (
-    <footer className="py-4 px-4 pb-20 md:pb-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white">
+    <footer className="py-6 mt-6 text-center text-xs text-slate-500">
       <p>
         Developed by{' '}
         <a

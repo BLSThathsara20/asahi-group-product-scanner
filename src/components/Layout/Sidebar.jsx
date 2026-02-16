@@ -1,18 +1,20 @@
 import { NavLink } from 'react-router-dom';
+import { Logo } from './Logo';
+import { NavIcon } from '../icons/NavIcons';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/inventory', label: 'Inventory', icon: '📦' },
-  { to: '/inventory/add', label: 'Add Item', icon: '➕' },
-  { to: '/scan', label: 'Scan QR', icon: '📷' },
+  { to: '/', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/inventory', label: 'Inventory', icon: 'inventory' },
+  { to: '/inventory/add', label: 'Add Item', icon: 'add' },
+  { to: '/scan', label: 'Scan QR', icon: 'scan' },
 ];
 
 export function Sidebar() {
   return (
     <aside className="w-56 bg-white border-r border-slate-200 flex flex-col">
       <div className="p-6 border-b border-slate-200">
-        <h2 className="text-lg font-bold text-asahi">AsahiGroup</h2>
-        <p className="text-xs text-slate-500 mt-0.5">UK</p>
+        <Logo className="h-8 w-full object-contain" fallbackText="AsahiGroup" />
+        <p className="text-xs text-slate-500 mt-2">UK</p>
       </div>
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map(({ to, label, icon }) => (
@@ -28,7 +30,7 @@ export function Sidebar() {
               }`
             }
           >
-            <span className="text-lg">{icon}</span>
+            <NavIcon name={icon} className="w-5 h-5 shrink-0" />
             {label}
           </NavLink>
         ))}
