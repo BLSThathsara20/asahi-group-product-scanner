@@ -28,12 +28,16 @@ export async function getProfilesByIds(ids) {
 export async function updateProfileRole(id, role) {
   const roleVal = role && String(role).trim();
   if (!roleVal) throw new Error('Role is required');
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .update({ role: roleVal, updated_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', id)
+    .select('id');
   if (error) throw error;
-  return null;
+  if (!data || data.length === 0) {
+    throw new Error('Role update failed. You may not have permission.');
+  }
+  return data[0];
 }
 
 const PROFILE_UPDATE_FIELDS = ['full_name', 'address', 'phone_number'];
@@ -46,12 +50,16 @@ export async function updateProfile(id, updates) {
       payload[key] = val === '' || val === undefined ? null : String(val);
     }
   }
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .update(payload)
-    .eq('id', id);
+    .eq('id', id)
+    .select('id');
   if (error) throw error;
-  return null;
+  if (!data || data.length === 0) {
+    throw new Error('Profile update failed. You may not have permission.');
+  }
+  return data[0];
 }
 
 export async function deleteProfile(id) {
