@@ -146,6 +146,12 @@ export function ItemDetail() {
                 {item.vehicle_model && (
                   <span className="text-sm text-slate-500">• 🚗 {item.vehicle_model}</span>
                 )}
+                {item.model_name && (
+                  <span className="text-sm text-slate-500">• Model: {item.model_name}</span>
+                )}
+                {item.sku_code && (
+                  <span className="text-sm text-slate-500">• SKU: {item.sku_code}</span>
+                )}
               </div>
               <div className="text-sm text-slate-500 mt-2 space-y-1">
                 {item.added_date && (

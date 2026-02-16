@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { createWorker } from 'tesseract.js';
 import { useAuth } from '../context/AuthContext';
 import { generateQrId } from '../lib/utils';
+import { parseOcrForProduct } from '../lib/ocrParse';
 import { createItem, createTransaction, checkQrIdExists } from '../services/itemService';
 import { compressAndUploadImage } from '../services/imageService';
 import { useNotification } from '../context/NotificationContext';
@@ -24,15 +26,21 @@ export function AddItem() {
     quantity: 1,
     store_location: '',
     vehicle_model: '',
+    model_name: '',
+    sku_code: '',
     added_date: new Date().toISOString().slice(0, 10),
     barcode: '',
     photo: null,
   });
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [showOcrCamera, setShowOcrCamera] = useState(false);
+  const [ocrProcessing, setOcrProcessing] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const videoRef = useRef(null);
+  const ocrVideoRef = useRef(null);
   const streamRef = useRef(null);
+  const ocrStreamRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const handleChange = (e) => {
@@ -69,6 +77,63 @@ export function AddItem() {
     }
   };
 
+  const startOcrCamera = async () => {
+    setCameraError('');
+    try {
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+      ocrStreamRef.current = stream;
+      setShowOcrCamera(true);
+    } catch (err) {
+      setCameraError(err.message || 'Camera access denied');
+      notifyError('Could not open camera');
+    }
+  };
+
+  const stopOcrCamera = () => {
+    ocrStreamRef.current?.getTracks().forEach((t) => t.stop());
+    ocrStreamRef.current = null;
+    setShowOcrCamera(false);
+    setCameraError('');
+  };
+
+  const captureAndScanOcr = async () => {
+    const video = ocrVideoRef.current;
+    if (!video || !video.videoWidth) return;
+    setOcrProcessing(true);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.9)
+      );
+      if (!blob) throw new Error('Failed to capture image');
+      stopOcrCamera();
+      const worker = await createWorker('eng');
+      const { data } = await worker.recognize(URL.createObjectURL(blob));
+      await worker.terminate();
+      const parsed = parseOcrForProduct(data.text);
+      setForm((prev) => ({
+        ...prev,
+        name: parsed.name || prev.name,
+        model_name: parsed.model_name || prev.model_name,
+        sku_code: parsed.sku_code || prev.sku_code,
+      }));
+      success(parsed.name || parsed.model_name || parsed.sku_code ? 'Text extracted. Review and edit if needed.' : 'No product text found. Try a clearer photo.');
+    } catch (err) {
+      notifyError(err.message || 'OCR failed');
+    } finally {
+      setOcrProcessing(false);
+    }
+  };
+
   useEffect(() => {
     const barcode = searchParams.get('barcode');
     if (barcode) {
@@ -93,6 +158,20 @@ export function AddItem() {
       }
     };
   }, [showCamera]);
+
+  useEffect(() => {
+    if (showOcrCamera && ocrStreamRef.current && ocrVideoRef.current) {
+      const video = ocrVideoRef.current;
+      video.srcObject = ocrStreamRef.current;
+      video.play().catch(() => {});
+    }
+    return () => {
+      if (showOcrCamera) {
+        ocrStreamRef.current?.getTracks().forEach((t) => t.stop());
+        ocrStreamRef.current = null;
+      }
+    };
+  }, [showOcrCamera]);
 
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -155,6 +234,8 @@ export function AddItem() {
         quantity: form.quantity || 1,
         store_location: form.store_location.trim() || null,
         vehicle_model: form.vehicle_model.trim() || null,
+        model_name: form.model_name?.trim() || null,
+        sku_code: form.sku_code?.trim() || null,
         added_date: form.added_date ? new Date(form.added_date).toISOString() : null,
         photo_url: photoUrl,
         status: 'in_stock',
@@ -194,13 +275,44 @@ export function AddItem() {
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>
           )}
 
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Item Name *</label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={startOcrCamera}
+                className="shrink-0 p-2"
+                title="Scan label to auto-fill name, model, SKU"
+              >
+                <span className="text-xl">📷</span>
+              </Button>
+              <Input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="e.g. Car Audio Player"
+                className="flex-1 min-w-0"
+                required
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Click camera to scan product label and auto-fill</p>
+          </div>
+
           <Input
-            label="Item Name *"
-            name="name"
-            value={form.name}
+            label="Model Name"
+            name="model_name"
+            value={form.model_name}
             onChange={handleChange}
-            placeholder="e.g. Car Audio Player"
-            required
+            placeholder="e.g. XYZ-2000"
+          />
+
+          <Input
+            label="SKU Code"
+            name="sku_code"
+            value={form.sku_code}
+            onChange={handleChange}
+            placeholder="e.g. SKU-12345"
           />
 
           <div>
@@ -362,6 +474,37 @@ export function AddItem() {
                       Capture
                     </Button>
                     <Button variant="secondary" onClick={stopCamera}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {showOcrCamera && (
+            <>
+              <div className="fixed inset-0 z-50 bg-black/80" onClick={stopOcrCamera} />
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="bg-slate-900 rounded-xl overflow-hidden max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+                  <p className="p-3 text-sm text-slate-300 text-center">
+                    Point camera at product label (name, model, SKU)
+                  </p>
+                  <video
+                    ref={ocrVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full aspect-video object-cover"
+                  />
+                  {cameraError && (
+                    <p className="p-4 text-amber-400 text-sm">{cameraError}</p>
+                  )}
+                  <div className="flex gap-2 p-4 bg-slate-800">
+                    <Button onClick={captureAndScanOcr} className="flex-1" disabled={ocrProcessing}>
+                      {ocrProcessing ? 'Scanning...' : 'Capture & Scan'}
+                    </Button>
+                    <Button variant="secondary" onClick={stopOcrCamera} disabled={ocrProcessing}>
                       Cancel
                     </Button>
                   </div>

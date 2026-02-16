@@ -100,6 +100,8 @@ export async function exportInventoryExcel(items) {
   const rows = items.map((item) => ({
     Name: item.name || '',
     'QR ID': item.qr_id || '',
+    'Model Name': item.model_name || '',
+    'SKU Code': item.sku_code || '',
     Description: item.description || '',
     Category: item.category || '',
     'Store Location': item.store_location || '',
@@ -116,10 +118,12 @@ export async function exportInventoryExcel(items) {
 }
 
 export function exportInventoryCSV(items) {
-  const headers = ['Name', 'QR ID', 'Description', 'Category', 'Store Location', 'Vehicle Model', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
+  const headers = ['Name', 'QR ID', 'Model Name', 'SKU Code', 'Description', 'Category', 'Store Location', 'Vehicle Model', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
   const rows = items.map((item) => [
     `"${(item.name || '').replace(/"/g, '""')}"`,
     item.qr_id || '',
+    item.model_name || '',
+    item.sku_code || '',
     `"${(item.description || '').replace(/"/g, '""')}"`,
     item.category || '',
     item.store_location || '',

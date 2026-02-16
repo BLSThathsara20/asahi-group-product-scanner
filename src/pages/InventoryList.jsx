@@ -34,7 +34,9 @@ export function InventoryList() {
       item.qr_id?.toLowerCase().includes(search.toLowerCase()) ||
       item.category?.toLowerCase().includes(search.toLowerCase()) ||
       item.store_location?.toLowerCase().includes(search.toLowerCase()) ||
-      item.vehicle_model?.toLowerCase().includes(search.toLowerCase());
+      item.vehicle_model?.toLowerCase().includes(search.toLowerCase()) ||
+      item.model_name?.toLowerCase().includes(search.toLowerCase()) ||
+      item.sku_code?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || item.status === statusFilter;
     const matchCategory = categoryFilter === 'all' || item.category === categoryFilter;
     const matchLocation = !locationFilter || item.store_location === locationFilter;
@@ -395,6 +397,8 @@ function EditItemForm({ item, onSave, onCancel }) {
     category: item.category || '',
     store_location: item.store_location || '',
     vehicle_model: item.vehicle_model || '',
+    model_name: item.model_name || '',
+    sku_code: item.sku_code || '',
     quantity: item.quantity ?? 1,
   });
 
@@ -414,6 +418,8 @@ function EditItemForm({ item, onSave, onCancel }) {
       category: form.category?.trim() || null,
       store_location: form.store_location?.trim() || null,
       vehicle_model: form.vehicle_model?.trim() || null,
+      model_name: form.model_name?.trim() || null,
+      sku_code: form.sku_code?.trim() || null,
       quantity: form.quantity || 1,
     });
   };
@@ -434,6 +440,8 @@ function EditItemForm({ item, onSave, onCancel }) {
       <Input label="Category" name="category" value={form.category} onChange={handleChange} />
       <Input label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} />
       <Input label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} />
+      <Input label="Model Name" name="model_name" value={form.model_name} onChange={handleChange} />
+      <Input label="SKU Code" name="sku_code" value={form.sku_code} onChange={handleChange} />
       <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
       <div className="flex gap-2 pt-2">
         <Button type="submit">Save</Button>
