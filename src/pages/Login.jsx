@@ -62,7 +62,6 @@ export function Login() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Logo className="h-16 mx-auto object-contain" fallbackText="AsahiGroup" />
-            <p className="text-slate-500 mt-2">Inventory Management</p>
           </div>
         <Card className="p-6">
           <h2 className="text-xl font-semibold text-slate-800 mb-6">Sign in</h2>

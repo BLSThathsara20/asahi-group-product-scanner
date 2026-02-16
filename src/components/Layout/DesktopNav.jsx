@@ -27,7 +27,6 @@ export function DesktopNav() {
     <aside className="hidden md:flex w-64 flex-col bg-white border-r border-slate-200">
       <div className="p-6 border-b border-slate-200">
         <Logo className="h-10 w-full object-contain" fallbackText="AsahiGroup" />
-        <p className="text-xs text-slate-500 mt-2">Inventory Management</p>
       </div>
       <nav className="flex-1 p-4 space-y-1">
         {mainNavItems.map(({ to, label, icon }) => (

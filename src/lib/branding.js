@@ -1,4 +1,5 @@
-export const LOGO_URL = 'https://www.asahigroup.co.uk/admin/uploaded_photos/site_logo.png';
+// Use local copy to avoid cross-origin / referrer blocking from external host
+export const LOGO_URL = '/logo.png';
 
 export const DEVELOPER = {
   name: 'Savindu',

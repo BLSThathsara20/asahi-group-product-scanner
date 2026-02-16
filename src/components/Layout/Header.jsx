@@ -1,5 +1,5 @@
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { updateProfile } from '../../services/userService';
 import { Logo } from './Logo';
@@ -87,7 +87,9 @@ export function Header() {
     <>
       <header className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 shadow-sm sticky top-0 z-30">
         <div className="flex items-center justify-between">
-        <Logo className="h-8 md:h-10 object-contain" fallbackText="AsahiGroup" />
+        <Link to="/" className="flex items-center">
+          <Logo className="h-8 md:h-10 object-contain" fallbackText="AsahiGroup" />
+        </Link>
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
