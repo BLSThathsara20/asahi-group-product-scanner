@@ -1,26 +1,35 @@
-# Deploy AsahiGroup Inventory to Vercel
+# Deploy to GitHub Pages
 
-## Quick Deploy
+Your app is configured to deploy automatically to GitHub Pages when you push to `main`.
 
-1. Go to [vercel.com](https://vercel.com) and sign in with GitHub.
-2. Click **Add New** → **Project**.
-3. Import `BLSThathsara20/asahi-group-product-scanner` (or your fork).
-4. **Environment Variables** – Add these in the project settings:
-   - `VITE_SUPABASE_URL` – Your Supabase project URL
-   - `VITE_SUPABASE_ANON_KEY` – Your Supabase anon/public key
-5. Click **Deploy**.
+## One-time setup
 
-Vercel will build with `npm run build` and serve the app. Your live URL will be something like `asahi-group-product-scanner.vercel.app`.
+### 1. Add Supabase secrets
 
-## Supabase Auth Settings
+The build needs your Supabase credentials. Add them as repository secrets:
 
-After deploying, update Supabase:
+1. Go to **GitHub** → your repo → **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret** and add:
+   - `VITE_SUPABASE_URL` – your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY` – your Supabase anon/public key
 
-1. Supabase Dashboard → **Authentication** → **URL Configuration**
-2. Add your Vercel URL to **Redirect URLs**, e.g.:
-   - `https://your-app.vercel.app`
-   - `https://your-app.vercel.app/**`
+### 2. Enable GitHub Pages
 
-## Custom Domain (Optional)
+1. Go to **Settings** → **Pages**
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**
 
-In Vercel: Project → **Settings** → **Domains** → add your domain.
+### 3. Push to trigger deploy
+
+```bash
+git add -A
+git commit -m "Configure GitHub Pages deployment"
+git push origin main
+```
+
+The workflow will build and deploy. After it finishes, your app will be live at:
+
+**https://blsthathsara20.github.io/asahi-group-product-scanner/**
+
+---
+
+**Note:** If you skip adding the Supabase secrets, the build will still succeed, but the app will not connect to your database until you add them and redeploy.
