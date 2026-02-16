@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getItemById, getTransactions, updateItem, createTransaction } from '../services/itemService';
 import { getProfilesByIds } from '../services/userService';
@@ -12,6 +12,7 @@ import { CheckOutForm } from '../components/Inventory/CheckOutForm';
 
 export function ItemDetail() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { success: notifySuccess } = useNotification();
@@ -50,6 +51,12 @@ export function ItemDetail() {
   useEffect(() => {
     load();
   }, [id]);
+
+  useEffect(() => {
+    if (item && searchParams.get('checkout') === '1' && item.status === 'in_stock') {
+      setShowCheckOut(true);
+    }
+  }, [item, searchParams]);
 
   const handleCheckOut = async (data) => {
     await createTransaction({

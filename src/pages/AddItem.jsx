@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { generateQrId } from '../lib/utils';
 import { createItem, createTransaction, checkQrIdExists } from '../services/itemService';
@@ -12,6 +12,7 @@ import { Input } from '../components/ui/Input';
 
 export function AddItem() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile } = useAuth();
   const { success, error: notifyError } = useNotification();
   const [loading, setLoading] = useState(false);
@@ -67,6 +68,17 @@ export function AddItem() {
       notifyError('Could not open camera');
     }
   };
+
+  useEffect(() => {
+    const barcode = searchParams.get('barcode');
+    if (barcode) {
+      try {
+        setForm((prev) => ({ ...prev, barcode: decodeURIComponent(barcode) }));
+      } catch {
+        setForm((prev) => ({ ...prev, barcode }));
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (showCamera && streamRef.current && videoRef.current) {

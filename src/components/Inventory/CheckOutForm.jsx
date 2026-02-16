@@ -26,18 +26,20 @@ export function CheckOutForm({ onSubmit, onCancel }) {
       <h3 className="text-lg font-semibold text-slate-800 mb-4">Check Out Item</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Recipient Name"
+          label="Recipient Name *"
           name="recipientName"
           value={form.recipientName}
           onChange={handleChange}
           placeholder="Who received this item?"
+          required
         />
         <Input
-          label="Purpose"
+          label="Purpose / Reason *"
           name="purpose"
           value={form.purpose}
           onChange={handleChange}
           placeholder="What is it for? (e.g. Car repair job #123)"
+          required
         />
         <Input
           label="Vehicle Model"

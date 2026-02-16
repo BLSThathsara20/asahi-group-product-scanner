@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import {
@@ -11,6 +11,7 @@ import {
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { Pagination } from '../components/ui/Pagination';
 
 const ROLES = [
   { value: 'worker', label: 'Worker' },
@@ -32,6 +33,18 @@ export function UserManagement() {
     temp_password: '',
   });
   const [editingProfile, setEditingProfile] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const paginatedProfiles = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return profiles.slice(start, start + pageSize);
+  }, [profiles, page, pageSize]);
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -126,6 +139,42 @@ export function UserManagement() {
         <Button onClick={() => setShowAddUser(true)}>+ Add User</Button>
       </div>
 
+      {editingProfile && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setEditingProfile(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+              <h3 className="font-semibold text-slate-800 mb-4">Edit User</h3>
+              <p className="text-sm text-slate-500 mb-4">
+                {editingProfile.email} {editingProfile.full_name && `(${editingProfile.full_name})`}
+              </p>
+              <div className="space-y-4">
+                <Input
+                  label="Phone"
+                  value={editingProfile.phone_number}
+                  onChange={(e) => setEditingProfile((prev) => ({ ...prev, phone_number: e.target.value }))}
+                  placeholder="Optional"
+                />
+                <Input
+                  label="Address"
+                  value={editingProfile.address}
+                  onChange={(e) => setEditingProfile((prev) => ({ ...prev, address: e.target.value }))}
+                  placeholder="Optional"
+                />
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={() => handleSaveProfile(editingProfile.id, editingProfile.address, editingProfile.phone_number)}>
+                    Save
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setEditingProfile(null)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+
       {showAddUser && (
         <>
           <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setShowAddUser(false)} />
@@ -195,33 +244,17 @@ export function UserManagement() {
               </tr>
             </thead>
             <tbody>
-              {profiles.map((p) => (
+              {paginatedProfiles.map((p) => (
                 <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3">
                     <p className="font-medium text-slate-800">{p.email}</p>
                     <p className="text-sm text-slate-500">{p.full_name || '-'}</p>
                   </td>
                   <td className="px-4 py-3">
-                    {editingProfile?.id === p.id ? (
-                      <Input
-                        value={editingProfile.phone_number}
-                        onChange={(e) => setEditingProfile((prev) => ({ ...prev, phone_number: e.target.value }))}
-                        className="w-32"
-                      />
-                    ) : (
-                      <span className="text-sm text-slate-600">{p.phone_number || '-'}</span>
-                    )}
+                    <span className="text-sm text-slate-600">{p.phone_number || '-'}</span>
                   </td>
                   <td className="px-4 py-3 max-w-[200px]">
-                    {editingProfile?.id === p.id ? (
-                      <Input
-                        value={editingProfile.address}
-                        onChange={(e) => setEditingProfile((prev) => ({ ...prev, address: e.target.value }))}
-                        placeholder="Address"
-                      />
-                    ) : (
-                      <span className="text-sm text-slate-600 truncate block" title={p.address}>{p.address || '-'}</span>
-                    )}
+                    <span className="text-sm text-slate-600 truncate block" title={p.address}>{p.address || '-'}</span>
                   </td>
                   <td className="px-4 py-3">
                     <select
@@ -237,20 +270,9 @@ export function UserManagement() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      {editingProfile?.id === p.id ? (
-                        <>
-                          <Button className="text-sm py-1.5" onClick={() => handleSaveProfile(p.id, editingProfile.address, editingProfile.phone_number)}>
-                            Save
-                          </Button>
-                          <Button variant="secondary" className="text-sm py-1.5" onClick={() => setEditingProfile(null)}>
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <Button variant="outline" className="text-sm py-1.5" onClick={() => setEditingProfile({ id: p.id, address: p.address || '', phone_number: p.phone_number || '' })}>
-                          Edit
-                        </Button>
-                      )}
+                      <Button variant="outline" className="text-sm py-1.5" onClick={() => setEditingProfile({ id: p.id, email: p.email, full_name: p.full_name, address: p.address || '', phone_number: p.phone_number || '' })}>
+                        Edit
+                      </Button>
                       {isSuperAdmin && p.id !== user?.id && p.role !== 'super_admin' && (
                         <Button variant="outline" className="text-red-600 border-red-200 text-sm py-1.5" onClick={() => handleRemove(p.id)}>
                           Remove
@@ -263,6 +285,15 @@ export function UserManagement() {
             </tbody>
           </table>
         </div>
+        {profiles.length > 0 && (
+          <Pagination
+            page={page}
+            totalItems={profiles.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        )}
       </Card>
     </div>
   );
