@@ -19,6 +19,8 @@ export function ScanQR() {
         const item = await getItemByQrId(barcode.trim());
         if (item.status === 'in_stock') {
           navigate(`/inventory/${item.id}?checkout=1`, { replace: true });
+        } else if (item.status === 'out') {
+          navigate(`/inventory/${item.id}?checkin=1`, { replace: true });
         } else {
           navigate(`/inventory/${item.id}`, { replace: true });
         }
@@ -46,6 +48,8 @@ export function ScanQR() {
       const item = await getItemByQrId(trimmed);
       if (item.status === 'in_stock') {
         navigate(`/inventory/${item.id}?checkout=1`);
+      } else if (item.status === 'out') {
+        navigate(`/inventory/${item.id}?checkin=1`);
       } else {
         navigate(`/inventory/${item.id}`);
       }

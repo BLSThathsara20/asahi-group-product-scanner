@@ -16,7 +16,7 @@ import { Button } from "../components/ui/Button";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { QRCodeDisplay, BarcodeDisplay } from "../components/QR";
 import { NavIcon } from "../components/icons/NavIcons";
-import { CheckOutForm, EditItemForm } from "../components/Inventory";
+import { CheckOutForm, CheckInForm, EditItemForm } from "../components/Inventory";
 
 export function ItemDetail() {
 	const { id } = useParams();
@@ -29,6 +29,7 @@ export function ItemDetail() {
 	const [performerNames, setPerformerNames] = useState({});
 	const [loading, setLoading] = useState(true);
 	const [showCheckOut, setShowCheckOut] = useState(false);
+	const [showCheckIn, setShowCheckIn] = useState(false);
 	const [showEdit, setShowEdit] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 	const hasRetried = useRef(false);
@@ -96,12 +97,11 @@ export function ItemDetail() {
 	}, [id, loading, item]);
 
 	useEffect(() => {
-		if (
-			item &&
-			searchParams.get("checkout") === "1" &&
-			item.status === "in_stock"
-		) {
+		if (!item) return;
+		if (searchParams.get("checkout") === "1" && item.status === "in_stock") {
 			setShowCheckOut(true);
+		} else if (searchParams.get("checkin") === "1" && item.status === "out") {
+			setShowCheckIn(true);
 		}
 	}, [item, searchParams]);
 
@@ -143,21 +143,26 @@ export function ItemDetail() {
 		}
 	};
 
-	const handleCheckIn = async () => {
+	const handleCheckIn = async (data) => {
+		const qty = data.quantity ?? 1;
+		const newQty = (item?.quantity ?? 0) + qty;
 		const recordedAt = new Date().toISOString();
 		await createTransaction({
 			item_id: id,
 			type: "in",
-			notes: "Item returned to inventory",
+			quantity: qty,
+			notes: data.notes || "Item returned to inventory",
 			performed_by: user?.id,
 			created_at: recordedAt,
 		});
 		await updateItem(id, {
+			quantity: newQty,
 			status: "in_stock",
-			last_used_date: new Date().toISOString(),
+			last_used_date: recordedAt,
 			last_used_by: user?.id,
 		});
 		notifySuccess("Item checked in");
+		setShowCheckIn(false);
 		load();
 	};
 
@@ -204,7 +209,7 @@ export function ItemDetail() {
 						</>
 					)}
 					{item.status === "out" && (
-						<Button onClick={handleCheckIn}>Check In</Button>
+						<Button onClick={() => setShowCheckIn(true)}>Check In</Button>
 					)}
 					{isSuperAdmin && (
 						<Button
@@ -219,6 +224,18 @@ export function ItemDetail() {
 					)}
 				</div>
 			</div>
+
+			{item.status === "out" && (
+				<div className="p-4 rounded-lg bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+					<div>
+						<p className="font-semibold text-amber-800">Item already checked out</p>
+						<p className="text-sm text-amber-700 mt-0.5">
+							This item is currently out. Check it back in to return to inventory.
+						</p>
+					</div>
+					<Button onClick={() => setShowCheckIn(true)}>Check In to Inventory</Button>
+				</div>
+			)}
 
 			{/* Section 1: Item overview - ordered for clarity */}
 			<Card className="p-6">
@@ -391,6 +408,16 @@ export function ItemDetail() {
 					currentUserId={user?.id}
 					currentUserDisplay={profile?.full_name || user?.email}
 				/>
+			)}
+
+			{showCheckIn && (
+				<Modal onBackdropClick={() => setShowCheckIn(false)}>
+					<CheckInForm
+						item={item}
+						onSubmit={handleCheckIn}
+						onCancel={() => setShowCheckIn(false)}
+					/>
+				</Modal>
 			)}
 
 			<Card>

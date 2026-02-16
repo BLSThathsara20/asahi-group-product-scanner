@@ -141,16 +141,20 @@ export function InventoryList() {
   const handleCheckIn = async (data) => {
     if (!checkinItem) return;
     const targetStatus = checkinTargetStatus || 'in_stock';
+    const qty = data.quantity ?? 1;
+    const newQty = (checkinItem.quantity ?? 0) + qty;
     try {
       const recordedAt = new Date().toISOString();
       await createTransaction({
         item_id: checkinItem.id,
         type: 'in',
+        quantity: qty,
         notes: data.notes || 'Item returned to inventory',
         performed_by: user?.id,
         created_at: recordedAt,
       });
       await updateItem(checkinItem.id, {
+        quantity: newQty,
         status: targetStatus,
         last_used_date: recordedAt,
         last_used_by: user?.id,
@@ -383,13 +387,11 @@ export function InventoryList() {
 
       {checkinItem && (
         <Modal onBackdropClick={() => setCheckinItem(null)}>
-          <div>
-            <p className="text-sm text-slate-600 mb-2">Check in: {checkinItem.name}</p>
-            <CheckInForm
-              onSubmit={handleCheckIn}
-              onCancel={() => setCheckinItem(null)}
-            />
-          </div>
+          <CheckInForm
+            item={checkinItem}
+            onSubmit={handleCheckIn}
+            onCancel={() => setCheckinItem(null)}
+          />
         </Modal>
       )}
     </div>
