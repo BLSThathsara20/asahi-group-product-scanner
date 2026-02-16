@@ -82,10 +82,12 @@ export function AddItem() {
 
   useEffect(() => {
     if (showCamera && streamRef.current && videoRef.current) {
-      videoRef.current.srcObject = streamRef.current;
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      video.play().catch(() => {});
     }
     return () => {
-      if (!showCamera) {
+      if (showCamera) {
         streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
