@@ -7,7 +7,7 @@ import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/ui/StatusBadge';
-import { QRCodeDisplay } from '../components/QR/QRCodeDisplay';
+import { QRCodeDisplay, BarcodeDisplay } from '../components/QR';
 import { CheckOutForm } from '../components/Inventory/CheckOutForm';
 
 export function ItemDetail() {
@@ -117,8 +117,8 @@ export function ItemDetail() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6 md:col-span-2">
           <div className="flex gap-6">
             {item.photo_url ? (
               <img
@@ -178,6 +178,10 @@ export function ItemDetail() {
         <Card className="p-6">
           <h3 className="font-semibold text-slate-800 mb-4">QR Code</h3>
           <QRCodeDisplay qrId={item.qr_id} itemName={item.name} />
+        </Card>
+        <Card className="p-6">
+          <h3 className="font-semibold text-slate-800 mb-4">Barcode</h3>
+          <BarcodeDisplay barcodeId={item.qr_id} itemName={item.name} />
         </Card>
       </div>
 

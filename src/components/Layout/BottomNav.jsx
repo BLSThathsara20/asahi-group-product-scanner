@@ -29,7 +29,7 @@ export function BottomNav() {
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === '/' || to === '/inventory'}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center flex-1 py-2 text-xs transition-colors ${
                   isActive ? 'text-asahi' : 'text-slate-500'
