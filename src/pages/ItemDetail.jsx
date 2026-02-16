@@ -179,57 +179,57 @@ export function ItemDetail() {
               <table className="w-full text-sm">
                 <tbody className="divide-y divide-slate-100">
                   <tr>
-                    <td className="py-2 pr-4 text-slate-500 font-medium w-32">Status</td>
-                    <td className="py-2">
+                    <td className="py-3 px-4 text-slate-500 font-medium w-32">Status</td>
+                    <td className="py-3 px-4">
                       <StatusBadge status={item.status} />
                     </td>
                   </tr>
                   <tr>
-                    <td className="py-2 pr-4 text-slate-500 font-medium">Quantity</td>
-                    <td className="py-2 text-slate-800">{item.quantity ?? 0}</td>
+                    <td className="py-3 px-4 text-slate-500 font-medium">Quantity</td>
+                    <td className="py-3 px-4 text-slate-800">{item.quantity ?? 0}</td>
                   </tr>
                   {item.category && (
                     <tr>
-                      <td className="py-2 pr-4 text-slate-500 font-medium">Category</td>
-                      <td className="py-2 text-slate-800">{item.category}</td>
+                      <td className="py-3 px-4 text-slate-500 font-medium">Category</td>
+                      <td className="py-3 px-4 text-slate-800">{item.category}</td>
                     </tr>
                   )}
                   {item.store_location && (
                     <tr>
-                      <td className="py-2 pr-4 text-slate-500 font-medium">
+                      <td className="py-3 px-4 text-slate-500 font-medium">
                         <span className="inline-flex items-center gap-1">
                           <NavIcon name="mapPin" className="w-3.5 h-3.5" /> Location
                         </span>
                       </td>
-                      <td className="py-2 text-slate-800">{item.store_location}</td>
+                      <td className="py-3 px-4 text-slate-800">{item.store_location}</td>
                     </tr>
                   )}
                   {item.vehicle_model && (
                     <tr>
-                      <td className="py-2 pr-4 text-slate-500 font-medium">
+                      <td className="py-3 px-4 text-slate-500 font-medium">
                         <span className="inline-flex items-center gap-1">
                           <NavIcon name="car" className="w-3.5 h-3.5" /> Vehicle
                         </span>
                       </td>
-                      <td className="py-2 text-slate-800">{item.vehicle_model}</td>
+                      <td className="py-3 px-4 text-slate-800">{item.vehicle_model}</td>
                     </tr>
                   )}
                   {item.model_name && (
                     <tr>
-                      <td className="py-2 pr-4 text-slate-500 font-medium">Model</td>
-                      <td className="py-2 text-slate-800">{item.model_name}</td>
+                      <td className="py-3 px-4 text-slate-500 font-medium">Model</td>
+                      <td className="py-3 px-4 text-slate-800">{item.model_name}</td>
                     </tr>
                   )}
                   {item.sku_code && (
                     <tr>
-                      <td className="py-2 pr-4 text-slate-500 font-medium">SKU</td>
-                      <td className="py-2 text-slate-800 font-mono">{item.sku_code}</td>
+                      <td className="py-3 px-4 text-slate-500 font-medium">SKU</td>
+                      <td className="py-3 px-4 text-slate-800 font-mono">{item.sku_code}</td>
                     </tr>
                   )}
                   {item.added_date && (
                     <tr>
-                      <td className="py-2 pr-4 text-slate-500 font-medium">Added</td>
-                      <td className="py-2 text-slate-800">
+                      <td className="py-3 px-4 text-slate-500 font-medium">Added</td>
+                      <td className="py-3 px-4 text-slate-800">
                         {new Date(item.added_date).toLocaleDateString()}
                         {item.added_by && performerNames[item.added_by] && (
                           <span className="text-slate-500"> by {performerNames[item.added_by]}</span>
@@ -239,8 +239,8 @@ export function ItemDetail() {
                   )}
                   {item.last_used_date && (
                     <tr>
-                      <td className="py-2 pr-4 text-slate-500 font-medium">Last used</td>
-                      <td className="py-2 text-slate-800">
+                      <td className="py-3 px-4 text-slate-500 font-medium">Last used</td>
+                      <td className="py-3 px-4 text-slate-800">
                         {new Date(item.last_used_date).toLocaleDateString()}
                         {item.last_used_by && performerNames[item.last_used_by] && (
                           <span className="text-slate-500"> by {performerNames[item.last_used_by]}</span>

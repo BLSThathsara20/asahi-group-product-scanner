@@ -59,7 +59,7 @@ export function BottomNav() {
             className="md:hidden fixed inset-0 z-40 bg-black/30"
             onClick={() => setShowMore(false)}
           />
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl border-t border-slate-200 p-4 pb-8 safe-area-pb animate-slide-up">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl border-t border-slate-200 p-4 pb-20 safe-area-pb animate-slide-up">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-slate-800">More</h3>
               <button onClick={() => setShowMore(false)} className="text-slate-400 hover:text-slate-600 p-1">
