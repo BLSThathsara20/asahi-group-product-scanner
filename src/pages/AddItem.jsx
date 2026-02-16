@@ -166,7 +166,7 @@ export function AddItem() {
         notes: 'Item registered in inventory',
         performed_by: user?.id,
       });
-      success('Item added to inventory');
+      success('Item added. Download QR code PDF from the item page.');
       navigate(`/inventory/${item.id}`);
     } catch (err) {
       const msg = err.message || 'Failed to add item';
@@ -208,7 +208,7 @@ export function AddItem() {
               Product Barcode / QR Code (optional)
             </label>
             <p className="text-xs text-slate-500 mb-2">
-              Use product&apos;s existing barcode or QR. Leave empty to generate unique ID. Duplicates are blocked.
+              Use product&apos;s existing barcode, scan, or click Auto Generate for a unique code. Duplicates are blocked.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
@@ -218,6 +218,14 @@ export function AddItem() {
                 placeholder="Scan or enter barcode/QR code"
                 className="sm:flex-1 min-w-0"
               />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setForm((prev) => ({ ...prev, barcode: generateQrId() }))}
+                className="shrink-0"
+              >
+                Auto Generate
+              </Button>
               <Button
                 type="button"
                 variant="outline"
