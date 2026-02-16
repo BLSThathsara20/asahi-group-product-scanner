@@ -13,6 +13,7 @@ export function Logo({ className = '', alt = 'AsahiGroup', fallbackText }) {
       src={LOGO_URL}
       alt={alt}
       className={className}
+      referrerPolicy="no-referrer"
       onError={() => setErrored(true)}
     />
   );

@@ -5,7 +5,10 @@ const statusLabels = { in_stock: 'In Stock', out: 'Out', reserved: 'Reserved' };
 
 async function loadLogoBase64() {
   try {
-    const res = await fetch(LOGO_URL, { mode: 'cors' });
+    const res = await fetch(LOGO_URL, {
+      mode: 'cors',
+      referrerPolicy: 'no-referrer',
+    });
     const blob = await res.blob();
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
