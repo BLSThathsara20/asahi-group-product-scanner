@@ -19,6 +19,7 @@ import {
 	Trash2,
 	Search,
 	Sparkles,
+	Flashlight,
 } from "lucide-react";
 
 export const NavIcons = {
@@ -44,6 +45,7 @@ export const NavIcons = {
 	trash: Trash2,
 	search: Search,
 	sparkles: Sparkles,
+	flashlight: Flashlight,
 };
 
 export function NavIcon({ name, className = "w-5 h-5" }) {

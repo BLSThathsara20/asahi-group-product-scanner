@@ -79,7 +79,7 @@ export function ScanModalProvider({ children }) {
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
                 <h3 className="font-semibold text-slate-800">Scan QR or Barcode</h3>
-                <p className="text-sm text-slate-500 mt-1">Point camera at code to identify</p>
+                <p className="text-sm text-slate-500 mt-1">Hold steady, ensure good lighting for best results</p>
               </div>
               <button
                 type="button"

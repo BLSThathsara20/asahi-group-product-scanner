@@ -341,7 +341,7 @@ export function AddItem() {
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <h3 className="font-semibold text-slate-800">Scan Barcode / QR Code</h3>
-                    <p className="text-sm text-slate-500 mt-1">Point your camera at the barcode or QR code.</p>
+                    <p className="text-sm text-slate-500 mt-1">Point camera at the code. Hold steady, ensure good lighting.</p>
                   </div>
                   <button
                     type="button"
