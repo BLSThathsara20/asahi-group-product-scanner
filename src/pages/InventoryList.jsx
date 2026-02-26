@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useItems } from '../hooks/useItems';
 import { useAuth } from '../context/AuthContext';
+import { getCategories, buildCategoryOptions } from '../services/categoryService';
+import { STORE_LOCATIONS } from '../components/StoreLocationSelect';
 import { exportInventoryPDF, exportInventoryExcel } from '../services/reportService';
 import { updateItem, createTransaction } from '../services/itemService';
 import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
-import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
 import { Pagination } from '../components/ui/Pagination';
 import { CheckOutForm, CheckInForm, EditItemForm } from '../components/Inventory';
 import { Modal } from '../components/ui/Modal';
@@ -29,6 +29,17 @@ export function InventoryList() {
   const [checkinTargetStatus, setCheckinTargetStatus] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+
+  useEffect(() => {
+    getCategories()
+      .then((cats) => setCategoryOptions(buildCategoryOptions(cats)))
+      .catch(() => setCategoryOptions([]));
+  }, []);
+
+  const customLocations = [...new Set(items.map((i) => i.store_location).filter(Boolean))]
+    .filter((loc) => !STORE_LOCATIONS.includes(loc))
+    .sort();
 
   const filtered = items.filter((item) => {
     const matchSearch =
@@ -44,9 +55,6 @@ export function InventoryList() {
     const matchLocation = !locationFilter || item.store_location === locationFilter;
     return matchSearch && matchStatus && matchCategory && matchLocation;
   });
-
-  const categories = [...new Set(items.map((i) => i.category).filter(Boolean))].sort();
-  const locations = [...new Set(items.map((i) => i.store_location).filter(Boolean))].sort();
 
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
   const totalFiltered = filtered.length;
@@ -198,146 +206,147 @@ export function InventoryList() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-800">Spare Parts</h2>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl font-semibold text-slate-800">Spare Parts</h2>
         <Link to="/inventory/add">
-          <Button>+ Add Item</Button>
+          <Button className="text-sm py-1.5 px-3">+ Add</Button>
         </Link>
       </div>
 
-      <Card className="p-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Input
-              placeholder="Search by name, QR ID, category, location, vehicle..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-0"
-            />
-            <div className="flex flex-wrap gap-2 sm:ml-auto">
-              <Button
-                variant="outline"
-                className="text-sm py-1.5"
-                onClick={handleExportPDF}
-                disabled={exporting || filtered.length === 0}
-              >
-                {exporting === 'pdf' ? '...' : 'Export PDF'}
-              </Button>
-              <Button
-                variant="outline"
-                className="text-sm py-1.5"
-                onClick={handleExportExcel}
-                disabled={exporting || filtered.length === 0}
-              >
-                {exporting === 'excel' ? '...' : 'Export Excel'}
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-slate-600">Filters:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-asahi/30 min-w-[120px]"
-            >
-              <option value="all">All Status</option>
-              <option value="in_stock">In Stock</option>
-              <option value="out">Out</option>
-              <option value="reserved">Reserved</option>
-            </select>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-asahi/30 min-w-[140px]"
-            >
-              <option value="all">All Categories</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <select
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-asahi/30 min-w-[140px]"
-            >
-              <option value="">All Locations</option>
-              {locations.map((loc) => (
+      {/* Minimal filter bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 min-w-0 px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-asahi/40 focus:border-asahi/50 outline-none"
+        />
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-asahi/40 outline-none"
+          >
+            <option value="all">Status</option>
+            <option value="in_stock">In Stock</option>
+            <option value="out">Out</option>
+            <option value="reserved">Reserved</option>
+          </select>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-asahi/40 outline-none min-w-[120px]"
+          >
+            <option value="all">Category</option>
+            {categoryOptions.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-asahi/40 outline-none min-w-[120px]"
+          >
+            <option value="">Location</option>
+            <optgroup label="Rack">
+              {STORE_LOCATIONS.map((loc) => (
                 <option key={loc} value={loc}>{loc}</option>
               ))}
-            </select>
+            </optgroup>
+            {customLocations.length > 0 && (
+              <optgroup label="Other">
+                {customLocations.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+          <div className="flex gap-1 ml-auto sm:ml-0">
+            <button
+              type="button"
+              onClick={handleExportPDF}
+              disabled={exporting || filtered.length === 0}
+              className="px-3 py-2 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
+            >
+              {exporting === 'pdf' ? '...' : 'PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={exporting || filtered.length === 0}
+              className="px-3 py-2 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
+            >
+              {exporting === 'excel' ? '...' : 'Excel'}
+            </button>
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Card className="overflow-hidden">
+      {/* Minimal table */}
+      <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Item</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">QR ID</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Category</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Location</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Qty</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Status</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Actions</th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Item</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Code</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Loc</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Qty</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody>
               {paginated.map((item) => (
-                <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <Link to={`/inventory/${item.id}`} className="flex items-center gap-3">
+                <tr key={item.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                  <td className="px-4 py-2.5">
+                    <Link to={`/inventory/${item.id}`} className="flex items-center gap-2.5">
                       {item.photo_url ? (
-                        <img
-                          src={item.photo_url}
-                          alt=""
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
+                        <img src={item.photo_url} alt="" className="w-8 h-8 rounded object-cover" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400">
-                          <NavIcon name="package" className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400">
+                          <NavIcon name="package" className="w-4 h-4" />
                         </div>
                       )}
                       <span className="font-medium text-slate-800">{item.name}</span>
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-600 font-mono text-sm">{item.qr_id}</td>
-                  <td className="px-4 py-3 text-slate-600">{item.category || '-'}</td>
-                  <td className="px-4 py-3 text-slate-600">{item.store_location || '-'}</td>
-                  <td className="px-4 py-3">{item.quantity}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-2.5 text-slate-500 font-mono text-xs">{item.qr_id}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{item.category || '—'}</td>
+                  <td className="px-4 py-2.5 text-slate-500 text-xs">{item.store_location || '—'}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{item.quantity}</td>
+                  <td className="px-4 py-2.5">
                     <select
                       value={item.status}
                       onChange={(e) => handleStatusChange(item, e.target.value)}
                       disabled={item.status === 'out'}
-                      className={`px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-asahi/30 ${
-                        item.status === 'out' ? 'bg-slate-100 cursor-not-allowed' : ''
+                      className={`text-xs px-2 py-0.5 rounded border border-slate-200 focus:ring-1 focus:ring-asahi/40 outline-none ${
+                        item.status === 'out' ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-600'
                       }`}
-                      title={item.status === 'out' ? 'Check in from item detail to change status' : ''}
+                      title={item.status === 'out' ? 'Check in first' : ''}
                     >
                       <option value="in_stock">In Stock</option>
                       <option value="out">Out</option>
                       <option value="reserved">Reserved</option>
                     </select>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end items-center gap-3">
                       {item.status === 'in_stock' && (
-                        <Button
-                          variant="outline"
-                          className="text-sm py-1.5"
+                        <button
+                          type="button"
                           onClick={() => setEditingItem({ ...item })}
-                          title="Edit item"
+                          className="text-slate-400 hover:text-slate-600"
+                          title="Edit"
                         >
                           <NavIcon name="pencil" className="w-4 h-4" />
-                        </Button>
+                        </button>
                       )}
-                      <Link to={`/inventory/${item.id}`}>
-                        <Button variant="outline" className="text-sm py-1.5">
-                          View
-                        </Button>
+                      <Link to={`/inventory/${item.id}`} className="text-xs text-slate-500 hover:text-asahi" title="View">
+                        View
                       </Link>
                     </div>
                   </td>
@@ -347,9 +356,7 @@ export function InventoryList() {
           </table>
         </div>
         {filtered.length === 0 && (
-          <div className="p-12 text-center text-slate-500">
-            No spare parts found. Add your first spare part to get started.
-          </div>
+          <div className="py-16 text-center text-slate-400 text-sm">No items found</div>
         )}
         {filtered.length > 0 && (
           <Pagination
@@ -360,7 +367,7 @@ export function InventoryList() {
             onPageSizeChange={handlePageSizeChange}
           />
         )}
-      </Card>
+      </div>
 
       {editingItem && editingItem.status === 'in_stock' && (
         <Modal onBackdropClick={() => setEditingItem(null)}>

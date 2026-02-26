@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useScanModal } from '../../context/ScanModalContext';
 import { NavIcon } from '../icons/NavIcons';
 
 const mainNavItems = [
   { to: '/', label: 'Dashboard', icon: 'dashboard' },
   { to: '/inventory', label: 'Spare Parts', icon: 'inventory' },
   { to: '/inventory/add', label: 'Add', icon: 'add' },
-  { to: '/scan', label: 'Scan', icon: 'scan' },
+  { scan: true, label: 'Scan', icon: 'scan' },
 ];
 
 const moreNavItems = [
   { to: '/reports', label: 'Reports', icon: 'reports' },
+  { to: '/analytics', label: 'Analytics', icon: 'analytics' },
+  { to: '/categories', label: 'Categories', icon: 'folder', adminOnly: true },
   { to: '/health', label: 'Health', icon: 'health' },
   { to: '/users', label: 'Users', icon: 'users', adminOnly: true },
 ];
@@ -19,6 +22,7 @@ const moreNavItems = [
 export function BottomNav() {
   const [showMore, setShowMore] = useState(false);
   const { isAdmin } = useAuth();
+  const { openScanModal } = useScanModal();
 
   const filteredMore = moreNavItems.filter((item) => !item.adminOnly || isAdmin);
 
@@ -26,21 +30,33 @@ export function BottomNav() {
     <>
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 safe-area-pb">
         <div className="flex items-center justify-around h-16">
-          {mainNavItems.map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/' || to === '/inventory'}
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center flex-1 py-2 text-xs transition-colors ${
-                  isActive ? 'text-asahi' : 'text-slate-500'
-                }`
-              }
-            >
-              <NavIcon name={icon} className="w-6 h-6 mb-0.5 shrink-0" />
-              <span>{label}</span>
-            </NavLink>
-          ))}
+          {mainNavItems.map((item) =>
+            item.scan ? (
+              <button
+                key="scan"
+                type="button"
+                onClick={openScanModal}
+                className="flex flex-col items-center justify-center flex-1 py-2 text-xs text-slate-500"
+              >
+                <NavIcon name={item.icon} className="w-6 h-6 mb-0.5 shrink-0" />
+                <span>{item.label}</span>
+              </button>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/' || item.to === '/inventory'}
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center flex-1 py-2 text-xs transition-colors ${
+                    isActive ? 'text-asahi' : 'text-slate-500'
+                  }`
+                }
+              >
+                <NavIcon name={item.icon} className="w-6 h-6 mb-0.5 shrink-0" />
+                <span>{item.label}</span>
+              </NavLink>
+            )
+          )}
           <button
             onClick={() => setShowMore(!showMore)}
             className={`flex flex-col items-center justify-center flex-1 py-2 text-xs transition-colors ${

@@ -98,6 +98,22 @@ export async function addUser(email, fullName, role, tempPassword) {
   return { activationLink: `${base}/activate?token=${token}` };
 }
 
+/** Get pending invites (users who haven't activated yet) */
+export async function getPendingInvites() {
+  const { data, error } = await supabase
+    .from('user_invites')
+    .select('id, email, full_name, role, created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+/** Delete a pending invite (user hasn't activated yet) */
+export async function deleteInvite(inviteId) {
+  const { error } = await supabase.from('user_invites').delete().eq('id', inviteId);
+  if (error) throw error;
+}
+
 /** Get invite by token (for activation page) */
 export async function getInviteByToken(token) {
   const { data, error } = await supabase.rpc('get_invite_by_token', { t: token });

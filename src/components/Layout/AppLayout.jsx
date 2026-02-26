@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
+import { ScanModalProvider } from '../../context/ScanModalContext';
 import { Header } from './Header';
 import { DesktopNav } from './DesktopNav';
 import { BottomNav } from './BottomNav';
@@ -42,6 +43,7 @@ export function AppLayout() {
   }, [handleScroll]);
 
   return (
+    <ScanModalProvider>
     <div className="h-screen flex flex-col md:flex-row bg-slate-50 overflow-hidden md:min-h-screen md:h-auto md:overflow-visible">
       <DesktopNav />
       <div className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden md:overflow-visible">
@@ -64,5 +66,6 @@ export function AppLayout() {
       </div>
       <BottomNav />
     </div>
+    </ScanModalProvider>
   );
 }

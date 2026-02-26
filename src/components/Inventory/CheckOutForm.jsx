@@ -3,6 +3,8 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
+import { VehicleModelSelect } from '../VehicleModelSelect';
+import { VoiceInput } from '../VoiceInput';
 import { getProfiles } from '../../services/userService';
 
 export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentUserDisplay }) {
@@ -179,21 +181,31 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
               />
             )}
           </div>
-          <Input
-            label="Purpose / Reason *"
-            name="purpose"
-            value={form.purpose}
-            onChange={handleChange}
-            placeholder="What is it for? (e.g. Car repair job #123)"
-            error={errors.purpose}
-            required
-          />
-          <Input
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Purpose / Reason *</label>
+            <div className="flex gap-2">
+              <VoiceInput
+                onResult={(text) => setForm((prev) => ({ ...prev, purpose: (prev.purpose || '') + (prev.purpose ? ' ' : '') + text }))}
+                className="shrink-0 self-start"
+              />
+              <Input
+                name="purpose"
+                value={form.purpose}
+                onChange={handleChange}
+                placeholder="What is it for? (e.g. Car repair job #123)"
+                error={errors.purpose}
+                className="flex-1 min-w-0"
+                required
+              />
+            </div>
+            {errors.purpose && <p className="mt-1 text-sm text-red-600">{errors.purpose}</p>}
+          </div>
+          <VehicleModelSelect
             label="Vehicle Model"
             name="vehicleModel"
             value={form.vehicleModel}
             onChange={handleChange}
-            placeholder="e.g. Toyota Camry 2020"
+            placeholder="Select vehicle make"
           />
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -228,14 +240,20 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              rows={2}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
-              placeholder="Optional notes"
-            />
+            <div className="flex gap-2">
+              <VoiceInput
+                onResult={(text) => setForm((prev) => ({ ...prev, notes: (prev.notes || '') + (prev.notes ? ' ' : '') + text }))}
+                className="shrink-0 self-start"
+              />
+              <textarea
+                name="notes"
+                value={form.notes}
+                onChange={handleChange}
+                rows={2}
+                className="flex-1 min-w-0 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
+                placeholder="Optional notes"
+              />
+            </div>
           </div>
           <div className="flex gap-2 pt-2">
             <Button type="submit">Confirm Check Out</Button>

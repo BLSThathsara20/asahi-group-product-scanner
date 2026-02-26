@@ -62,6 +62,44 @@ export async function checkQrIdExists(qrId) {
 	return !!data;
 }
 
+/** Check if barcode base is already used (exact match or as prefix of base_uniqueId) */
+export async function checkBarcodeBaseExists(base) {
+	const normalized = String(base || "").trim();
+	if (!normalized) return false;
+	const { data: exact } = await supabase
+		.from("items")
+		.select("id")
+		.eq("qr_id", normalized)
+		.maybeSingle();
+	if (exact) return true;
+	const escaped = normalized.replace(/\\/g, "\\\\").replace(/_/g, "\\_").replace(/%/g, "\\%");
+	const { data: prefix } = await supabase
+		.from("items")
+		.select("id")
+		.ilike("qr_id", escaped + "\\_%")
+		.limit(1);
+	return !!(prefix && prefix.length > 0);
+}
+
+/** Get item by qr_id or by barcode base (for product barcodes stored as base_uniqueId) */
+export async function getItemByQrIdOrBase(barcode) {
+	const trimmed = String(barcode || "").trim();
+	if (!trimmed) return null;
+	const { data: exact } = await supabase
+		.from("items")
+		.select("*")
+		.eq("qr_id", trimmed)
+		.maybeSingle();
+	if (exact) return exact;
+	const escaped = trimmed.replace(/\\/g, "\\\\").replace(/_/g, "\\_").replace(/%/g, "\\%");
+	const { data: prefix } = await supabase
+		.from("items")
+		.select("*")
+		.ilike("qr_id", escaped + "\\_%")
+		.limit(1);
+	return prefix?.[0] ?? null;
+}
+
 export async function updateItem(id, updates) {
 	const { data, error } = await supabase
 		.from("items")

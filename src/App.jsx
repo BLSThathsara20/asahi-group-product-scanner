@@ -14,8 +14,10 @@ import { AddItem } from './pages/AddItem';
 import { ItemDetail } from './pages/ItemDetail';
 import { ScanQR } from './pages/ScanQR';
 import { Reports } from './pages/Reports';
+import { Analytics } from './pages/Analytics';
 import { HealthCheck } from './pages/HealthCheck';
 import { UserManagement } from './pages/UserManagement';
+import { CategoryManager } from './pages/CategoryManager';
 
 function App() {
   return (
@@ -42,7 +44,9 @@ function App() {
               <Route path="inventory/:id" element={<ItemDetail />} />
               <Route path="scan" element={<ScanQR />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="analytics" element={<Analytics />} />
               <Route path="health" element={<HealthCheck />} />
+              <Route path="categories" element={<CategoryManager />} />
               <Route path="users" element={<UserManagement />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

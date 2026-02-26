@@ -2,6 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { VehicleModelSelect } from '../VehicleModelSelect';
+import { StoreLocationSelect } from '../StoreLocationSelect';
+import { CategorySelect } from '../CategorySelect';
+import { VoiceInput } from '../VoiceInput';
 import { NavIcon } from '../icons/NavIcons';
 import { compressAndUploadImage } from '../../services/imageService';
 
@@ -14,8 +18,6 @@ export function EditItemForm({ item, onSave, onCancel }) {
     category: item.category || '',
     store_location: item.store_location || '',
     vehicle_model: item.vehicle_model || '',
-    model_name: item.model_name || '',
-    sku_code: item.sku_code || '',
     quantity: item.quantity ?? 1,
     photo: null,
   });
@@ -104,8 +106,8 @@ export function EditItemForm({ item, onSave, onCancel }) {
         category: form.category?.trim() || null,
         store_location: form.store_location?.trim() || null,
         vehicle_model: form.vehicle_model?.trim() || null,
-        model_name: form.model_name?.trim() || null,
-        sku_code: form.sku_code?.trim() || null,
+        model_name: null,
+        sku_code: null,
         quantity: form.quantity || 1,
         photo_url: photoUrl,
       });
@@ -116,22 +118,35 @@ export function EditItemForm({ item, onSave, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input label="Name *" name="name" value={form.name} onChange={handleChange} required />
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+        <div className="flex gap-2">
+          <VoiceInput
+            onResult={(text) => setForm((prev) => ({ ...prev, name: (prev.name || '') + (prev.name ? ' ' : '') + text }))}
+            className="shrink-0"
+          />
+          <Input name="name" value={form.name} onChange={handleChange} className="flex-1" required />
+        </div>
+      </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          rows={2}
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
-        />
+        <div className="flex gap-2">
+          <VoiceInput
+            onResult={(text) => setForm((prev) => ({ ...prev, description: (prev.description || '') + (prev.description ? ' ' : '') + text }))}
+            className="shrink-0 self-start"
+          />
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            rows={2}
+            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
+          />
+        </div>
       </div>
-      <Input label="Category" name="category" value={form.category} onChange={handleChange} />
-      <Input label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} />
-      <Input label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} />
-      <Input label="Model Name" name="model_name" value={form.model_name} onChange={handleChange} />
-      <Input label="SKU Code" name="sku_code" value={form.sku_code} onChange={handleChange} />
+      <CategorySelect label="Category" name="category" value={form.category} onChange={handleChange} placeholder="Select category" />
+      <StoreLocationSelect label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" />
+      <VehicleModelSelect label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} placeholder="Select vehicle make" />
       <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
 
       <div>

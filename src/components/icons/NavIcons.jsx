@@ -8,6 +8,7 @@ import {
 	Users,
 	MoreHorizontal,
 	FolderOpen,
+	BarChart2,
 	X,
 	MapPin,
 	Car,
@@ -16,6 +17,8 @@ import {
 	Info,
 	Pencil,
 	Trash2,
+	Search,
+	Sparkles,
 } from "lucide-react";
 
 export const NavIcons = {
@@ -24,6 +27,7 @@ export const NavIcons = {
 	add: Plus,
 	scan: Camera,
 	reports: FileText,
+	analytics: BarChart2,
 	health: Heart,
 	users: Users,
 	more: MoreHorizontal,
@@ -38,6 +42,8 @@ export const NavIcons = {
 	info: Info,
 	pencil: Pencil,
 	trash: Trash2,
+	search: Search,
+	sparkles: Sparkles,
 };
 
 export function NavIcon({ name, className = "w-5 h-5" }) {

@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { updateProfile } from '../../services/userService';
 import { Logo } from './Logo';
 import { useNotification } from '../../context/NotificationContext';
+import { HeaderSearch } from '../HeaderSearch';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
+import { NavIcon } from '../icons/NavIcons';
 
 const roleLabels = {
   super_admin: 'Super Admin',
@@ -21,6 +23,7 @@ export function Header() {
   const { success, error } = useNotification();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [profileForm, setProfileForm] = useState({ full_name: '', address: '', phone_number: '' });
@@ -90,7 +93,15 @@ export function Header() {
         <Link to="/" className="flex items-center">
           <Logo className="h-8 md:h-10 object-contain" fallbackText="AsahiGroup" />
         </Link>
-          <div className="relative">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowSearch(true)}
+              className="p-2 rounded-full hover:bg-slate-100 text-slate-600"
+              aria-label="Search spare parts"
+              title="Search spare parts"
+            >
+              <NavIcon name="search" className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setShowMenu(!showMenu)}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-slate-100"
@@ -137,6 +148,8 @@ export function Header() {
           </div>
         </div>
       </header>
+
+      <HeaderSearch open={showSearch} onClose={() => setShowSearch(false)} />
 
       {showProfile && (
         <Modal onBackdropClick={() => setShowProfile(false)}>

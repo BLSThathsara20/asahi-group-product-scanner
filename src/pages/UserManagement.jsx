@@ -3,9 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import {
   getProfiles,
+  getPendingInvites,
   updateProfileRole,
   updateProfile,
   deleteProfile,
+  deleteInvite,
   addUser,
 } from '../services/userService';
 import { Card } from '../components/ui/Card';
@@ -25,6 +27,7 @@ export function UserManagement() {
   const { user, isAdmin, isSuperAdmin } = useAuth();
   const { success, error } = useNotification();
   const [profiles, setProfiles] = useState([]);
+  const [pendingInvites, setPendingInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddUser, setShowAddUser] = useState(false);
   const [addUserForm, setAddUserForm] = useState({
@@ -38,10 +41,34 @@ export function UserManagement() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const paginatedProfiles = useMemo(() => {
+  const allUsers = useMemo(() => {
+    const profileRows = profiles.map((p) => ({
+      type: 'profile',
+      id: p.id,
+      email: p.email,
+      full_name: p.full_name,
+      role: p.role,
+      phone_number: p.phone_number,
+      address: p.address,
+      status: 'Active',
+    }));
+    const inviteRows = pendingInvites.map((i) => ({
+      type: 'invite',
+      id: i.id,
+      email: i.email,
+      full_name: i.full_name,
+      role: i.role,
+      phone_number: null,
+      address: null,
+      status: 'Pending invitation',
+    }));
+    return [...profileRows, ...inviteRows];
+  }, [profiles, pendingInvites]);
+
+  const paginatedUsers = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return profiles.slice(start, start + pageSize);
-  }, [profiles, page, pageSize]);
+    return allUsers.slice(start, start + pageSize);
+  }, [allUsers, page, pageSize]);
 
   const handlePageSizeChange = (newSize) => {
     setPageSize(newSize);
@@ -51,8 +78,16 @@ export function UserManagement() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await getProfiles();
-      setProfiles(data);
+      const [profilesData, invitesData] = await Promise.all([
+        getProfiles(),
+        getPendingInvites(),
+      ]);
+      const profileEmails = new Set(profilesData.map((p) => p.email?.toLowerCase()));
+      const invitesOnly = invitesData.filter(
+        (i) => !profileEmails.has(i.email?.toLowerCase())
+      );
+      setProfiles(profilesData);
+      setPendingInvites(invitesOnly);
     } catch (err) {
       error(err.message);
     } finally {
@@ -90,6 +125,17 @@ export function UserManagement() {
     try {
       await deleteProfile(profileId);
       success('User removed');
+      load();
+    } catch (err) {
+      error(err.message);
+    }
+  };
+
+  const handleDeleteInvite = async (inviteId, email) => {
+    if (!confirm(`Cancel invitation for ${email}? They will not be able to activate.`)) return;
+    try {
+      await deleteInvite(inviteId);
+      success('Invitation cancelled');
       load();
     } catch (err) {
       error(err.message);
@@ -263,6 +309,7 @@ export function UserManagement() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">User</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Status</th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Phone</th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Address</th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Role</th>
@@ -270,39 +317,62 @@ export function UserManagement() {
               </tr>
             </thead>
             <tbody>
-              {paginatedProfiles.map((p) => (
-                <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
+              {paginatedUsers.map((row) => (
+                <tr key={`${row.type}-${row.id}`} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-slate-800">{p.email}</p>
-                    <p className="text-sm text-slate-500">{p.full_name || '-'}</p>
+                    <p className="font-medium text-slate-800">{row.email}</p>
+                    <p className="text-sm text-slate-500">{row.full_name || '-'}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-slate-600">{p.phone_number || '-'}</span>
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                        row.status === 'Pending invitation'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {row.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-sm text-slate-600">{row.phone_number || '-'}</span>
                   </td>
                   <td className="px-4 py-3 max-w-[200px]">
-                    <span className="text-sm text-slate-600 truncate block" title={p.address}>{p.address || '-'}</span>
+                    <span className="text-sm text-slate-600 truncate block" title={row.address}>{row.address || '-'}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <select
-                      value={p.role || 'worker'}
-                      onChange={(e) => handleRoleChange(p.id, e.target.value)}
-                      disabled={p.id === user?.id}
-                      className="px-3 py-1.5 border rounded-lg text-sm"
-                    >
-                      {ROLES.filter((r) => r.value !== 'super_admin' || isSuperAdmin).map((r) => (
-                        <option key={r.value} value={r.value}>{r.label}</option>
-                      ))}
-                    </select>
+                    {row.type === 'profile' ? (
+                      <select
+                        value={row.role || 'worker'}
+                        onChange={(e) => handleRoleChange(row.id, e.target.value)}
+                        disabled={row.id === user?.id}
+                        className="px-3 py-1.5 border rounded-lg text-sm"
+                      >
+                        {ROLES.filter((r) => r.value !== 'super_admin' || isSuperAdmin).map((r) => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-sm text-slate-600">{ROLES.find((r) => r.value === row.role)?.label || row.role}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <Button variant="outline" className="text-sm py-1.5" onClick={() => setEditingProfile({ id: p.id, email: p.email, full_name: p.full_name, address: p.address || '', phone_number: p.phone_number || '' })}>
-                        Edit
-                      </Button>
-                      {isSuperAdmin && p.id !== user?.id && p.role !== 'super_admin' && (
-                        <Button variant="outline" className="text-red-600 border-red-200 text-sm py-1.5" onClick={() => handleRemove(p.id)}>
-                          Remove
+                      {row.type === 'profile' && (
+                        <Button variant="outline" className="text-sm py-1.5" onClick={() => setEditingProfile({ id: row.id, email: row.email, full_name: row.full_name, address: row.address || '', phone_number: row.phone_number || '' })}>
+                          Edit
                         </Button>
+                      )}
+                      {row.type === 'invite' ? (
+                        <Button variant="outline" className="text-red-600 border-red-200 text-sm py-1.5" onClick={() => handleDeleteInvite(row.id, row.email)}>
+                          Delete
+                        </Button>
+                      ) : (
+                        isSuperAdmin && row.id !== user?.id && row.role !== 'super_admin' && (
+                          <Button variant="outline" className="text-red-600 border-red-200 text-sm py-1.5" onClick={() => handleRemove(row.id)}>
+                            Remove
+                          </Button>
+                        )
                       )}
                     </div>
                   </td>
@@ -311,10 +381,15 @@ export function UserManagement() {
             </tbody>
           </table>
         </div>
-        {profiles.length > 0 && (
+        {allUsers.length === 0 && (
+          <div className="p-12 text-center text-slate-500">
+            No users yet. Add your first user to get started.
+          </div>
+        )}
+        {allUsers.length > 0 && (
           <Pagination
             page={page}
-            totalItems={profiles.length}
+            totalItems={allUsers.length}
             pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={handlePageSizeChange}
