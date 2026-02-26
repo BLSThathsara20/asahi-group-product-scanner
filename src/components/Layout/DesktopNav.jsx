@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useScanModal } from '../../context/ScanModalContext';
@@ -22,7 +22,16 @@ const moreNavItems = [
 
 export function DesktopNav() {
   const [showMore, setShowMore] = useState(false);
+  const [moreClosing, setMoreClosing] = useState(false);
   const { isAdmin } = useAuth();
+
+  const closeMore = useCallback(() => {
+    setMoreClosing(true);
+    setTimeout(() => {
+      setShowMore(false);
+      setMoreClosing(false);
+    }, 120);
+  }, []);
   const { openScanModal } = useScanModal();
 
   const filteredMore = moreNavItems.filter((item) => !item.adminOnly || isAdmin);
@@ -62,26 +71,37 @@ export function DesktopNav() {
         )}
         <div className="relative">
           <button
-            onClick={() => setShowMore(!showMore)}
+            onClick={() => (showMore ? closeMore() : setShowMore(true))}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 w-full"
           >
             <NavIcon name="more" className="w-5 h-5 shrink-0" />
             More
           </button>
           {showMore && (
-            <div className="absolute left-0 right-0 top-full mt-1 py-2 bg-white rounded-lg shadow-lg border border-slate-200 z-10">
+            <>
+              <div
+                className={`fixed inset-0 z-40 transition-opacity duration-150 ${moreClosing ? 'opacity-0' : 'opacity-100'}`}
+                onClick={closeMore}
+                aria-hidden="true"
+              />
+              <div
+                className={`absolute left-0 right-0 top-full mt-1 py-2 bg-white rounded-lg shadow-lg border border-slate-200 z-50 ${
+                  moreClosing ? 'animate-dropdown-out' : 'animate-dropdown-in'
+                }`}
+              >
               {filteredMore.map(({ to, label, icon }) => (
                 <NavLink
                   key={to}
                   to={to}
-                  onClick={() => setShowMore(false)}
+                  onClick={closeMore}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
                 >
                   <NavIcon name={icon} className="w-4 h-4 shrink-0" />
                   {label}
                 </NavLink>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </nav>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useScanModal } from '../../context/ScanModalContext';
@@ -21,7 +21,16 @@ const moreNavItems = [
 
 export function BottomNav() {
   const [showMore, setShowMore] = useState(false);
+  const [moreClosing, setMoreClosing] = useState(false);
   const { isAdmin } = useAuth();
+
+  const closeMore = useCallback(() => {
+    setMoreClosing(true);
+    setTimeout(() => {
+      setShowMore(false);
+      setMoreClosing(false);
+    }, 200);
+  }, []);
   const { openScanModal } = useScanModal();
 
   const filteredMore = moreNavItems.filter((item) => !item.adminOnly || isAdmin);
@@ -58,7 +67,7 @@ export function BottomNav() {
             )
           )}
           <button
-            onClick={() => setShowMore(!showMore)}
+            onClick={() => (showMore ? closeMore() : setShowMore(true))}
             className={`flex flex-col items-center justify-center flex-1 py-2 text-xs transition-colors ${
               showMore ? 'text-asahi' : 'text-slate-500'
             }`}
@@ -72,13 +81,18 @@ export function BottomNav() {
       {showMore && (
         <>
           <div
-            className="md:hidden fixed inset-0 z-40 bg-black/30"
-            onClick={() => setShowMore(false)}
+            className={`md:hidden fixed inset-0 z-40 bg-black/30 transition-opacity duration-200 ${moreClosing ? 'opacity-0' : 'opacity-100'}`}
+            onClick={closeMore}
+            aria-hidden="true"
           />
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl border-t border-slate-200 p-4 pb-20 safe-area-pb animate-slide-up">
+          <div
+            className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl border-t border-slate-200 p-4 pb-20 safe-area-pb ${
+              moreClosing ? 'animate-slide-down' : 'animate-slide-up'
+            }`}
+          >
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-slate-800">More</h3>
-              <button onClick={() => setShowMore(false)} className="text-slate-400 hover:text-slate-600 p-1">
+              <button onClick={closeMore} className="text-slate-400 hover:text-slate-600 p-1">
                 <NavIcon name="close" className="w-5 h-5" />
               </button>
             </div>
@@ -87,7 +101,7 @@ export function BottomNav() {
                 <NavLink
                   key={to}
                   to={to}
-                  onClick={() => setShowMore(false)}
+                  onClick={closeMore}
                   className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
                 >
                   <NavIcon name={icon} className="w-6 h-6 shrink-0" />

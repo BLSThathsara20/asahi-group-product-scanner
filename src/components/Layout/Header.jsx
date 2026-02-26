@@ -1,6 +1,6 @@
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { updateProfile } from '../../services/userService';
 import { Logo } from './Logo';
 import { useNotification } from '../../context/NotificationContext';
@@ -23,6 +23,15 @@ export function Header() {
   const { success, error } = useNotification();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
+
+  const closeMenu = useCallback(() => {
+    setMenuClosing(true);
+    setTimeout(() => {
+      setShowMenu(false);
+      setMenuClosing(false);
+    }, 150);
+  }, []);
   const [showSearch, setShowSearch] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +41,7 @@ export function Header() {
   const handleSignOut = () => {
     signOut();
     navigate('/login');
-    setShowMenu(false);
+    closeMenu();
   };
 
   const openProfile = () => {
@@ -42,13 +51,13 @@ export function Header() {
       phone_number: profile?.phone_number || '',
     });
     setShowProfile(true);
-    setShowMenu(false);
+    closeMenu();
   };
 
   const openPassword = () => {
     setPasswordForm({ current: '', new: '', confirm: '' });
     setShowPassword(true);
-    setShowMenu(false);
+    closeMenu();
   };
 
   const handleSaveProfile = async (e) => {
@@ -93,7 +102,7 @@ export function Header() {
         <Link to="/" className="flex items-center">
           <Logo className="h-8 md:h-10 object-contain" fallbackText="AsahiGroup" />
         </Link>
-          <div className="flex items-center gap-1">
+          <div className="relative flex items-center gap-1">
             <button
               onClick={() => setShowSearch(true)}
               className="p-2 rounded-full hover:bg-slate-100 text-slate-600"
@@ -103,7 +112,7 @@ export function Header() {
               <NavIcon name="search" className="w-5 h-5" />
             </button>
             <button
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={() => (showMenu ? closeMenu() : setShowMenu(true))}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-slate-100"
             >
               <div className="w-8 h-8 rounded-full bg-asahi/20 flex items-center justify-center text-asahi font-medium">
@@ -116,10 +125,15 @@ export function Header() {
             {showMenu && (
               <>
                 <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowMenu(false)}
+                  className={`fixed inset-0 z-40 transition-opacity duration-150 ${menuClosing ? 'opacity-0' : 'opacity-100'}`}
+                  onClick={closeMenu}
+                  aria-hidden="true"
                 />
-                <div className="absolute right-0 top-full mt-1 py-2 bg-white rounded-xl shadow-lg border border-slate-200 z-50 min-w-[180px]">
+                <div
+                  className={`absolute right-0 top-full mt-1 py-2 bg-white rounded-xl shadow-lg border border-slate-200 z-50 min-w-[180px] ${
+                    menuClosing ? 'animate-dropdown-out' : 'animate-dropdown-in'
+                  }`}
+                >
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="font-medium text-slate-800 truncate">{user?.email}</p>
                     <p className="text-xs text-slate-500">{roleLabels[profile?.role] || profile?.role}</p>

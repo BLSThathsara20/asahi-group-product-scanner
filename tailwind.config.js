@@ -20,12 +20,27 @@ export default {
 			},
 			animation: {
 				"spin-slow": "spin 20s linear infinite",
-				"slide-up": "slideUp 0.3s ease-out",
+				"slide-up": "slideUp 0.25s ease-out",
+				"slide-down": "slideDown 0.2s ease-in forwards",
+				"dropdown-in": "dropdownIn 0.15s ease-out",
+				"dropdown-out": "dropdownOut 0.12s ease-in forwards",
 			},
 			keyframes: {
 				slideUp: {
 					"0%": { transform: "translateY(100%)", opacity: "0" },
 					"100%": { transform: "translateY(0)", opacity: "1" },
+				},
+				slideDown: {
+					"0%": { transform: "translateY(0)", opacity: "1" },
+					"100%": { transform: "translateY(100%)", opacity: "0" },
+				},
+				dropdownIn: {
+					"0%": { opacity: "0", transform: "scale(0.96)" },
+					"100%": { opacity: "1", transform: "scale(1)" },
+				},
+				dropdownOut: {
+					"0%": { opacity: "1", transform: "scale(1)" },
+					"100%": { opacity: "0", transform: "scale(0.96)" },
 				},
 			},
 		},
