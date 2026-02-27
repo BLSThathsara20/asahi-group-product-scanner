@@ -10,6 +10,17 @@ export async function createItem(item) {
 	return data;
 }
 
+/** Get items with low stock (quantity <= reminder_count) for notifications */
+export async function getLowStockItems() {
+	const { data, error } = await supabase
+		.from("items")
+		.select("id, name, quantity, reminder_count, category")
+		.lte("quantity", 100); // optimization: only items that could be low stock
+	if (error) throw error;
+	const threshold = (r) => (r.reminder_count != null ? r.reminder_count : 1);
+	return (data || []).filter((r) => (r.quantity ?? 0) <= threshold(r));
+}
+
 /** Search item names for autocomplete (returns unique names matching query) */
 export async function searchItemNames(query) {
 	const q = String(query || "").trim();

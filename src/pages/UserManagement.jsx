@@ -15,6 +15,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Pagination } from '../components/ui/Pagination';
 import { Modal } from '../components/ui/Modal';
+import { NavIcon } from '../components/icons/NavIcons';
 
 const ROLES = [
   { value: 'worker', label: 'Mechanic' },
@@ -61,6 +62,7 @@ export function UserManagement() {
       phone_number: null,
       address: null,
       status: 'Pending invitation',
+      token: i.token,
     }));
     return [...profileRows, ...inviteRows];
   }, [profiles, pendingInvites]);
@@ -166,6 +168,37 @@ export function UserManagement() {
     if (generatedLink) {
       navigator.clipboard.writeText(generatedLink);
       success('Link copied to clipboard');
+    }
+  };
+
+  const getActivationLink = (token) => {
+    if (!token) return null;
+    const base = typeof window !== 'undefined'
+      ? `${window.location.origin}${(import.meta.env?.BASE_URL || '').replace(/\/$/, '')}`
+      : '';
+    return `${base}/activate?token=${token}`;
+  };
+
+  const handleCopyInviteLink = async (token) => {
+    const link = getActivationLink(token);
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      success('Invite link copied to clipboard');
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = link;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        success('Invite link copied to clipboard');
+      } catch {
+        error('Failed to copy. Please copy the link manually.');
+      }
+      document.body.removeChild(textarea);
     }
   };
 
@@ -325,13 +358,27 @@ export function UserManagement() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${
                         row.status === 'Pending invitation'
                           ? 'bg-amber-100 text-amber-800'
                           : 'bg-emerald-100 text-emerald-800'
                       }`}
                     >
                       {row.status}
+                      {row.status === 'Pending invitation' && row.token && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyInviteLink(row.token);
+                          }}
+                          className="p-1 -m-1 rounded hover:bg-amber-200/50 min-w-[28px] min-h-[28px] flex items-center justify-center"
+                          title="Copy invite link"
+                          aria-label="Copy invite link"
+                        >
+                          <NavIcon name="copy" className="w-4 h-4" />
+                        </button>
+                      )}
                     </span>
                   </td>
                   <td className="px-4 py-3">

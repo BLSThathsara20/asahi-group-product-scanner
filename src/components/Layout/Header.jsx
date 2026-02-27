@@ -5,6 +5,7 @@ import { updateProfile } from '../../services/userService';
 import { Logo } from './Logo';
 import { useNotification } from '../../context/NotificationContext';
 import { HeaderSearch } from '../HeaderSearch';
+import { HeaderNotifications } from '../HeaderNotifications';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -111,6 +112,7 @@ export function Header() {
             >
               <NavIcon name="search" className="w-5 h-5" />
             </button>
+            <HeaderNotifications />
             <button
               onClick={() => (showMenu ? closeMenu() : setShowMenu(true))}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-slate-100"

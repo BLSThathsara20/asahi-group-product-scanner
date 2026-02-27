@@ -18,6 +18,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
     store_location: item.store_location || '',
     vehicle_model: item.vehicle_model || '',
     quantity: item.quantity ?? 1,
+    reminder_count: item.reminder_count ?? 1,
     photo: null,
   });
   const [uploading, setUploading] = useState(false);
@@ -108,6 +109,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         model_name: null,
         sku_code: null,
         quantity: form.quantity || 1,
+        reminder_count: form.reminder_count ?? 1,
         photo_url: photoUrl,
       });
     } finally {
@@ -135,6 +137,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
       <StoreLocationSelect label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" />
       <VehicleModelSelect label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} placeholder="Select vehicle make" />
       <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
+      <Input label="Low stock alert at" name="reminder_count" type="number" min={0} value={form.reminder_count} onChange={handleChange} />
 
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-2">Product Image</label>

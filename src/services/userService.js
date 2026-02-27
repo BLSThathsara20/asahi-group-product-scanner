@@ -102,7 +102,7 @@ export async function addUser(email, fullName, role, tempPassword) {
 export async function getPendingInvites() {
   const { data, error } = await supabase
     .from('user_invites')
-    .select('id, email, full_name, role, created_at')
+    .select('id, email, full_name, role, created_at, token')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data || [];

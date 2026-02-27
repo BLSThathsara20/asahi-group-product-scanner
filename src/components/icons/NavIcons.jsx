@@ -22,6 +22,8 @@ import {
 	Flashlight,
 	ChevronDown,
 	ChevronRight,
+	Bell,
+	Copy,
 } from "lucide-react";
 
 export const NavIcons = {
@@ -50,6 +52,8 @@ export const NavIcons = {
 	flashlight: Flashlight,
 	chevronDown: ChevronDown,
 	chevronRight: ChevronRight,
+	bell: Bell,
+	copy: Copy,
 };
 
 export function NavIcon({ name, className = "w-5 h-5" }) {

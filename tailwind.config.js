@@ -24,8 +24,14 @@ export default {
 				"slide-down": "slideDown 0.2s ease-in forwards",
 				"dropdown-in": "dropdownIn 0.15s ease-out",
 				"dropdown-out": "dropdownOut 0.12s ease-in forwards",
+				"vibrate": "vibrate 0.5s ease-in-out infinite",
 			},
 			keyframes: {
+				vibrate: {
+					"0%, 100%": { transform: "rotate(0deg)" },
+					"10%, 30%, 50%, 70%, 90%": { transform: "rotate(-12deg)" },
+					"20%, 40%, 60%, 80%": { transform: "rotate(12deg)" },
+				},
 				slideUp: {
 					"0%": { transform: "translateY(100%)", opacity: "0" },
 					"100%": { transform: "translateY(0)", opacity: "1" },
