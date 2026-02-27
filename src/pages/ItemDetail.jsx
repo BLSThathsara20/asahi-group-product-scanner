@@ -324,6 +324,16 @@ export function ItemDetail() {
 											</td>
 										</tr>
 									)}
+									{item.agl_number && (
+										<tr>
+											<td className="py-3 px-4 text-slate-500 font-medium">
+												AGL number
+											</td>
+											<td className="py-3 px-4 text-slate-800">
+												{item.agl_number}
+											</td>
+										</tr>
+									)}
 									{item.added_date && (
 										<tr>
 											<td className="py-3 px-4 text-slate-500 font-medium">

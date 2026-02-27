@@ -32,6 +32,7 @@ export function AddItem() {
     reminder_count: 1,
     store_location: '',
     vehicle_model: '',
+    agl_number: '',
     added_date: new Date().toISOString().slice(0, 10),
     barcode: '',
     photo: null,
@@ -250,6 +251,7 @@ export function AddItem() {
         reminder_count: form.reminder_count ?? 1,
         store_location: form.store_location.trim() || null,
         vehicle_model: form.vehicle_model.trim() || null,
+        agl_number: form.agl_number?.trim() || null,
         model_name: null,
         sku_code: null,
         added_date: form.added_date ? new Date(form.added_date).toISOString() : null,
@@ -454,6 +456,14 @@ export function AddItem() {
               </Card>
             </Modal>
           )}
+
+          <Input
+            label="AGL number (optional)"
+            name="agl_number"
+            value={form.agl_number}
+            onChange={handleChange}
+            placeholder="e.g. AGL-12345"
+          />
 
           <div className="min-w-0">
             <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">

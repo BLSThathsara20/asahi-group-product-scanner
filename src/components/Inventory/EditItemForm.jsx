@@ -17,6 +17,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
     category: item.category || '',
     store_location: item.store_location || '',
     vehicle_model: item.vehicle_model || '',
+    agl_number: item.agl_number || '',
     quantity: item.quantity ?? 1,
     reminder_count: item.reminder_count ?? 1,
     photo: null,
@@ -106,6 +107,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         category: form.category?.trim() || null,
         store_location: form.store_location?.trim() || null,
         vehicle_model: form.vehicle_model?.trim() || null,
+        agl_number: form.agl_number?.trim() || null,
         model_name: null,
         sku_code: null,
         quantity: form.quantity || 1,
@@ -133,6 +135,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
           />
       </div>
+      <Input label="AGL number (optional)" name="agl_number" value={form.agl_number} onChange={handleChange} placeholder="e.g. AGL-12345" />
       <CategorySelect label="Category" name="category" value={form.category} onChange={handleChange} placeholder="Select category" />
       <StoreLocationSelect label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" />
       <VehicleModelSelect label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} placeholder="Select vehicle make" />
