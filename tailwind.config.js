@@ -24,13 +24,15 @@ export default {
 				"slide-down": "slideDown 0.2s ease-in forwards",
 				"dropdown-in": "dropdownIn 0.15s ease-out",
 				"dropdown-out": "dropdownOut 0.12s ease-in forwards",
-				"vibrate": "vibrate 0.5s ease-in-out infinite",
+				"vibrate": "vibrate 3s ease-in-out infinite",
 			},
 			keyframes: {
 				vibrate: {
 					"0%, 100%": { transform: "rotate(0deg)" },
-					"10%, 30%, 50%, 70%, 90%": { transform: "rotate(-12deg)" },
-					"20%, 40%, 60%, 80%": { transform: "rotate(12deg)" },
+					"2%": { transform: "rotate(-12deg)" },
+					"4%": { transform: "rotate(12deg)" },
+					"6%": { transform: "rotate(-8deg)" },
+					"8%, 100%": { transform: "rotate(0deg)" },
 				},
 				slideUp: {
 					"0%": { transform: "translateY(100%)", opacity: "0" },
