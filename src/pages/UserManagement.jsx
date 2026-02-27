@@ -389,16 +389,20 @@ export function UserManagement() {
                   </td>
                   <td className="px-4 py-3">
                     {row.type === 'profile' ? (
-                      <select
-                        value={row.role || 'worker'}
-                        onChange={(e) => handleRoleChange(row.id, e.target.value)}
-                        disabled={row.id === user?.id}
-                        className="px-3 py-1.5 border rounded-lg text-sm"
-                      >
-                        {ROLES.filter((r) => r.value !== 'super_admin').map((r) => (
-                          <option key={r.value} value={r.value}>{r.label}</option>
-                        ))}
-                      </select>
+                      row.role === 'super_admin' ? (
+                        <span className="text-sm text-slate-600 font-medium">Super Admin</span>
+                      ) : (
+                        <select
+                          value={row.role || 'worker'}
+                          onChange={(e) => handleRoleChange(row.id, e.target.value)}
+                          disabled={row.id === user?.id}
+                          className="px-3 py-1.5 border rounded-lg text-sm"
+                        >
+                          {ROLES.filter((r) => r.value !== 'super_admin').map((r) => (
+                            <option key={r.value} value={r.value}>{r.label}</option>
+                          ))}
+                        </select>
+                      )
                     ) : (
                       <span className="text-sm text-slate-600">{ROLES.find((r) => r.value === row.role)?.label || row.role}</span>
                     )}
