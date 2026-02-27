@@ -23,7 +23,11 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
 
   useEffect(() => {
     if (item) {
-      setForm((prev) => ({ ...prev, quantity: 1 }));
+      setForm((prev) => ({
+        ...prev,
+        quantity: 1,
+        vehicleModel: item.vehicle_model || '',
+      }));
       setErrors((prev) => ({ ...prev, quantity: '' }));
     }
   }, [item?.id]);
