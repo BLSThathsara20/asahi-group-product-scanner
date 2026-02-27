@@ -17,7 +17,7 @@ import { Pagination } from '../components/ui/Pagination';
 import { Modal } from '../components/ui/Modal';
 
 const ROLES = [
-  { value: 'worker', label: 'Worker' },
+  { value: 'worker', label: 'Mechanic' },
   { value: 'inventory_manager', label: 'Inventory Manager' },
   { value: 'admin', label: 'Admin' },
   { value: 'super_admin', label: 'Super Admin' },
@@ -276,7 +276,7 @@ export function UserManagement() {
                         onChange={(e) => setAddUserForm((p) => ({ ...p, role: e.target.value }))}
                         className="w-full px-4 py-2 border border-slate-300 rounded-lg"
                       >
-                        {ROLES.filter((r) => r.value !== 'super_admin' || isSuperAdmin).map((r) => (
+                        {ROLES.filter((r) => r.value !== 'super_admin').map((r) => (
                           <option key={r.value} value={r.value}>{r.label}</option>
                         ))}
                       </select>
@@ -348,7 +348,7 @@ export function UserManagement() {
                         disabled={row.id === user?.id}
                         className="px-3 py-1.5 border rounded-lg text-sm"
                       >
-                        {ROLES.filter((r) => r.value !== 'super_admin' || isSuperAdmin).map((r) => (
+                        {ROLES.filter((r) => r.value !== 'super_admin').map((r) => (
                           <option key={r.value} value={r.value}>{r.label}</option>
                         ))}
                       </select>

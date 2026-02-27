@@ -15,7 +15,7 @@ const roleLabels = {
   super_admin: 'Super Admin',
   admin: 'Admin',
   inventory_manager: 'Inventory Manager',
-  worker: 'Worker',
+  worker: 'Mechanic',
 };
 
 export function Header() {
@@ -99,10 +99,10 @@ export function Header() {
     <>
       <header className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 shadow-sm sticky top-0 z-30">
         <div className="flex items-center justify-between">
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center md:hidden shrink-0">
           <Logo className="h-8 md:h-10 object-contain" fallbackText="AsahiGroup" />
         </Link>
-          <div className="relative flex items-center gap-1">
+          <div className="relative flex items-center gap-1 ml-auto">
             <button
               onClick={() => setShowSearch(true)}
               className="p-2 rounded-full hover:bg-slate-100 text-slate-600"

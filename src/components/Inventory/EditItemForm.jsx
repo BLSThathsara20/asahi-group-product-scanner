@@ -5,7 +5,6 @@ import { Button } from '../ui/Button';
 import { VehicleModelSelect } from '../VehicleModelSelect';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
-import { VoiceInput } from '../VoiceInput';
 import { NavIcon } from '../icons/NavIcons';
 import { compressAndUploadImage } from '../../services/imageService';
 
@@ -120,29 +119,17 @@ export function EditItemForm({ item, onSave, onCancel }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
-        <div className="flex gap-2">
-          <VoiceInput
-            onResult={(text) => setForm((prev) => ({ ...prev, name: (prev.name || '') + (prev.name ? ' ' : '') + text }))}
-            className="shrink-0"
-          />
-          <Input name="name" value={form.name} onChange={handleChange} className="flex-1" required />
-        </div>
+        <Input name="name" value={form.name} onChange={handleChange} required />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-        <div className="flex gap-2">
-          <VoiceInput
-            onResult={(text) => setForm((prev) => ({ ...prev, description: (prev.description || '') + (prev.description ? ' ' : '') + text }))}
-            className="shrink-0 self-start"
-          />
-          <textarea
+        <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
             rows={2}
-            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
           />
-        </div>
       </div>
       <CategorySelect label="Category" name="category" value={form.category} onChange={handleChange} placeholder="Select category" />
       <StoreLocationSelect label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" />

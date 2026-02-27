@@ -32,6 +32,7 @@ export function ItemDetail() {
 	const [showCheckIn, setShowCheckIn] = useState(false);
 	const [showEdit, setShowEdit] = useState(false);
 	const [deleting, setDeleting] = useState(false);
+	const [barcodeAccordionOpen, setBarcodeAccordionOpen] = useState(false);
 	const hasRetried = useRef(false);
 
 	const handleDelete = async () => {
@@ -329,7 +330,7 @@ export function ItemDetail() {
 												Added
 											</td>
 											<td className="py-3 px-4 text-slate-800">
-												{new Date(item.added_date).toLocaleDateString()}
+												{new Date(item.added_date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
 												{item.added_by && performerNames[item.added_by] && (
 													<span className="text-slate-500">
 														{" "}
@@ -362,18 +363,6 @@ export function ItemDetail() {
 					</div>
 				</div>
 			</Card>
-
-			{/* Section 2: QR & Barcode - grouped together */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-				<Card className="p-6">
-					<h3 className="font-semibold text-slate-800 mb-4">QR Code</h3>
-					<QRCodeDisplay qrId={item.qr_id} itemName={item.name} />
-				</Card>
-				<Card className="p-6">
-					<h3 className="font-semibold text-slate-800 mb-4">Barcode</h3>
-					<BarcodeDisplay barcodeId={item.qr_id} itemName={item.name} />
-				</Card>
-			</div>
 
 			{showEdit && (
 				<Modal onBackdropClick={() => setShowEdit(false)}>
@@ -462,6 +451,35 @@ export function ItemDetail() {
 						</div>
 					)}
 				</div>
+			</Card>
+
+			{/* Barcode & QR Code - accordion at bottom (default closed) */}
+			<Card className="overflow-hidden">
+				<button
+					type="button"
+					onClick={() => setBarcodeAccordionOpen((o) => !o)}
+					className="w-full flex items-center justify-between gap-2 p-4 text-left hover:bg-slate-50 transition-colors"
+				>
+					<h3 className="font-semibold text-slate-800">Barcode & QR Code</h3>
+					<NavIcon
+						name={barcodeAccordionOpen ? "chevronDown" : "chevronRight"}
+						className="w-5 h-5 text-slate-500"
+					/>
+				</button>
+				{barcodeAccordionOpen && (
+					<div className="border-t border-slate-200 p-6">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h4 className="font-medium text-slate-700 mb-3">QR Code</h4>
+								<QRCodeDisplay qrId={item.qr_id} itemName={item.name} />
+							</div>
+							<div>
+								<h4 className="font-medium text-slate-700 mb-3">Barcode</h4>
+								<BarcodeDisplay barcodeId={item.qr_id} itemName={item.name} />
+							</div>
+						</div>
+					</div>
+				)}
 			</Card>
 		</div>
 	);

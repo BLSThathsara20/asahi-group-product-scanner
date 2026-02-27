@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createItem, createTransaction, checkBarcodeBaseExists, getNextItemCode } from '../services/itemService';
+import { createItem, createTransaction, checkBarcodeBaseExists, getNextItemCode, searchItemNames } from '../services/itemService';
 import { v4 as uuidv4 } from 'uuid';
 import { compressAndUploadImage } from '../services/imageService';
 import { useNotification } from '../context/NotificationContext';
@@ -14,7 +14,6 @@ import { Modal } from '../components/ui/Modal';
 import { VehicleModelSelect } from '../components/VehicleModelSelect';
 import { StoreLocationSelect } from '../components/StoreLocationSelect';
 import { CategorySelect } from '../components/CategorySelect';
-import { VoiceInput } from '../components/VoiceInput';
 import { InfoTooltip } from '../components/ui/InfoTooltip';
 import { NavIcon } from '../components/icons/NavIcons';
 
@@ -42,6 +41,10 @@ export function AddItem() {
   const [cameraError, setCameraError] = useState('');
   const [barcodeError, setBarcodeError] = useState('');
   const [barcodeChecking, setBarcodeChecking] = useState(false);
+  const [nameSuggestions, setNameSuggestions] = useState([]);
+  const [nameSuggestionsOpen, setNameSuggestionsOpen] = useState(false);
+  const [nameSuggestionsLoading, setNameSuggestionsLoading] = useState(false);
+  const nameSuggestionsTimerRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -130,6 +133,32 @@ export function AddItem() {
   }, [form.barcode]);
 
   useEffect(() => {
+    const q = form.name.trim();
+    if (q.length < 2) {
+      setNameSuggestions([]);
+      setNameSuggestionsOpen(false);
+      return;
+    }
+    if (nameSuggestionsTimerRef.current) clearTimeout(nameSuggestionsTimerRef.current);
+    nameSuggestionsTimerRef.current = setTimeout(async () => {
+      setNameSuggestionsLoading(true);
+      try {
+        const list = await searchItemNames(q);
+        setNameSuggestions(list);
+        setNameSuggestionsOpen(list.length > 0);
+      } catch {
+        setNameSuggestions([]);
+        setNameSuggestionsOpen(false);
+      } finally {
+        setNameSuggestionsLoading(false);
+      }
+    }, 250);
+    return () => {
+      if (nameSuggestionsTimerRef.current) clearTimeout(nameSuggestionsTimerRef.current);
+    };
+  }, [form.name]);
+
+  useEffect(() => {
     if (showCamera && streamRef.current && videoRef.current) {
       const video = videoRef.current;
       video.srcObject = streamRef.current;
@@ -177,6 +206,10 @@ export function AddItem() {
     setError('');
     if (!form.name.trim()) {
       setError('Item name is required');
+      return;
+    }
+    if (!form.barcode?.trim()) {
+      setError('Product barcode/QR code is required. Scan, enter, or use Auto Generate.');
       return;
     }
     if (barcodeError) {
@@ -258,30 +291,47 @@ export function AddItem() {
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>
           )}
 
-          <div>
-            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
-              Item Name *
-              <InfoTooltip text="Use the mic button for voice input to speak the item name." />
-            </label>
-            <div className="flex gap-2">
-              <VoiceInput
-                onResult={(text) => setForm((prev) => ({ ...prev, name: (prev.name || '') + (prev.name ? ' ' : '') + text }))}
-                className="shrink-0 self-start"
-              />
-              <Input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="e.g. Car Audio Player"
-                className="flex-1 min-w-0"
-                required
-              />
-            </div>
+          <div className="relative">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Item Name *</label>
+            <Input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              onFocus={() => form.name.trim().length >= 2 && nameSuggestions.length > 0 && setNameSuggestionsOpen(true)}
+              onBlur={() => setTimeout(() => setNameSuggestionsOpen(false), 150)}
+              placeholder="e.g. Car Audio Player"
+              required
+            />
+            {(nameSuggestionsOpen || nameSuggestionsLoading) && form.name.trim().length >= 2 && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
+                {nameSuggestionsLoading ? (
+                  <div className="px-4 py-3 text-sm text-slate-500">Searching...</div>
+                ) : nameSuggestions.length > 0 ? (
+                  <ul>
+                    {nameSuggestions.map((s) => (
+                      <li key={s}>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setForm((prev) => ({ ...prev, name: s }));
+                            setNameSuggestionsOpen(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                        >
+                          {s}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            )}
           </div>
 
           <div>
             <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
-              Product Barcode / QR Code (optional)
+              Product Barcode / QR Code *
               <InfoTooltip text="Scan product barcode/QR — system checks if it exists. If new, a unique suffix is auto-added when saving. Use Auto Generate for internal codes." />
             </label>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -303,24 +353,41 @@ export function AddItem() {
                   </p>
                 )}
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={async () => {
-                  try {
-                    const code = await getNextItemCode();
-                    setForm((prev) => ({ ...prev, barcode: code }));
+              {barcodeAutoGenerated && form.barcode ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setForm((prev) => ({ ...prev, barcode: '' }));
                     setBarcodeError('');
-                    setBarcodeAutoGenerated(true);
-                  } catch (err) {
-                    notifyError(err.message || 'Failed to generate code');
-                  }
-                }}
-                className="shrink-0 p-2"
-                title="Auto Generate"
-              >
-                <NavIcon name="sparkles" className="w-5 h-5" />
-              </Button>
+                    setBarcodeAutoGenerated(false);
+                  }}
+                  className="shrink-0 p-2"
+                  title="Clear"
+                  aria-label="Clear barcode"
+                >
+                  <NavIcon name="close" className="w-5 h-5" />
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const code = await getNextItemCode();
+                      setForm((prev) => ({ ...prev, barcode: code }));
+                      setBarcodeError('');
+                      setBarcodeAutoGenerated(true);
+                    } catch (err) {
+                      notifyError(err.message || 'Failed to generate code');
+                    }
+                  }}
+                  className="shrink-0 p-2"
+                  title="Auto Generate"
+                >
+                  <NavIcon name="sparkles" className="w-5 h-5" />
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -388,22 +455,16 @@ export function AddItem() {
           <div className="min-w-0">
             <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
               Description
-              <InfoTooltip text="Optional details about the spare part. Use the mic for voice input." />
+              <InfoTooltip text="Optional details about the spare part." />
             </label>
-            <div className="flex gap-2">
-              <VoiceInput
-                onResult={(text) => setForm((prev) => ({ ...prev, description: (prev.description || '') + (prev.description ? ' ' : '') + text }))}
-                className="shrink-0 self-start"
-              />
-              <textarea
+            <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
                 placeholder="Optional details..."
                 rows={3}
-                className="flex-1 min-w-0 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+                className="w-full min-w-0 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
               />
-            </div>
           </div>
 
           <CategorySelect

@@ -10,6 +10,22 @@ export async function createItem(item) {
 	return data;
 }
 
+/** Search item names for autocomplete (returns unique names matching query) */
+export async function searchItemNames(query) {
+	const q = String(query || "").trim();
+	if (!q || q.length < 2) return [];
+	const { data, error } = await supabase
+		.from("items")
+		.select("name")
+		.ilike("name", `%${q}%`)
+		.limit(20);
+	if (error) throw error;
+	const seen = new Set();
+	return (data || [])
+		.map((r) => (r.name || "").trim())
+		.filter((name) => name && !seen.has(name) && seen.add(name));
+}
+
 export async function getItemById(id) {
 	if (!id || typeof id !== "string") return null;
 	const { data, error } = await supabase
