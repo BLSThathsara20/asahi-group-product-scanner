@@ -254,7 +254,12 @@ export function AddItem() {
         agl_number: form.agl_number?.trim() || null,
         model_name: null,
         sku_code: null,
-        added_date: form.added_date ? new Date(form.added_date).toISOString() : null,
+        added_date: form.added_date
+          ? (new Date().toISOString().slice(0, 10) === form.added_date
+              ? new Date()
+              : new Date(form.added_date + 'T12:00:00')
+            ).toISOString()
+          : null,
         photo_url: photoUrl,
         status: 'in_stock',
         added_by: user?.id,

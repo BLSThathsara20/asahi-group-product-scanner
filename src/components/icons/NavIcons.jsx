@@ -24,6 +24,7 @@ import {
 	ChevronRight,
 	Bell,
 	Copy,
+	Eye,
 } from "lucide-react";
 
 export const NavIcons = {
@@ -54,6 +55,7 @@ export const NavIcons = {
 	chevronRight: ChevronRight,
 	bell: Bell,
 	copy: Copy,
+	eye: Eye,
 };
 
 export function NavIcon({ name, className = "w-5 h-5" }) {

@@ -98,7 +98,7 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 shadow-sm sticky top-0 z-30">
+      <header className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 shadow-sm sticky top-0 z-30 safe-area-pt">
         <div className="flex items-center justify-between">
         <Link to="/" className="flex items-center md:hidden shrink-0">
           <Logo className="h-8 md:h-10 object-contain" fallbackText="AsahiGroup" />

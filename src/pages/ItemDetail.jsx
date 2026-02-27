@@ -33,6 +33,7 @@ export function ItemDetail() {
 	const [showEdit, setShowEdit] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 	const [barcodeAccordionOpen, setBarcodeAccordionOpen] = useState(false);
+	const [showImagePreview, setShowImagePreview] = useState(false);
 	const hasRetried = useRef(false);
 
 	const handleDelete = async () => {
@@ -230,13 +231,24 @@ export function ItemDetail() {
 			<Card className="p-6">
 				<div className="flex flex-col sm:flex-row gap-6">
 					{/* Photo - left on desktop, top on mobile */}
-					<div className="shrink-0">
+					<div className="shrink-0 relative">
 						{item.photo_url ? (
-							<img
-								src={item.photo_url}
-								alt={item.name}
-								className="w-full sm:w-36 h-36 rounded-xl object-cover"
-							/>
+							<>
+								<img
+									src={item.photo_url}
+									alt={item.name}
+									className="w-full sm:w-36 h-36 rounded-xl object-cover"
+								/>
+								<button
+									type="button"
+									onClick={() => setShowImagePreview(true)}
+									className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
+									title="View full size"
+									aria-label="View full size"
+								>
+									<NavIcon name="eye" className="w-4 h-4" />
+								</button>
+							</>
 						) : (
 							<div className="w-full sm:w-36 h-36 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400">
 								<NavIcon name="package" className="w-16 h-16" />
@@ -373,6 +385,28 @@ export function ItemDetail() {
 					</div>
 				</div>
 			</Card>
+
+			{showImagePreview && item?.photo_url && (
+				<div
+					className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+					onClick={() => setShowImagePreview(false)}
+				>
+					<button
+						type="button"
+						onClick={() => setShowImagePreview(false)}
+						className="absolute top-4 right-4 p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+						aria-label="Close"
+					>
+						<NavIcon name="close" className="w-6 h-6" />
+					</button>
+					<img
+						src={item.photo_url}
+						alt={item.name}
+						className="max-w-full max-h-full object-contain"
+						onClick={(e) => e.stopPropagation()}
+					/>
+				</div>
+			)}
 
 			{showEdit && (
 				<Modal onBackdropClick={() => setShowEdit(false)}>

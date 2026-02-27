@@ -7,6 +7,11 @@
   --color-asahi-light: rgb(225 95 81);
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 body {
   @apply bg-slate-50 text-slate-800 antialiased;
 }
@@ -14,4 +19,9 @@ body {
 /* Safe area for mobile bottom nav (notch/home indicator) */
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Safe area for top (notch/status bar) - extends header to very top */
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top, 0);
 }
