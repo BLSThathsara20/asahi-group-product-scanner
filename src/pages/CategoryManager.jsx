@@ -113,112 +113,69 @@ export function CategoryManager() {
     );
   }
 
+  const CategoryRow = ({ cat, isChild, count }) => (
+    <div className={`flex items-center justify-between gap-2 py-3 ${isChild ? 'pl-8' : ''} ${!isChild ? 'border-b border-slate-100 last:border-0' : ''}`}>
+      <div className="flex items-center gap-2 min-w-0">
+        {!isChild && <NavIcon name="folder" className="w-4 h-4 text-asahi shrink-0" />}
+        <span className={isChild ? 'text-slate-600' : 'font-medium text-slate-800'}>{cat.name}</span>
+        {count > 0 && (
+          <span className="text-xs text-slate-400 shrink-0">{count} item{count !== 1 ? 's' : ''}</span>
+        )}
+      </div>
+      <div className="flex gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => setEditing({ id: cat.id, name: cat.name, parent_id: cat.parent_id || null })}
+          className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
+          aria-label="Edit"
+        >
+          <NavIcon name="pencil" className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDelete(cat.id, cat.name)}
+          className="p-2 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600"
+          aria-label="Delete"
+        >
+          <NavIcon name="trash" className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-800">Category Manager</h2>
-        <Button onClick={() => setShowAdd(true)}>+ Add Category</Button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-xl font-bold text-slate-800">Categories</h2>
+        <Button onClick={() => setShowAdd(true)} className="shrink-0">+ Add</Button>
       </div>
 
-      <Card className="p-6">
-        <p className="text-sm text-slate-500 mb-6">
-          Add parent categories (e.g. Audio, Parts) and child categories (e.g. Speakers under Audio).
-          These appear in the dropdown when adding spare parts.
+      <Card className="p-4">
+        <p className="text-sm text-slate-500 mb-4">
+          Parent and child categories for spare parts.
         </p>
-        <div className="space-y-3">
-          {parents.length === 0 ? (
-            <div className="py-12 text-center">
-              <NavIcon name="folder" className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-500">No categories yet.</p>
-              <p className="text-sm text-slate-400 mt-1">Add your first category to organize spare parts.</p>
-            </div>
-          ) : (
-            parents.map((parent) => {
+        {parents.length === 0 ? (
+          <div className="py-8 text-center text-slate-500">
+            <p>No categories yet.</p>
+            <Button variant="outline" className="mt-3" onClick={() => setShowAdd(true)}>Add first</Button>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {parents.map((parent) => {
               const children = getChildren(parent.id);
               const parentCount = itemCountByCategory[parent.name] || 0;
               return (
-                <div key={parent.id} className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                  <div className="flex items-center justify-between gap-4 p-4 bg-gradient-to-r from-slate-50 to-white">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-asahi/10 flex items-center justify-center shrink-0">
-                        <NavIcon name="folder" className="w-5 h-5 text-asahi" />
-                      </div>
-                      <div>
-                        <span className="font-semibold text-slate-800">{parent.name}</span>
-                        {parentCount > 0 && (
-                          <span className="ml-2 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                            {parentCount} item{parentCount !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Button
-                        variant="outline"
-                        className="p-2"
-                        onClick={() => setEditing({ id: parent.id, name: parent.name, parent_id: null })}
-                        title="Edit"
-                      >
-                        <NavIcon name="pencil" className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="p-2 text-red-600 border-red-200 hover:bg-red-50"
-                        onClick={() => handleDelete(parent.id, parent.name)}
-                        title="Delete"
-                      >
-                        <NavIcon name="trash" className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  {children.length > 0 && (
-                    <div className="border-t border-slate-100">
-                      {children.map((child, index) => {
-                        const childCount = itemCountByCategory[`${parent.name} > ${child.name}`] || 0;
-                        return (
-                          <div
-                            key={child.id}
-                            className={`flex items-center justify-between gap-4 px-4 py-3 pl-14 ${
-                              index < children.length - 1 ? 'border-b border-slate-50' : ''
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-slate-400">└</span>
-                              <span className="text-slate-700">{child.name}</span>
-                              {childCount > 0 && (
-                                <span className="text-xs text-slate-400">
-                                  {childCount} item{childCount !== 1 ? 's' : ''}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex gap-2 shrink-0">
-                              <Button
-                                variant="outline"
-                                className="p-1.5"
-                                onClick={() => setEditing({ id: child.id, name: child.name, parent_id: child.parent_id })}
-                                title="Edit"
-                              >
-                                <NavIcon name="pencil" className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="p-1.5 text-red-600 border-red-200 hover:bg-red-50"
-                                onClick={() => handleDelete(child.id, child.name)}
-                                title="Delete"
-                              >
-                                <NavIcon name="trash" className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                <div key={parent.id}>
+                  <CategoryRow cat={parent} isChild={false} count={parentCount} />
+                  {children.map((child) => {
+                    const childCount = itemCountByCategory[`${parent.name} > ${child.name}`] || 0;
+                    return <CategoryRow key={child.id} cat={child} isChild count={childCount} />;
+                  })}
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </Card>
 
       {showAdd && (

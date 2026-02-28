@@ -3,42 +3,47 @@ import { LOGO_URL } from '../lib/branding';
 
 const statusLabels = { in_stock: 'In Stock', out: 'Out', reserved: 'Reserved' };
 
-async function loadLogoBase64() {
-  try {
-    const res = await fetch(LOGO_URL, {
-      mode: 'cors',
-      referrerPolicy: 'no-referrer',
-    });
-    const blob = await res.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
+function loadLogoImage(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
 }
 
-export async function exportInventoryPDF(items) {
+export async function exportInventoryPDF(items, categoryFilter = null) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   let y = 10;
 
-  // Company logo - centered at top
-  const logoData = await loadLogoBase64();
+  // Company logo - top of PDF (uses image URL directly)
   const logoW = 45;
   const logoH = 16;
   const logoX = (pageWidth - logoW) / 2;
-  if (logoData) {
+  const logoImg = await loadLogoImage(LOGO_URL);
+  if (logoImg) {
     try {
-      doc.addImage(logoData, 'PNG', logoX, y, logoW, logoH);
+      doc.addImage(logoImg, 'PNG', logoX, y, logoW, logoH);
     } catch {
-      doc.setFontSize(18);
-      doc.setTextColor(193, 58, 42);
-      doc.text('AsahiGroup', pageWidth / 2, y + logoH / 2 + 2, { align: 'center' });
+      // Fallback: try fetch + base64 if Image fails
+      try {
+        const res = await fetch(LOGO_URL, { mode: 'cors' });
+        const blob = await res.blob();
+        const dataUrl = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onloadend = () => res(r.result);
+          r.onerror = rej;
+          r.readAsDataURL(blob);
+        });
+        doc.addImage(dataUrl, 'PNG', logoX, y, logoW, logoH);
+      } catch {
+        doc.setFontSize(18);
+        doc.setTextColor(193, 58, 42);
+        doc.text('AsahiGroup', pageWidth / 2, y + logoH / 2 + 2, { align: 'center' });
+      }
     }
   } else {
     doc.setFontSize(18);
@@ -61,7 +66,14 @@ export async function exportInventoryPDF(items) {
   doc.text(`Exported: ${new Date().toLocaleString()}`, pageWidth / 2, y, { align: 'center' });
   y += 4;
   doc.text(`Total items: ${items.length}`, pageWidth / 2, y, { align: 'center' });
-  y += 10;
+  y += 4;
+  if (categoryFilter) {
+    doc.setFont(undefined, 'italic');
+    doc.text(`Filtered by category: ${categoryFilter}`, pageWidth / 2, y, { align: 'center' });
+    doc.setFont(undefined, 'normal');
+    y += 4;
+  }
+  y += 6;
 
   doc.setFontSize(9);
   const headers = ['Name', 'QR ID', 'Category', 'Location', 'Qty', 'Status', 'Vehicle'];
@@ -103,7 +115,10 @@ export async function exportInventoryPDF(items) {
     y += 6;
   });
 
-  doc.save(`spare-parts-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+  const filename = categoryFilter
+    ? `spare-parts-${categoryFilter.replace(/[^a-z0-9]/gi, '-')}-${new Date().toISOString().slice(0, 10)}.pdf`
+    : `spare-parts-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+  doc.save(filename);
 }
 
 export async function exportInventoryExcel(items) {
@@ -128,7 +143,7 @@ export async function exportInventoryExcel(items) {
   XLSX.writeFile(wb, `spare-parts-${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
-export function exportInventoryCSV(items) {
+export function exportInventoryCSV(items, categoryFilter = null) {
   const headers = ['Name', 'QR ID', 'Model Name', 'SKU Code', 'Description', 'Category', 'Store Location', 'Vehicle Model', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
   const rows = items.map((item) => [
     `"${(item.name || '').replace(/"/g, '""')}"`,
@@ -150,7 +165,10 @@ export function exportInventoryCSV(items) {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `spare-parts-report-${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = categoryFilter
+    ? `spare-parts-${categoryFilter.replace(/[^a-z0-9]/gi, '-')}-${new Date().toISOString().slice(0, 10)}.csv`
+    : `spare-parts-report-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = filename;
   link.click();
   URL.revokeObjectURL(link.href);
 }

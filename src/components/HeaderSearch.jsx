@@ -1,14 +1,43 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useItems } from '../hooks/useItems';
+import { getItemByQrIdOrBase } from '../services/itemService';
 import { Modal } from './ui/Modal';
 import { Card } from './ui/Card';
+import { Button } from './ui/Button';
 import { NavIcon } from './icons/NavIcons';
 import { StatusBadge } from './ui/StatusBadge';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+const PAGE_SIZE = 10;
+
+function normalizeRepeatedBarcode(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return trimmed;
+  for (let len = 1; len <= Math.floor(trimmed.length / 2); len++) {
+    if (trimmed.length % len !== 0) continue;
+    const chunk = trimmed.slice(0, len);
+    if (chunk.repeat(trimmed.length / len) === trimmed) return chunk;
+  }
+  return trimmed;
+}
+
+function extractBarcode(value) {
+  const trimmed = String(value || '').trim();
+  try {
+    const url = new URL(trimmed);
+    const b = url.searchParams.get('barcode');
+    return b || trimmed;
+  } catch {
+    return trimmed;
+  }
+}
 
 export function HeaderSearch({ open, onClose }) {
+  const navigate = useNavigate();
   const { items, loading } = useItems();
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
   const inputRef = useRef(null);
 
   const filtered = items.filter(
@@ -25,9 +54,17 @@ export function HeaderSearch({ open, onClose }) {
   useEffect(() => {
     if (open) {
       setQuery('');
+      setPage(1);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open]);
+
+  useEffect(() => setPage(1), [query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const hasPrev = page > 1;
+  const hasNext = page < totalPages;
 
   if (!open) return null;
 
@@ -50,7 +87,30 @@ export function HeaderSearch({ open, onClose }) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, code, category..."
+          onKeyDown={async (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const raw = e.target.value ?? query;
+              const normalized = extractBarcode(normalizeRepeatedBarcode(raw));
+              if (!normalized) return;
+              const exactMatch = filtered.find(
+                (i) => i.qr_id === normalized || (i.qr_id && i.qr_id.startsWith(normalized + '_'))
+              );
+              if (exactMatch) {
+                onClose();
+                navigate(`/inventory/${exactMatch.id}`);
+                return;
+              }
+              try {
+                const item = await getItemByQrIdOrBase(normalized);
+                if (item) {
+                  onClose();
+                  navigate(`/inventory/${item.id}`);
+                }
+              } catch {}
+            }
+          }}
+          placeholder="Search or scan barcode (name, code, category...)"
           className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none mb-4"
         />
         <div className="flex-1 overflow-y-auto min-h-0">
@@ -61,7 +121,7 @@ export function HeaderSearch({ open, onClose }) {
               <p className="text-slate-500 text-sm py-8 text-center">No items found</p>
             ) : (
               <ul className="space-y-2">
-                {filtered.slice(0, 50).map((item) => (
+                {paginated.map((item) => (
                   <li key={item.id}>
                     <Link
                       to={`/inventory/${item.id}`}
@@ -95,9 +155,34 @@ export function HeaderSearch({ open, onClose }) {
           )}
         </div>
         {query.trim() && filtered.length > 0 && (
-          <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-            {filtered.length} item{filtered.length !== 1 ? 's' : ''} found
-          </p>
+          <div className="flex items-center justify-between gap-4 mt-3 pt-3 border-t border-slate-100">
+            <p className="text-xs text-slate-500">
+              {filtered.length} item{filtered.length !== 1 ? 's' : ''} found
+            </p>
+            {filtered.length > PAGE_SIZE && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  className="p-2 min-w-0"
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={!hasPrev}
+                >
+                  <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                </Button>
+                <span className="text-xs text-slate-600 px-2">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  className="p-2 min-w-0"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!hasNext}
+                >
+                  <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                </Button>
+              </div>
+            )}
+          </div>
         )}
       </Card>
     </Modal>

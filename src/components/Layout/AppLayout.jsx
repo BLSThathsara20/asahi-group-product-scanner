@@ -56,9 +56,9 @@ export function AppLayout() {
         </div>
         <main
           ref={mainRef}
-          className="flex-1 min-h-0 px-4 md:px-6 pt-20 md:pt-8 pb-24 md:pb-6 overflow-x-hidden overflow-y-auto overscroll-behavior-y-contain"
+          className="flex-1 flex flex-col min-h-0 px-4 md:px-6 pt-20 md:pt-8 pb-24 md:pb-6 overflow-x-hidden overflow-y-auto overscroll-behavior-y-contain"
         >
-          <div className="pt-2 md:pt-0">
+          <div className="flex-1 pt-2 md:pt-0">
             <Outlet />
           </div>
           <Footer />

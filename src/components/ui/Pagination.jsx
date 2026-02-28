@@ -1,7 +1,7 @@
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { Button } from './Button';
 
-const PAGE_SIZES = [10, 20, 50];
+const PAGE_SIZES = [5, 10, 20, 30, 50];
 
 export function Pagination({ page, totalItems, pageSize, onPageChange, onPageSizeChange }) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
