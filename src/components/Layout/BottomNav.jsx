@@ -8,10 +8,11 @@ const mainNavItems = [
   { to: '/', label: 'Dashboard', icon: 'dashboard' },
   { to: '/inventory', label: 'Spare Parts', icon: 'inventory' },
   { to: '/inventory/add', label: 'Add', icon: 'add' },
-  { scan: true, label: 'Scan', icon: 'scan' },
+  { scanBarcode: true, label: 'Scan', icon: 'barcode' },
 ];
 
 const moreNavItems = [
+  { scan: true, label: 'Scan QR', icon: 'scan' },
   { to: '/reports', label: 'Reports', icon: 'reports' },
   { to: '/analytics', label: 'Analytics', icon: 'analytics' },
   { to: '/categories', label: 'Categories', icon: 'folder', adminOnly: true },
@@ -31,7 +32,7 @@ export function BottomNav() {
       setMoreClosing(false);
     }, 200);
   }, []);
-  const { openScanModal } = useScanModal();
+  const { openScanModal, openScanBarcodeModal } = useScanModal();
 
   const filteredMore = moreNavItems.filter((item) => !item.adminOnly || isAdmin);
 
@@ -40,11 +41,11 @@ export function BottomNav() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 safe-area-pb">
         <div className="flex items-center justify-around h-16">
           {mainNavItems.map((item) =>
-            item.scan ? (
+            item.scanBarcode ? (
               <button
-                key="scan"
+                key="scan-barcode"
                 type="button"
-                onClick={openScanModal}
+                onClick={openScanBarcodeModal}
                 className="flex flex-col items-center justify-center flex-1 py-2 text-xs text-slate-500"
               >
                 <NavIcon name={item.icon} className="w-6 h-6 mb-0.5 shrink-0" />
@@ -97,17 +98,32 @@ export function BottomNav() {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {filteredMore.map(({ to, label, icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={closeMore}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
-                >
-                  <NavIcon name={icon} className="w-6 h-6 shrink-0" />
-                  <span className="font-medium text-slate-800">{label}</span>
-                </NavLink>
-              ))}
+              {filteredMore.map((item) =>
+                item.scan ? (
+                  <button
+                    key="scan-qr"
+                    type="button"
+                    onClick={() => {
+                      closeMore();
+                      openScanModal();
+                    }}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                  >
+                    <NavIcon name={item.icon} className="w-6 h-6 shrink-0" />
+                    <span className="font-medium text-slate-800">{item.label}</span>
+                  </button>
+                ) : (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={closeMore}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <NavIcon name={item.icon} className="w-6 h-6 shrink-0" />
+                    <span className="font-medium text-slate-800">{item.label}</span>
+                  </NavLink>
+                )
+              )}
             </div>
           </div>
         </>
