@@ -113,6 +113,16 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
 
   const userDisplay = (u) => u.full_name?.trim() || u.email || 'Unknown';
 
+  const COMMON_REASONS = [
+    'Car repair',
+    'Vehicle service',
+    'Customer delivery',
+    'Internal use',
+    'Warranty claim',
+    'Demo / display',
+    'Stock transfer',
+  ];
+
   return (
     <Modal onBackdropClick={onCancel}>
       <Card className="p-6">
@@ -186,14 +196,22 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Purpose / Reason *</label>
-            <Input
-                name="purpose"
-                value={form.purpose}
-                onChange={handleChange}
-                placeholder="What is it for? (e.g. Car repair job #123)"
-                error={errors.purpose}
-                required
-              />
+            <input
+              list="checkout-reason-options"
+              name="purpose"
+              value={form.purpose}
+              onChange={handleChange}
+              placeholder="Select or type reason..."
+              required
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none ${
+                errors.purpose ? 'border-red-500' : 'border-slate-300'
+              }`}
+            />
+            <datalist id="checkout-reason-options">
+              {COMMON_REASONS.map((r) => (
+                <option key={r} value={r} />
+              ))}
+            </datalist>
             {errors.purpose && <p className="mt-1 text-sm text-red-600">{errors.purpose}</p>}
           </div>
           <VehicleModelSelect
