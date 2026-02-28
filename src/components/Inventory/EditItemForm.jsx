@@ -7,6 +7,7 @@ import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
 import { NavIcon } from '../icons/NavIcons';
 import { compressAndUploadImage } from '../../services/imageService';
+import { getItemBarcodes } from '../../services/itemService';
 
 export function EditItemForm({ item, onSave, onCancel }) {
   const videoRef = useRef(null);
@@ -21,10 +22,18 @@ export function EditItemForm({ item, onSave, onCancel }) {
     quantity: item.quantity ?? 1,
     reminder_count: item.reminder_count ?? 1,
     photo: null,
+    barcodes: [],
   });
   const [uploading, setUploading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraError, setCameraError] = useState('');
+
+  useEffect(() => {
+    if (!item?.id) return;
+    getItemBarcodes(item.id).then((barcodes) => {
+      setForm((prev) => ({ ...prev, barcodes: barcodes || [] }));
+    });
+  }, [item?.id]);
 
   useEffect(() => {
     if (showCamera && streamRef.current && videoRef.current) {
@@ -92,6 +101,29 @@ export function EditItemForm({ item, onSave, onCancel }) {
     }));
   };
 
+  const handleBarcodeChange = (index, value) => {
+    setForm((prev) => {
+      const next = [...(prev.barcodes || [''])];
+      next[index] = value;
+      return { ...prev, barcodes: next };
+    });
+  };
+
+  const addBarcodeInput = () => {
+    setForm((prev) => {
+      const barcodes = prev.barcodes || [];
+      return { ...prev, barcodes: [...barcodes, ''] };
+    });
+  };
+
+  const removeBarcodeInput = (index) => {
+    setForm((prev) => {
+      const barcodes = prev.barcodes || [];
+      const next = barcodes.filter((_, i) => i !== index);
+      return { ...prev, barcodes: next };
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
@@ -101,6 +133,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         const url = await compressAndUploadImage(form.photo);
         if (url) photoUrl = url;
       }
+      const altBarcodes = (form.barcodes || []).map((b) => String(b || '').trim()).filter(Boolean);
       onSave({
         name: form.name.trim(),
         description: form.description?.trim() || null,
@@ -113,6 +146,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         quantity: form.quantity || 1,
         reminder_count: form.reminder_count ?? 1,
         photo_url: photoUrl,
+        barcodes: altBarcodes,
       });
     } finally {
       setUploading(false);
@@ -141,6 +175,51 @@ export function EditItemForm({ item, onSave, onCancel }) {
       <VehicleModelSelect label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} placeholder="Select vehicle make" />
       <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
       <Input label="Low stock alert at" name="reminder_count" type="number" min={0} value={form.reminder_count} onChange={handleChange} />
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Barcodes</label>
+        <p className="text-xs text-slate-500 mb-2">Primary (QR ID) is fixed. Add extra barcodes for the same product.</p>
+        <div className="rounded-lg border border-slate-200 p-3 space-y-2 bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Primary</span>
+            <code className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded text-sm text-slate-700 truncate">
+              {item.qr_id}
+            </code>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={addBarcodeInput}
+              className="shrink-0 p-1.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-200"
+              title="Add barcode"
+              aria-label="Add barcode"
+            >
+              <NavIcon name="add" className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-xs text-slate-500">Add extra barcode</span>
+          </div>
+          {(form.barcodes || []).map((barcode, index) => (
+            <div key={index} className="flex gap-2 items-center">
+              <button
+                type="button"
+                onClick={() => removeBarcodeInput(index)}
+                className="shrink-0 p-1.5 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-700"
+                title="Remove"
+                aria-label="Remove barcode"
+              >
+                <NavIcon name="close" className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-xs font-medium text-slate-500 w-12 shrink-0">Extra {index + 1}</span>
+              <input
+                value={barcode}
+                onChange={(e) => handleBarcodeChange(index, e.target.value)}
+                placeholder="Barcode"
+                className="flex-1 min-w-0 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none text-sm"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-2">Product Image</label>

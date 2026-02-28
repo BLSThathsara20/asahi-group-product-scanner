@@ -4,7 +4,9 @@ import { useAuth } from "../context/AuthContext";
 import {
 	getItemById,
 	getTransactions,
+	getItemBarcodes,
 	updateItem,
+	syncItemBarcodes,
 	createTransaction,
 	deleteItem,
 } from "../services/itemService";
@@ -25,6 +27,7 @@ export function ItemDetail() {
 	const { user, profile, isSuperAdmin } = useAuth();
 	const { success: notifySuccess, error: notifyError } = useNotification();
 	const [item, setItem] = useState(null);
+	const [itemBarcodes, setItemBarcodes] = useState([]);
 	const [transactions, setTransactions] = useState([]);
 	const [performerNames, setPerformerNames] = useState({});
 	const [loading, setLoading] = useState(true);
@@ -55,11 +58,13 @@ export function ItemDetail() {
 	const load = async () => {
 		setLoading(true);
 		try {
-			const [itemData, txData] = await Promise.all([
+			const [itemData, txData, barcodes] = await Promise.all([
 				getItemById(id),
 				getTransactions(id),
+				getItemBarcodes(id),
 			]);
 			setItem(itemData);
+			setItemBarcodes(barcodes || []);
 			setTransactions(txData);
 			if (itemData) {
 				const ids = [
@@ -136,7 +141,11 @@ export function ItemDetail() {
 
 	const handleSaveEdit = async (updates) => {
 		try {
-			await updateItem(id, updates);
+			const { barcodes, ...itemUpdates } = updates;
+			await updateItem(id, itemUpdates);
+			if (Array.isArray(barcodes)) {
+				await syncItemBarcodes(id, barcodes);
+			}
 			notifySuccess("Item updated");
 			setShowEdit(false);
 			load();
@@ -512,14 +521,39 @@ export function ItemDetail() {
 				</button>
 				{barcodeAccordionOpen && (
 					<div className="border-t border-slate-200 p-6">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div>
-								<h4 className="font-medium text-slate-700 mb-3">QR Code</h4>
-								<QRCodeDisplay qrId={item.qr_id} itemName={item.name} />
-							</div>
-							<div>
-								<h4 className="font-medium text-slate-700 mb-3">Barcode</h4>
-								<BarcodeDisplay barcodeId={item.qr_id} itemName={item.name} />
+						<div className="space-y-6">
+							{(itemBarcodes?.length > 0 || item?.qr_id) && (
+								<div>
+									<h4 className="font-medium text-slate-700 mb-2">Barcodes</h4>
+									<ul className="space-y-1.5 text-sm">
+										{item?.qr_id && (
+											<li className="flex items-center gap-2">
+												<span className="text-slate-500 w-16 shrink-0">Primary</span>
+												<code className="px-2 py-1 bg-slate-100 rounded font-mono text-slate-800 truncate max-w-[200px]">
+													{item.qr_id}
+												</code>
+											</li>
+										)}
+										{itemBarcodes?.map((b, i) => (
+											<li key={i} className="flex items-center gap-2">
+												<span className="text-slate-500 w-16 shrink-0">Extra {i + 1}</span>
+												<code className="px-2 py-1 bg-slate-100 rounded font-mono text-slate-800 truncate max-w-[200px]">
+													{b}
+												</code>
+											</li>
+										))}
+									</ul>
+								</div>
+							)}
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								<div>
+									<h4 className="font-medium text-slate-700 mb-3">QR Code</h4>
+									<QRCodeDisplay qrId={item.qr_id} itemName={item.name} />
+								</div>
+								<div>
+									<h4 className="font-medium text-slate-700 mb-3">Barcode</h4>
+									<BarcodeDisplay barcodeId={item.qr_id} itemName={item.name} />
+								</div>
 							</div>
 						</div>
 					</div>

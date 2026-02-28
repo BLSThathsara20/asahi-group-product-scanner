@@ -89,7 +89,7 @@ export async function checkQrIdExists(qrId) {
 	return !!data;
 }
 
-/** Check if barcode base is already used (exact match or as prefix of base_uniqueId) */
+/** Check if barcode base is already used (exact match or as prefix of base_uniqueId, or in item_barcodes) */
 export async function checkBarcodeBaseExists(base) {
 	const normalized = String(base || "").trim();
 	if (!normalized) return false;
@@ -105,10 +105,49 @@ export async function checkBarcodeBaseExists(base) {
 		.select("id")
 		.ilike("qr_id", escaped + "\\_%")
 		.limit(1);
-	return !!(prefix && prefix.length > 0);
+	if (prefix && prefix.length > 0) return true;
+	const { data: alt } = await supabase
+		.from("item_barcodes")
+		.select("id")
+		.eq("barcode", normalized)
+		.maybeSingle();
+	return !!alt;
 }
 
-/** Get item by qr_id or by barcode base (for product barcodes stored as base_uniqueId) */
+/** Get alt barcodes for an item (qr_id is primary, these are extras) */
+export async function getItemBarcodes(itemId) {
+	if (!itemId) return [];
+	const { data, error } = await supabase
+		.from("item_barcodes")
+		.select("barcode")
+		.eq("item_id", itemId)
+		.order("created_at", { ascending: true });
+	if (error) throw error;
+	return (data || []).map((r) => r.barcode || "").filter(Boolean);
+}
+
+/** Replace all alt barcodes for an item (deletes existing, inserts new) */
+export async function syncItemBarcodes(itemId, barcodes) {
+	if (!itemId) return;
+	const { error: delErr } = await supabase.from("item_barcodes").delete().eq("item_id", itemId);
+	if (delErr) throw delErr;
+	const normalized = (barcodes || []).filter((b) => String(b || "").trim());
+	if (normalized.length === 0) return;
+	const rows = normalized.map((barcode) => ({ item_id: itemId, barcode: String(barcode).trim() }));
+	const { error: insErr } = await supabase.from("item_barcodes").insert(rows);
+	if (insErr) throw insErr;
+}
+
+/** Insert additional barcodes for an item (qr_id is primary) */
+export async function createItemBarcodes(itemId, barcodes) {
+	const normalized = (barcodes || []).filter((b) => String(b || "").trim());
+	if (normalized.length === 0) return;
+	const rows = normalized.map((barcode) => ({ item_id: itemId, barcode: String(barcode).trim() }));
+	const { error } = await supabase.from("item_barcodes").insert(rows);
+	if (error) throw error;
+}
+
+/** Get item by qr_id or by barcode base (for product barcodes stored as base_uniqueId) or item_barcodes */
 export async function getItemByQrIdOrBase(barcode) {
 	const trimmed = String(barcode || "").trim();
 	if (!trimmed) return null;
@@ -124,7 +163,17 @@ export async function getItemByQrIdOrBase(barcode) {
 		.select("*")
 		.ilike("qr_id", escaped + "\\_%")
 		.limit(1);
-	return prefix?.[0] ?? null;
+	if (prefix?.[0]) return prefix[0];
+	const { data: alt } = await supabase
+		.from("item_barcodes")
+		.select("item_id")
+		.eq("barcode", trimmed)
+		.maybeSingle();
+	if (alt) {
+		const { data: item } = await supabase.from("items").select("*").eq("id", alt.item_id).single();
+		return item;
+	}
+	return null;
 }
 
 export async function updateItem(id, updates) {
