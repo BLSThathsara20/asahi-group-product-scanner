@@ -206,6 +206,20 @@ export function ItemDetail() {
 					← Back
 				</button>
 				<div className="flex gap-2">
+					<Button
+						variant="outline"
+						onClick={async () => {
+							const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+							const shareUrl = new URL(`${base ? base + "/" : ""}share/${id}`, window.location.origin).href;
+							await navigator.clipboard.writeText(shareUrl);
+							notifySuccess("Link copied to clipboard");
+						}}
+						title="Share item"
+						className="hidden sm:flex p-2"
+						aria-label="Share item"
+					>
+						<NavIcon name="share" className="w-4 h-4" />
+					</Button>
 					{item.status === "in_stock" && (
 						<>
 							<Button
@@ -559,6 +573,22 @@ export function ItemDetail() {
 					</div>
 				)}
 			</Card>
+
+			{/* Floating share button - mobile only, bottom right */}
+			<button
+				type="button"
+				onClick={async () => {
+					const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+					const shareUrl = new URL(`${base ? base + "/" : ""}share/${id}`, window.location.origin).href;
+					await navigator.clipboard.writeText(shareUrl);
+					notifySuccess("Link copied to clipboard");
+				}}
+				title="Share item"
+				aria-label="Share item"
+				className="sm:hidden fixed bottom-20 right-4 z-50 p-2.5 rounded-full bg-asahi text-white shadow-lg hover:bg-asahi-700 transition-colors"
+			>
+				<NavIcon name="share" className="w-5 h-5" />
+			</button>
 		</div>
 	);
 }

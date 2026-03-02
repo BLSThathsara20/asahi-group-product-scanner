@@ -12,6 +12,7 @@ import { Dashboard } from './pages/Dashboard';
 import { InventoryList } from './pages/InventoryList';
 import { AddItem } from './pages/AddItem';
 import { ItemDetail } from './pages/ItemDetail';
+import { SharedItemView } from './pages/SharedItemView';
 import { ScanQR } from './pages/ScanQR';
 import { Reports } from './pages/Reports';
 import { Analytics } from './pages/Analytics';
@@ -27,6 +28,7 @@ function App() {
           <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/share/:id" element={<SharedItemView />} />
             <Route path="/setup" element={<Setup />} />
             <Route path="/invite" element={<AcceptInvite />} />
             <Route path="/activate" element={<Activate />} />
