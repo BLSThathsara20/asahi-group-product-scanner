@@ -7,7 +7,7 @@ import { VehicleModelSelect } from '../VehicleModelSelect';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
 import { NavIcon } from '../icons/NavIcons';
-import { compressAndUploadImage } from '../../services/imageService';
+import { sanitizeBarcodeInput, BARCODE_MAX_LENGTH } from '../../lib/barcodeUtils';
 import { getItemBarcodes } from '../../services/itemService';
 
 export function EditItemForm({ item, onSave, onCancel }) {
@@ -121,6 +121,15 @@ export function EditItemForm({ item, onSave, onCancel }) {
     });
   };
 
+  const commitBarcodeValue = (index, rawValue) => {
+    const clean = sanitizeBarcodeInput(rawValue);
+    setForm((prev) => {
+      const next = [...(prev.barcodes || [''])];
+      next[index] = clean;
+      return { ...prev, barcodes: next };
+    });
+  };
+
   const addBarcodeInput = () => {
     setForm((prev) => {
       const barcodes = prev.barcodes || [];
@@ -225,6 +234,14 @@ export function EditItemForm({ item, onSave, onCancel }) {
               <input
                 value={barcode}
                 onChange={(e) => handleBarcodeChange(index, e.target.value)}
+                onBlur={(e) => commitBarcodeValue(index, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitBarcodeValue(index, e.target.value ?? barcode);
+                  }
+                }}
+                maxLength={BARCODE_MAX_LENGTH * 2}
                 placeholder="Barcode"
                 className="flex-1 min-w-0 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none text-sm"
               />

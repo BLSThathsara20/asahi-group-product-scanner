@@ -9,29 +9,9 @@ import { NavIcon } from './icons/NavIcons';
 import { StatusBadge } from './ui/StatusBadge';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { sanitizeBarcodeInput } from '../lib/barcodeUtils';
+
 const PAGE_SIZE = 10;
-
-function normalizeRepeatedBarcode(value) {
-  const trimmed = String(value || '').trim();
-  if (!trimmed) return trimmed;
-  for (let len = 1; len <= Math.floor(trimmed.length / 2); len++) {
-    if (trimmed.length % len !== 0) continue;
-    const chunk = trimmed.slice(0, len);
-    if (chunk.repeat(trimmed.length / len) === trimmed) return chunk;
-  }
-  return trimmed;
-}
-
-function extractBarcode(value) {
-  const trimmed = String(value || '').trim();
-  try {
-    const url = new URL(trimmed);
-    const b = url.searchParams.get('barcode');
-    return b || trimmed;
-  } catch {
-    return trimmed;
-  }
-}
 
 export function HeaderSearch({ open, onClose }) {
   const navigate = useNavigate();
@@ -91,7 +71,7 @@ export function HeaderSearch({ open, onClose }) {
             if (e.key === 'Enter') {
               e.preventDefault();
               const raw = e.target.value ?? query;
-              const normalized = extractBarcode(normalizeRepeatedBarcode(raw));
+              const normalized = sanitizeBarcodeInput(raw);
               if (!normalized) return;
               const exactMatch = filtered.find(
                 (i) => i.qr_id === normalized || (i.qr_id && i.qr_id.startsWith(normalized + '_'))

@@ -2,27 +2,29 @@ import { LabelCell } from './LabelCell';
 
 const COLS = 3;
 
-export function LabelSheet({ item, rows = 4 }) {
-  const code = item.qr_id;
-  const count = COLS * rows;
+/** One A4 page — one label per product, up to 3 columns × rows. */
+export function LabelSheet({ items, maxRows = 4, pageIndex = 0 }) {
+  const count = items.length;
+  const rows = Math.min(maxRows, Math.max(1, Math.ceil(count / COLS)));
 
   return (
     <div
       className="a4-sheet bg-white shadow-sm border border-slate-200 mx-auto"
-      data-item-id={item.id}
-      data-item-name={item.name}
+      data-page-index={pageIndex}
     >
       <div
-        className="a4-sheet-grid"
+        className="a4-sheet-grid a4-sheet-grid-fit"
         style={{
           gridTemplateColumns: `repeat(${COLS}, 1fr)`,
           gridTemplateRows: `repeat(${rows}, 1fr)`,
         }}
       >
-        {Array.from({ length: count }, (_, i) => (
-          <LabelCell key={`${item.id}-${i}`} name={item.name} code={code} />
+        {items.map((item) => (
+          <LabelCell key={item.id} itemId={item.id} name={item.name} code={item.qr_id} />
         ))}
       </div>
     </div>
   );
 }
+
+export { COLS };

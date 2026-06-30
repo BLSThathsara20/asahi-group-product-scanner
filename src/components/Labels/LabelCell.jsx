@@ -3,7 +3,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import JsBarcode from 'jsbarcode';
 import { getQrCodeUrl } from '../../lib/utils';
 
-export function LabelCell({ name, code }) {
+export function LabelCell({ itemId, name, code }) {
   const barcodeRef = useRef(null);
 
   useEffect(() => {
@@ -27,6 +27,7 @@ export function LabelCell({ name, code }) {
     <div
       className="label-cell flex flex-col items-center justify-center gap-1 p-2 border border-dashed border-slate-300 bg-white overflow-hidden text-center"
       data-label-code={code}
+      data-item-id={itemId}
     >
       <p className="text-[9px] sm:text-[10px] font-semibold text-slate-800 leading-tight line-clamp-2 w-full px-0.5">
         {name}

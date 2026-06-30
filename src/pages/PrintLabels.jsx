@@ -5,7 +5,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ProductImage } from '../components/ui/ProductImage';
 import { LabelSheet } from '../components/Labels/LabelSheet';
-import { downloadLabelsPdf } from '../services/labelPrintService';
+import { COLS, chunkItemsForPages, downloadLabelsPdf } from '../services/labelPrintService';
 import { NavIcon } from '../components/icons/NavIcons';
 import {
   PageContainer,
@@ -27,11 +27,11 @@ export function PrintLabels() {
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [rows, setRows] = useState('4');
-  const [showPreview, setShowPreview] = useState(false);
+  const [listView, setListView] = useState('all');
   const [exporting, setExporting] = useState(false);
 
   const rowCount = Number(rows);
-  const labelsPerSheet = 3 * rowCount;
+  const labelsPerSheet = COLS * rowCount;
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -48,6 +48,36 @@ export function PrintLabels() {
     () => items.filter((item) => selectedIds.has(item.id) && item.qr_id),
     [items, selectedIds]
   );
+
+  const labelPages = useMemo(
+    () => chunkItemsForPages(selectedItems, rowCount),
+    [selectedItems, rowCount]
+  );
+
+  const listItems = useMemo(() => {
+    let list = listView === 'selected'
+      ? items.filter((item) => selectedIds.has(item.id))
+      : filtered;
+    if (listView === 'selected' && search.trim()) {
+      const q = search.toLowerCase().trim();
+      list = list.filter(
+        (item) =>
+          item.name?.toLowerCase().includes(q) ||
+          item.qr_id?.toLowerCase().includes(q) ||
+          item.category?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [listView, filtered, items, selectedIds, search]);
+
+  const previewSummary = useMemo(() => {
+    if (selectedItems.length === 0) return null;
+    const n = selectedItems.length;
+    const pages = labelPages.length;
+    const labelWord = n === 1 ? '1 label' : `${n} labels`;
+    const pageWord = pages === 1 ? '1 A4 page' : `${pages} A4 pages`;
+    return `${labelWord} · ${pageWord}`;
+  }, [selectedItems.length, labelPages.length]);
 
   const toggleItem = (id) => {
     setSelectedIds((prev) => {
@@ -68,26 +98,24 @@ export function PrintLabels() {
     });
   };
 
-  const clearSelection = () => setSelectedIds(new Set());
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setListView('all');
+  };
 
-  const handlePreview = () => {
+  const handlePrint = () => {
     if (selectedItems.length === 0) {
       notifyError('Select at least one product');
       return;
     }
-    setShowPreview(true);
-    success(`${selectedItems.length} product${selectedItems.length !== 1 ? 's' : ''} ready to print`);
-  };
-
-  const handlePrint = () => {
-    if (selectedItems.length === 0) return;
-    setShowPreview(true);
-    setTimeout(() => window.print(), 300);
+    setTimeout(() => window.print(), 200);
   };
 
   const handleDownloadPdf = async () => {
-    if (selectedItems.length === 0) return;
-    setShowPreview(true);
+    if (selectedItems.length === 0) {
+      notifyError('Select at least one product');
+      return;
+    }
     setExporting(true);
     try {
       await new Promise((r) => setTimeout(r, 400));
@@ -105,21 +133,19 @@ export function PrintLabels() {
   }
 
   return (
-    <>
-      <PageContainer width="wide" className="no-print">
+    <PageContainer width="wide">
+      <div className="no-print space-y-6">
         <PageHeader
           title="Print labels"
-          subtitle="Select products and print A4 sheets with QR codes and barcodes to stick on items"
+          subtitle="Each selected product gets one label — up to 3 per row on A4"
         />
 
         <Card className="p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-slate-600">Layout per sheet:</span>
+              <span className="text-sm text-slate-600">Max rows on A4:</span>
               <SegmentPills options={ROW_OPTIONS} value={rows} onChange={setRows} />
-              <span className="text-xs text-slate-400">
-                3 × {rowCount} = {labelsPerSheet} labels
-              </span>
+              <span className="text-xs text-slate-400">Up to {labelsPerSheet} products per page</span>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" className="text-sm" onClick={selectAllFiltered}>
@@ -132,7 +158,7 @@ export function PrintLabels() {
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 space-y-3">
           <input
             type="text"
             placeholder="Search products…"
@@ -140,17 +166,33 @@ export function PrintLabels() {
             onChange={(e) => setSearch(e.target.value)}
             className={filterInputClass}
           />
-          <p className="text-xs text-slate-500 mt-2">
-            {selectedIds.size} selected · {filtered.length} shown
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-slate-500">
+              {selectedIds.size} selected
+            </p>
+            <SegmentPills
+              options={[
+                { id: 'all', label: 'All products' },
+                { id: 'selected', label: `Selected (${selectedIds.size})` },
+              ]}
+              value={listView}
+              onChange={setListView}
+            />
+          </div>
         </Card>
 
         <Card className="overflow-hidden">
-          {filtered.length === 0 ? (
+          {listView === 'selected' && selectedIds.size === 0 ? (
+            <EmptyState
+              icon="printer"
+              title="No products selected"
+              description="Tick products in the list or switch to All products"
+            />
+          ) : listItems.length === 0 ? (
             <EmptyState icon="package" title="No products found" description="Try a different search" />
           ) : (
-            <ul className="divide-y divide-slate-100 max-h-[420px] overflow-y-auto">
-              {filtered.map((item) => {
+            <ul className="divide-y divide-slate-100 max-h-[360px] overflow-y-auto">
+              {listItems.map((item) => {
                 const checked = selectedIds.has(item.id);
                 return (
                   <li key={item.id}>
@@ -188,27 +230,60 @@ export function PrintLabels() {
           )}
         </Card>
 
-        <div className="flex flex-wrap gap-3 sticky bottom-20 md:bottom-4 z-10 bg-slate-50/95 backdrop-blur py-2 -mx-1 px-1">
-          <Button onClick={handlePreview} disabled={selectedIds.size === 0}>
-            Preview ({selectedIds.size})
-          </Button>
-          <Button variant="outline" onClick={handlePrint} disabled={selectedIds.size === 0}>
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={handlePrint} disabled={selectedIds.size === 0}>
             Print A4
           </Button>
           <Button variant="outline" onClick={handleDownloadPdf} disabled={selectedIds.size === 0 || exporting}>
             {exporting ? 'Generating…' : 'Download PDF'}
           </Button>
         </div>
+      </div>
 
-        {showPreview && selectedItems.length > 0 && (
-          <div id="print-labels-root" className="space-y-8 print-label-preview mt-6">
-            <h2 className="text-sm font-medium text-slate-600 no-print">Preview — one A4 page per product</h2>
-            {selectedItems.map((item) => (
-              <LabelSheet key={item.id} item={item} rows={rowCount} />
-            ))}
+      <section className="mt-8 pt-6 border-t border-slate-200">
+        <div className="no-print flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800">Print preview</h2>
+            <p className="text-sm text-slate-500 mt-0.5">
+              {previewSummary || 'Select products — one label per product, shown below'}
+            </p>
           </div>
-        )}
-      </PageContainer>
-    </>
+          {labelPages.length > 1 && (
+            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
+              Scroll to see all pages
+            </span>
+          )}
+        </div>
+
+        <div className="print-preview-viewport rounded-xl border border-slate-200 bg-slate-100/80 p-4 sm:p-6">
+          <div id="print-labels-root" className="print-preview-pages">
+            {selectedItems.length === 0 ? (
+              <div className="print-preview-empty">
+                <NavIcon name="printer" className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-slate-500">Nothing to preview yet</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Select products above — each gets one label on the sheet
+                </p>
+              </div>
+            ) : (
+              labelPages.map((pageItems, index) => (
+                <div key={`page-${index}`} className="print-preview-page">
+                  <div className="print-preview-page-label">
+                    <span className="text-xs font-medium text-slate-500">
+                      Page {index + 1} of {labelPages.length}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {pageItems.length} product{pageItems.length !== 1 ? 's' : ''}
+                      {pageItems.length === 1 ? ` · ${pageItems[0].name}` : ''}
+                    </span>
+                  </div>
+                  <LabelSheet items={pageItems} maxRows={rowCount} pageIndex={index} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+    </PageContainer>
   );
 }

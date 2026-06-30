@@ -26,68 +26,93 @@ function truncateText(doc, text, maxW) {
   return value.length < (text || '').length ? `${value}…` : value;
 }
 
-/** Build A4 PDF — one page per item, grid of QR + barcode labels. */
-export async function downloadLabelsPdf(items, rows = 4) {
+function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
+  const code = item.qr_id;
+  const { x, y, w, h } = cellRect(col, row, cols, rows);
+  const pad = 2;
+  const innerX = x + pad;
+  const innerY = y + pad;
+  const innerW = w - pad * 2;
+
+  doc.setDrawColor(180);
+  doc.rect(x, y, w, h);
+
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  const title = truncateText(doc, item.name || code, innerW - 2);
+  doc.text(title, innerX + innerW / 2, innerY + 4, { align: 'center', maxWidth: innerW });
+
+  const qrSize = Math.min(innerW * 0.55, h * 0.38, 22);
+  const qrX = innerX + (innerW - qrSize) / 2;
+  const qrY = innerY + 6;
+  if (qrData) {
+    doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
+  }
+
+  const barW = innerW * 0.88;
+  const barH = Math.min(h * 0.14, 10);
+  const barX = innerX + (innerW - barW) / 2;
+  const barY = qrY + qrSize + 2;
+  if (barcodeData) {
+    doc.addImage(barcodeData, 'PNG', barX, barY, barW, barH);
+  }
+
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(5.5);
+  doc.text(code, innerX + innerW / 2, barY + barH + 3, { align: 'center', maxWidth: innerW });
+}
+
+function getCellImages(itemId, pageIndex) {
+  const page = document.querySelector(`[data-page-index="${pageIndex}"]`);
+  const cell = page?.querySelector(`[data-item-id="${itemId}"]`) ||
+    document.querySelector(`[data-item-id="${itemId}"]`);
+  if (!cell) return { qrData: null, barcodeData: null };
+
+  return {
+    qrData: cell.querySelector('.label-qr canvas')?.toDataURL('image/png') || null,
+    barcodeData: cell.querySelector('.label-barcode')?.toDataURL('image/png') || null,
+  };
+}
+
+/** Build A4 PDF — selected products packed on sheets (one label each, 3 per row). */
+export async function downloadLabelsPdf(items, maxRows = 4) {
   if (!items?.length) return;
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-  const cols = COLS;
-  const labelsPerPage = cols * rows;
+  const labelsPerPage = COLS * maxRows;
+  const pages = [];
+  for (let i = 0; i < items.length; i += labelsPerPage) {
+    pages.push(items.slice(i, i + labelsPerPage));
+  }
 
-  for (let itemIndex = 0; itemIndex < items.length; itemIndex += 1) {
-    const item = items[itemIndex];
-    const code = item.qr_id;
-    if (!code) continue;
+  for (let pageIdx = 0; pageIdx < pages.length; pageIdx += 1) {
+    const pageItems = pages[pageIdx];
+    if (pageIdx > 0) doc.addPage();
 
-    if (itemIndex > 0) doc.addPage();
+    const rows = Math.min(maxRows, Math.max(1, Math.ceil(pageItems.length / COLS)));
 
-    const sheets = document.querySelectorAll(`[data-item-id="${item.id}"] .label-cell`);
-    const firstCell = sheets[0];
-    if (!firstCell) continue;
+    for (let i = 0; i < pageItems.length; i += 1) {
+      const item = pageItems[i];
+      if (!item.qr_id) continue;
 
-    const qrCanvas = firstCell.querySelector('.label-qr canvas');
-    const barcodeCanvas = firstCell.querySelector('.label-barcode');
-    const qrData = qrCanvas?.toDataURL('image/png');
-    const barcodeData = barcodeCanvas?.toDataURL('image/png');
-
-    for (let i = 0; i < labelsPerPage; i += 1) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const { x, y, w, h } = cellRect(col, row, cols, rows);
-      const pad = 2;
-      const innerX = x + pad;
-      const innerY = y + pad;
-      const innerW = w - pad * 2;
-
-      doc.setDrawColor(180);
-      doc.rect(x, y, w, h);
-
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      const title = truncateText(doc, item.name || code, innerW - 2);
-      doc.text(title, innerX + innerW / 2, innerY + 4, { align: 'center', maxWidth: innerW });
-
-      const qrSize = Math.min(innerW * 0.55, h * 0.38, 22);
-      const qrX = innerX + (innerW - qrSize) / 2;
-      const qrY = innerY + 6;
-      if (qrData) {
-        doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
-      }
-
-      const barW = innerW * 0.88;
-      const barH = Math.min(h * 0.14, 10);
-      const barX = innerX + (innerW - barW) / 2;
-      const barY = qrY + qrSize + 2;
-      if (barcodeData) {
-        doc.addImage(barcodeData, 'PNG', barX, barY, barW, barH);
-      }
-
-      doc.setFont('courier', 'normal');
-      doc.setFontSize(5.5);
-      doc.text(code, innerX + innerW / 2, barY + barH + 3, { align: 'center', maxWidth: innerW });
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const { qrData, barcodeData } = getCellImages(item.id, pageIdx);
+      drawLabelInCell(doc, item, qrData, barcodeData, col, row, COLS, rows);
     }
   }
 
   const slug = items.length === 1 ? items[0].qr_id : `${items.length}-items`;
   doc.save(`labels-${slug}.pdf`);
 }
+
+export function chunkItemsForPages(items, maxRows = 4) {
+  const perPage = COLS * maxRows;
+  const pages = [];
+  for (let i = 0; i < items.length; i += perPage) {
+    pages.push(items.slice(i, i + perPage));
+  }
+  return pages;
+}
+
+export { COLS };

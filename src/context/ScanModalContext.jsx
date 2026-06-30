@@ -14,27 +14,13 @@ export function useScanModal() {
   return ctx;
 }
 
-function extractBarcode(value) {
-  const trimmed = String(value || '').trim();
-  try {
-    const url = new URL(trimmed);
-    const b = url.searchParams.get('barcode');
-    return b || trimmed;
-  } catch {
-    return trimmed;
-  }
-}
-
-function normalizeRepeatedBarcode(value) {
-  const trimmed = String(value || '').trim();
-  if (!trimmed) return trimmed;
-  for (let len = 1; len <= Math.floor(trimmed.length / 2); len++) {
-    if (trimmed.length % len !== 0) continue;
-    const chunk = trimmed.slice(0, len);
-    if (chunk.repeat(trimmed.length / len) === trimmed) return chunk;
-  }
-  return trimmed;
-}
+import {
+	extractBarcode,
+	sanitizeBarcodeInput,
+	wasBarcodeCorrected,
+	barcodeLengthError,
+	BARCODE_MAX_LENGTH,
+} from '../lib/barcodeUtils';
 
 export function ScanModalProvider({ children }) {
   const navigate = useNavigate();
@@ -122,7 +108,7 @@ export function ScanModalProvider({ children }) {
 
   const processBarcode = useCallback(
     async (barcode) => {
-      const normalized = extractBarcode(normalizeRepeatedBarcode(barcode));
+      const normalized = sanitizeBarcodeInput(barcode);
       if (!normalized) return;
       try {
         const item = await getItemByQrIdOrBase(normalized);
@@ -152,7 +138,7 @@ export function ScanModalProvider({ children }) {
 
   const handleBarcodeSearch = useCallback(
     async (rawValue) => {
-      const barcode = extractBarcode(normalizeRepeatedBarcode(rawValue));
+      const barcode = sanitizeBarcodeInput(rawValue);
       if (!barcode) return;
       setBarcodeSearching(true);
       try {

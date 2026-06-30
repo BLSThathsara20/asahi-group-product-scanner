@@ -269,6 +269,7 @@ export function ItemDetail() {
 									alt={item.name}
 									className="w-full sm:w-36 h-36 rounded-xl"
 									iconClassName="w-16 h-16"
+									priority
 								/>
 								<button
 									type="button"
