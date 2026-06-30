@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
-import { ProductImage, ImageUploadOverlay } from '../ui/ProductImage';
+import { ProductImage } from '../ui/ProductImage';
 import { VehicleModelSelect } from '../VehicleModelSelect';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
@@ -275,7 +275,6 @@ export function EditItemForm({ item, onSave, onCancel }) {
                 <NavIcon name="package" className="w-8 h-8" />
               </div>
             )}
-            <ImageUploadOverlay show={saving} />
           </div>
           <div className="flex gap-2">
             <Button

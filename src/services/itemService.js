@@ -20,9 +20,16 @@ function notifySheetSync() {
 /** Delete oldest actions when a part exceeds MAX_ITEM_ACTIONS rows. */
 async function pruneItemActions(itemId) {
 	if (!itemId) return;
+	const count = await sanityClient.fetch(
+		`count(*[_type == "inventoryTransaction" && item._ref == $itemId])`,
+		{ itemId }
+	);
+	if (count <= MAX_ITEM_ACTIONS) return;
+
+	const removeCount = count - MAX_ITEM_ACTIONS;
 	const staleIds = await sanityClient.fetch(
 		`*[_type == "inventoryTransaction" && item._ref == $itemId]
-			| order(coalesce(createdAt, _createdAt) desc)[${MAX_ITEM_ACTIONS}...]._id`,
+			| order(coalesce(createdAt, _createdAt) asc)[0...${removeCount}]._id`,
 		{ itemId }
 	);
 	if (!staleIds?.length) return;

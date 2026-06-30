@@ -35,6 +35,12 @@ function json_(obj) {
 3. Who has access: **Anyone**
 4. Copy the **Web app URL**
 
+**Google Workspace — read this:** The URL must be the **public** form:
+
+`https://script.google.com/macros/s/.............../exec`
+
+If it contains `/a/asahigroup.co.uk/` (org URL), the app **cannot** call it without login and the sheet will **not** update on save. Redeploy with **Anyone** (not “Anyone in organization”), copy the new URL, and update `.env`.
+
 ## 3. Script Properties
 
 | Property | Value |
