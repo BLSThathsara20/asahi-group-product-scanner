@@ -5,10 +5,19 @@ import {
 	itemToSanity,
 	transactionToSanity,
 } from "../lib/sanityMappers";
+import { getStoredSession } from "../lib/authStorage";
+
+function currentUserId() {
+	return getStoredSession()?.userId ?? null;
+}
 
 
 export async function createItem(item) {
-	const doc = await sanityClient.create(itemToSanity(item));
+	const payload = {
+		...item,
+		added_by: item.added_by ?? currentUserId(),
+	};
+	const doc = await sanityClient.create(itemToSanity(payload));
 	return mapItem(doc);
 }
 
@@ -172,9 +181,18 @@ export async function getItemByQrIdOrBase(barcode) {
 }
 
 export async function updateItem(id, updates) {
+	const session = getStoredSession();
 	const patch = sanityClient.patch(id);
 	const sanityUpdates = itemToSanity(updates);
 	delete sanityUpdates._type;
+
+	// Track who last changed stock-related fields
+	const touchesActivity =
+		"status" in updates || "quantity" in updates || "last_used_date" in updates;
+	if (touchesActivity && !("last_used_by" in updates) && session?.userId) {
+		sanityUpdates.lastUsedBy = { _type: "reference", _ref: session.userId };
+	}
+
 	Object.entries(sanityUpdates).forEach(([key, val]) => {
 		if (val !== undefined) patch.set({ [key]: val });
 	});
@@ -200,15 +218,42 @@ export async function deleteItem(id) {
 
 export async function getTransactions(itemId) {
 	const docs = await sanityClient.fetch(
-		`*[_type == "inventoryTransaction" && item._ref == $itemId] | order(createdAt desc)`,
+		`*[_type == "inventoryTransaction" && item._ref == $itemId] | order(createdAt desc) {
+			...,
+			"performerName": coalesce(performedBy->fullName, performedBy->email)
+		}`,
 		{ itemId }
 	);
-	return (docs || []).map(mapTransaction);
+	return (docs || []).map((doc) => ({
+		...mapTransaction(doc),
+		performer_name: doc.performerName?.trim() || null,
+	}));
 }
 
 export async function createTransaction(transaction) {
-	const doc = await sanityClient.create(transactionToSanity(transaction));
+	const performedBy = transaction.performed_by ?? currentUserId();
+	const doc = await sanityClient.create(
+		transactionToSanity({ ...transaction, performed_by: performedBy })
+	);
 	return mapTransaction(doc);
+}
+
+/** Record a spare-part action on the item's history timeline. */
+export async function logItemAction(itemId, action, userId) {
+	if (!itemId || !action?.type) return null;
+	const performedBy = userId ?? currentUserId();
+	return createTransaction({
+		item_id: itemId,
+		type: action.type,
+		quantity: action.quantity ?? 1,
+		notes: action.notes ?? null,
+		recipient_name: action.recipient_name ?? null,
+		purpose: action.purpose ?? null,
+		responsible_person: action.responsible_person ?? null,
+		vehicle_model: action.vehicle_model ?? null,
+		performed_by: performedBy,
+		created_at: action.created_at || new Date().toISOString(),
+	});
 }
 
 export async function getAllItems() {

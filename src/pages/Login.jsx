@@ -85,6 +85,9 @@ export function Login() {
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
             </form>
+            <p className="mt-4 text-center text-xs text-slate-400">
+              Forgot your password? Contact an admin to get a reset link.
+            </p>
             {showSetupLink && (
               <p className="mt-4 text-center text-sm text-slate-500">
                 No account?{' '}

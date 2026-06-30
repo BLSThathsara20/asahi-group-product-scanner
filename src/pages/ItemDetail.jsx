@@ -8,10 +8,13 @@ import {
 	updateItem,
 	syncItemBarcodes,
 	createTransaction,
+	logItemAction,
 	deleteItem,
 } from "../services/itemService";
 import { getProfilesByIds } from "../services/userService";
 import { useNotification } from "../context/NotificationContext";
+import { buildItemEditSummary, ACTION_TYPE_LABELS, ACTION_TYPE_STYLES, formatActionSummary } from "../lib/itemActions";
+import { displayPerformer } from "../lib/performer";
 import { Card } from "../components/ui/Card";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
@@ -149,10 +152,12 @@ export function ItemDetail() {
 	const handleSaveEdit = async (updates) => {
 		try {
 			const { barcodes, ...itemUpdates } = updates;
+			const summary = buildItemEditSummary(item, { ...itemUpdates, barcodes });
 			await updateItem(id, itemUpdates);
 			if (Array.isArray(barcodes)) {
 				await syncItemBarcodes(id, barcodes);
 			}
+			await logItemAction(id, { type: "updated", notes: summary }, user?.id);
 			notifySuccess("Item updated");
 			setShowEdit(false);
 			load();
@@ -477,10 +482,13 @@ export function ItemDetail() {
 
 			<Card>
 				<div className="p-4 border-b border-slate-200">
-					<h3 className="font-semibold text-slate-800">Transaction History</h3>
+					<h3 className="font-semibold text-slate-800">Action history</h3>
+					<p className="text-xs text-slate-500 mt-0.5">Check-ins, edits, and other activity on this part</p>
 				</div>
 				<div className="divide-y divide-slate-100">
-					{transactions.map((tx) => (
+					{transactions.map((tx) => {
+						const who = displayPerformer(tx, performerNames);
+						return (
 						<div
 							key={tx.id}
 							className="p-4 flex items-start justify-between gap-4"
@@ -488,44 +496,35 @@ export function ItemDetail() {
 							<div>
 								<span
 									className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-										tx.type === "in"
-											? "bg-emerald-100 text-emerald-800"
-											: "bg-amber-100 text-amber-800"
+										ACTION_TYPE_STYLES[tx.type] || "bg-slate-100 text-slate-800"
 									}`}
 								>
-									{tx.type === "in" ? "In" : "Out"}
-									{(tx.quantity ?? 1) > 1 && ` ×${tx.quantity}`}
+									{ACTION_TYPE_LABELS[tx.type] || tx.type}
+									{(tx.type === "in" || tx.type === "out") && (tx.quantity ?? 1) > 1
+										? ` ×${tx.quantity}`
+										: ""}
 								</span>
 								<p className="mt-1 text-slate-800 font-medium">
-									{tx.type === "out" &&
-										tx.recipient_name &&
-										`To: ${tx.recipient_name}`}
-									{tx.type === "out" && tx.purpose && ` • ${tx.purpose}`}
-									{tx.type === "out" &&
-										tx.vehicle_model &&
-										` • Vehicle: ${tx.vehicle_model}`}
-									{tx.type === "in" && tx.notes}
+									{formatActionSummary(tx)}
 								</p>
 								{tx.responsible_person && (
 									<p className="text-sm text-slate-500">
 										Responsible: {tx.responsible_person}
 									</p>
 								)}
-								{tx.performed_by && performerNames[tx.performed_by] && (
-									<p className="text-sm text-slate-500">
-										{tx.type === "out" ? "Out recorded by" : "In recorded by"}:{" "}
-										{performerNames[tx.performed_by]}
-									</p>
+								{who && (
+									<p className="text-sm text-slate-500">By {who}</p>
 								)}
 							</div>
 							<span className="text-sm text-slate-500 whitespace-nowrap">
 								{new Date(tx.created_at).toLocaleString()}
 							</span>
 						</div>
-					))}
+						);
+					})}
 					{transactions.length === 0 && (
 						<div className="p-8 text-center text-slate-500">
-							No transactions yet
+							No actions recorded yet
 						</div>
 					)}
 				</div>

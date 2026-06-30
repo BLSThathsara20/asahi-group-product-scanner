@@ -17,7 +17,7 @@ const moreNavItems = [
   { to: '/labels', label: 'Print Labels', icon: 'printer' },
   { to: '/analytics', label: 'Analytics', icon: 'analytics' },
   { to: '/categories', label: 'Categories', icon: 'folder', adminOnly: true },
-  { to: '/health', label: 'Health', icon: 'health' },
+  { to: '/health', label: 'Health', icon: 'health', adminOnly: true },
   { to: '/users', label: 'Users', icon: 'users', adminOnly: true },
 ];
 

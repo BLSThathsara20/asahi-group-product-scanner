@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRedirect } from './components/AdminRoute';
 import { ConnectionGuard } from './components/ConnectionGuard';
 import { AppLayout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Setup } from './pages/Setup';
 import { AcceptInvite } from './pages/AcceptInvite';
 import { Activate } from './pages/Activate';
+import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { InventoryList } from './pages/InventoryList';
 import { AddItem } from './pages/AddItem';
@@ -33,6 +35,7 @@ function App() {
             <Route path="/setup" element={<Setup />} />
             <Route path="/invite" element={<AcceptInvite />} />
             <Route path="/activate" element={<Activate />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/"
               element={
@@ -48,10 +51,10 @@ function App() {
               <Route path="scan" element={<ScanQR />} />
               <Route path="reports" element={<Reports />} />
               <Route path="analytics" element={<Analytics />} />
-              <Route path="health" element={<HealthCheck />} />
-              <Route path="categories" element={<CategoryManager />} />
+              <Route path="health" element={<AdminRedirect><HealthCheck /></AdminRedirect>} />
+              <Route path="categories" element={<AdminRedirect><CategoryManager /></AdminRedirect>} />
               <Route path="labels" element={<PrintLabels />} />
-              <Route path="users" element={<UserManagement />} />
+              <Route path="users" element={<AdminRedirect><UserManagement /></AdminRedirect>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { getCategories, buildCategoryOptions } from '../services/categoryService';
 import { STORE_LOCATIONS } from '../components/StoreLocationSelect';
 import { exportInventoryPDF, exportInventoryExcel } from '../services/reportService';
-import { updateItem, createTransaction } from '../services/itemService';
+import { updateItem, createTransaction, logItemAction } from '../services/itemService';
+import { buildItemEditSummary } from '../lib/itemActions';
 import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -109,13 +110,23 @@ export function InventoryList() {
       setCheckinTargetStatus(newStatus);
       setCheckinItem(item);
     } else {
-      updateItemStatus(item.id, newStatus);
+      updateItemStatus(item.id, newStatus, item.status);
     }
   };
 
-  const updateItemStatus = async (id, status) => {
+  const updateItemStatus = async (id, status, previousStatus) => {
     try {
-      await updateItem(id, { status, last_used_date: new Date().toISOString(), last_used_by: user?.id });
+      const recordedAt = new Date().toISOString();
+      await updateItem(id, { status, last_used_date: recordedAt, last_used_by: user?.id });
+      await logItemAction(
+        id,
+        {
+          type: 'status',
+          notes: `Status: ${previousStatus || 'unknown'} → ${status}`,
+          created_at: recordedAt,
+        },
+        user?.id
+      );
       success('Status updated');
       refetch();
     } catch (err) {
@@ -188,7 +199,9 @@ export function InventoryList() {
   const handleSaveEdit = async (updates) => {
     if (!editingItem) return;
     try {
+      const summary = buildItemEditSummary(editingItem, updates);
       await updateItem(editingItem.id, updates);
+      await logItemAction(editingItem.id, { type: 'updated', notes: summary }, user?.id);
       success('Item updated');
       setEditingItem(null);
       refetch();

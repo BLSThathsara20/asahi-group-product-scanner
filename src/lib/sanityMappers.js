@@ -94,6 +94,20 @@ export function mapInvite(doc) {
 	};
 }
 
+export function mapPasswordReset(doc) {
+	if (!doc) return null;
+	return {
+		id: doc._id,
+		token: doc.token,
+		user_id: refId(doc.user) || doc.user_id || null,
+		email: doc.email || null,
+		full_name: doc.full_name || doc.fullName || null,
+		temp_password_hash: doc.tempPasswordHash || null,
+		created_by: refId(doc.createdBy),
+		created_at: doc._createdAt,
+	};
+}
+
 export function itemToSanity(item) {
 	const doc = {
 		_type: "inventoryItem",

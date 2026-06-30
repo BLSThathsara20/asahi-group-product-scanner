@@ -10,9 +10,6 @@ export default {
 			name: "role",
 			title: "Role",
 			type: "string",
-			options: {
-				list: ["super_admin", "admin", "inventory_manager", "worker"],
-			},
 			initialValue: "worker",
 		},
 		{ name: "address", title: "Address", type: "string" },

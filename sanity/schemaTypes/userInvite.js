@@ -8,7 +8,6 @@ export default {
 			name: "role",
 			title: "Role",
 			type: "string",
-			options: { list: ["admin", "inventory_manager", "worker"] },
 		},
 		{ name: "token", title: "Token", type: "string", validation: (R) => R.required() },
 		{ name: "fullName", title: "Full Name", type: "string" },

@@ -1,7 +1,9 @@
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { useState, useCallback } from 'react';
 import { updateProfile } from '../../services/userService';
+import { getUserRoles } from '../../services/roleService';
+import { getRoleLabel } from '../../lib/roles';
 import { Logo } from './Logo';
 import { useNotification } from '../../context/NotificationContext';
 import { HeaderSearch } from '../HeaderSearch';
@@ -14,15 +16,13 @@ import { NavIcon } from '../icons/NavIcons';
 
 const roleLabels = {
   super_admin: 'Super Admin',
-  admin: 'Admin',
-  inventory_manager: 'Inventory Manager',
-  worker: 'Mechanic',
 };
 
 export function Header() {
   const { user, profile, signOut, updatePassword, refreshProfile } = useAuth();
   const { success, error } = useNotification();
   const navigate = useNavigate();
+  const [userRoles, setUserRoles] = useState([]);
   const [showMenu, setShowMenu] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
 
@@ -38,6 +38,14 @@ export function Header() {
   const [showPassword, setShowPassword] = useState(false);
   const [profileForm, setProfileForm] = useState({ full_name: '', address: '', phone_number: '' });
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
+
+  useEffect(() => {
+    getUserRoles().then(setUserRoles).catch(() => setUserRoles([]));
+  }, [profile?.id]);
+
+  const roleDisplay = profile?.role === 'super_admin'
+    ? roleLabels.super_admin
+    : getRoleLabel(profile?.role, userRoles);
 
   const handleSignOut = () => {
     signOut();
@@ -138,7 +146,7 @@ export function Header() {
                 >
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="font-medium text-slate-800 truncate">{user?.email}</p>
-                    <p className="text-xs text-slate-500">{roleLabels[profile?.role] || profile?.role}</p>
+                    <p className="text-xs text-slate-500">{roleDisplay}</p>
                   </div>
                   <button
                     onClick={openProfile}

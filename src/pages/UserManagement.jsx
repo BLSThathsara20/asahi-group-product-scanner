@@ -9,7 +9,17 @@ import {
   deleteProfile,
   deleteInvite,
   addUser,
+  createPasswordReset,
+  generateTempPassword,
+  canResetUserPassword,
 } from '../services/userService';
+import {
+  getUserRoles,
+  createUserRole,
+  updateUserRole,
+  deleteUserRole,
+} from '../services/roleService';
+import { assignableRoles, getRoleLabel } from '../lib/roles';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -17,13 +27,6 @@ import { Pagination } from '../components/ui/Pagination';
 import { Modal } from '../components/ui/Modal';
 import { NavIcon } from '../components/icons/NavIcons';
 import { PageContainer, PageHeader, PageSkeleton } from '../components/ui/PageLayout';
-
-const ROLES = [
-  { value: 'worker', label: 'Mechanic' },
-  { value: 'inventory_manager', label: 'Inventory Manager' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'super_admin', label: 'Super Admin' },
-];
 
 export function UserManagement() {
   const { user, isAdmin, isSuperAdmin } = useAuth();
@@ -39,7 +42,16 @@ export function UserManagement() {
     temp_password: '',
   });
   const [generatedLink, setGeneratedLink] = useState(null);
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetTempPassword, setResetTempPassword] = useState('');
+  const [resetResult, setResetResult] = useState(null);
+  const [resetLoading, setResetLoading] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
+  const [userRoles, setUserRoles] = useState([]);
+  const [showManageRoles, setShowManageRoles] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [editingRole, setEditingRole] = useState(null);
+  const [roleSaving, setRoleSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -73,6 +85,14 @@ export function UserManagement() {
     return allUsers.slice(start, start + pageSize);
   }, [allUsers, page, pageSize]);
 
+  const assignmentRoles = useMemo(() => {
+    let roles = assignableRoles(userRoles);
+    if (!isSuperAdmin) roles = roles.filter((r) => r.slug !== 'admin');
+    return roles;
+  }, [userRoles, isSuperAdmin]);
+
+  const defaultAssignableRole = assignmentRoles[0]?.slug || 'worker';
+
   const handlePageSizeChange = (newSize) => {
     setPageSize(newSize);
     setPage(1);
@@ -81,9 +101,10 @@ export function UserManagement() {
   const load = async () => {
     setLoading(true);
     try {
-      const [profilesData, invitesData] = await Promise.all([
+      const [profilesData, invitesData, rolesData] = await Promise.all([
         getProfiles(),
         getPendingInvites(),
+        getUserRoles(),
       ]);
       const profileEmails = new Set(profilesData.map((p) => p.email?.toLowerCase()));
       const invitesOnly = invitesData.filter(
@@ -91,6 +112,7 @@ export function UserManagement() {
       );
       setProfiles(profilesData);
       setPendingInvites(invitesOnly);
+      setUserRoles(rolesData);
     } catch (err) {
       error(err.message);
     } finally {
@@ -104,7 +126,7 @@ export function UserManagement() {
 
   const handleRoleChange = async (profileId, newRole) => {
     try {
-      await updateProfileRole(profileId, newRole);
+      await updateProfileRole(profileId, newRole, { actorIsSuperAdmin: isSuperAdmin });
       success('Role updated');
       load();
     } catch (err) {
@@ -156,7 +178,8 @@ export function UserManagement() {
         addUserForm.email,
         addUserForm.full_name || addUserForm.email,
         addUserForm.role,
-        addUserForm.temp_password
+        addUserForm.temp_password,
+        { actorIsSuperAdmin: isSuperAdmin }
       );
       setGeneratedLink(activationLink);
       success('Invite created. Send the link to the user.');
@@ -179,6 +202,74 @@ export function UserManagement() {
       : '';
     return `${base}/activate?token=${token}`;
   };
+
+  const handleOpenResetPassword = (row) => {
+    setResetTarget(row);
+    setResetTempPassword(generateTempPassword());
+    setResetResult(null);
+  };
+
+  const handleCloseResetPassword = () => {
+    setResetTarget(null);
+    setResetTempPassword('');
+    setResetResult(null);
+    setResetLoading(false);
+  };
+
+  const handleCreatePasswordReset = async (e) => {
+    e.preventDefault();
+    if (!resetTarget?.id) return;
+    if (!resetTempPassword?.trim() || resetTempPassword.length < 6) {
+      error('Temporary password must be at least 6 characters');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const result = await createPasswordReset(resetTarget.id, resetTempPassword.trim());
+      setResetResult(result);
+      success('Password reset link created');
+    } catch (err) {
+      error(err.message);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleCopyResetDetails = async () => {
+    if (!resetResult) return;
+    const text = [
+      `Password reset for ${resetResult.email}`,
+      '',
+      `Temporary password: ${resetResult.tempPassword}`,
+      `Reset link: ${resetResult.resetLink}`,
+      '',
+      'Open the link, enter the temporary password, then choose a new password.',
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      success('Reset details copied to clipboard');
+    } catch {
+      error('Failed to copy. Please copy the details manually.');
+    }
+  };
+
+  const handleCopyResetLink = async () => {
+    if (!resetResult?.resetLink) return;
+    try {
+      await navigator.clipboard.writeText(resetResult.resetLink);
+      success('Reset link copied');
+    } catch {
+      error('Failed to copy link');
+    }
+  };
+
+  const canResetRow = (row) =>
+    canResetUserPassword({
+      isSuperAdmin,
+      isAdmin,
+      actorId: user?.id,
+      target: row,
+    });
 
   const handleCopyInviteLink = async (token) => {
     const link = getActivationLink(token);
@@ -206,8 +297,62 @@ export function UserManagement() {
   const handleCloseAddUser = () => {
     setShowAddUser(false);
     setGeneratedLink(null);
-    setAddUserForm({ email: '', full_name: '', role: 'worker', temp_password: '' });
+    setAddUserForm({ email: '', full_name: '', role: defaultAssignableRole, temp_password: '' });
     load();
+  };
+
+  const handleAddUserRole = async (e) => {
+    e.preventDefault();
+    if (!newRoleName.trim()) return;
+    setRoleSaving(true);
+    try {
+      await createUserRole(newRoleName.trim());
+      setNewRoleName('');
+      success('Role added');
+      const roles = await getUserRoles();
+      setUserRoles(roles);
+    } catch (err) {
+      error(err.message);
+    } finally {
+      setRoleSaving(false);
+    }
+  };
+
+  const handleSaveRoleName = async (roleId, name) => {
+    if (!name.trim()) return;
+    setRoleSaving(true);
+    try {
+      await updateUserRole(roleId, name.trim());
+      success('Role updated');
+      setEditingRole(null);
+      const roles = await getUserRoles();
+      setUserRoles(roles);
+    } catch (err) {
+      error(err.message);
+    } finally {
+      setRoleSaving(false);
+    }
+  };
+
+  const handleDeleteRole = async (role) => {
+    if (!confirm(`Delete role "${role.name}"?`)) return;
+    setRoleSaving(true);
+    try {
+      await deleteUserRole(role.id);
+      success('Role deleted');
+      const roles = await getUserRoles();
+      setUserRoles(roles);
+    } catch (err) {
+      error(err.message);
+    } finally {
+      setRoleSaving(false);
+    }
+  };
+
+  const handleCloseManageRoles = () => {
+    setShowManageRoles(false);
+    setNewRoleName('');
+    setEditingRole(null);
   };
 
   if (!isAdmin) {
@@ -229,8 +374,96 @@ export function UserManagement() {
       <PageHeader
         title="Users"
         subtitle={`${allUsers.length} user${allUsers.length !== 1 ? 's' : ''} and invites`}
-        action={<Button onClick={() => setShowAddUser(true)}>+ Add user</Button>}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setShowManageRoles(true)}>
+              Manage roles
+            </Button>
+            <Button onClick={() => {
+              setAddUserForm((p) => ({ ...p, role: defaultAssignableRole }));
+              setShowAddUser(true);
+            }}>
+              + Add user
+            </Button>
+          </div>
+        }
       />
+
+      {showManageRoles && (
+        <Modal onBackdropClick={handleCloseManageRoles}>
+          <Card className="p-6 max-w-md w-full">
+            <h3 className="font-semibold text-slate-800 mb-1">User roles</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Roles appear when adding users. System roles cannot be deleted.
+            </p>
+            <form onSubmit={handleAddUserRole} className="flex gap-2 mb-4">
+              <Input
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+                placeholder="New role name"
+                className="flex-1"
+              />
+              <Button type="submit" disabled={roleSaving || !newRoleName.trim()}>
+                Add
+              </Button>
+            </form>
+            <ul className="divide-y divide-slate-100 border border-slate-200 rounded-lg max-h-64 overflow-y-auto">
+              {userRoles.map((role) => (
+                <li key={role.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
+                  {editingRole?.id === role.id ? (
+                    <form
+                      className="flex flex-1 gap-2"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSaveRoleName(role.id, editingRole.name);
+                      }}
+                    >
+                      <input
+                        value={editingRole.name}
+                        onChange={(e) => setEditingRole((p) => ({ ...p, name: e.target.value }))}
+                        className="flex-1 px-2 py-1 border border-slate-300 rounded text-sm"
+                        autoFocus
+                      />
+                      <Button type="submit" className="text-sm py-1 px-2" disabled={roleSaving}>
+                        Save
+                      </Button>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">{role.name}</p>
+                        <p className="text-xs text-slate-400 font-mono">{role.slug}</p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setEditingRole({ id: role.id, name: role.name })}
+                          className="text-xs text-slate-500 hover:text-asahi px-2 py-1"
+                        >
+                          Rename
+                        </button>
+                        {!role.locked && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRole(role)}
+                            className="text-xs text-red-600 hover:underline px-2 py-1"
+                            disabled={roleSaving}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <Button variant="secondary" className="mt-4 w-full sm:w-auto" onClick={handleCloseManageRoles}>
+              Done
+            </Button>
+          </Card>
+        </Modal>
+      )}
 
       {editingProfile && (
         <Modal onBackdropClick={() => setEditingProfile(null)}>
@@ -261,6 +494,72 @@ export function UserManagement() {
                   </Button>
                 </div>
               </div>
+          </Card>
+        </Modal>
+      )}
+
+      {resetTarget && (
+        <Modal onBackdropClick={handleCloseResetPassword}>
+          <Card className="p-6 max-w-lg">
+            <h3 className="font-semibold text-slate-800 mb-1">Reset password</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              {resetTarget.email}
+              {resetTarget.full_name ? ` · ${resetTarget.full_name}` : ''}
+            </p>
+            {resetResult ? (
+              <div className="space-y-4">
+                <p className="text-sm text-emerald-600 font-medium">
+                  Share the temporary password and link with the user.
+                </p>
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2 text-sm">
+                  <p>
+                    <span className="text-slate-500">Temporary password:</span>{' '}
+                    <span className="font-mono font-medium text-slate-800">{resetResult.tempPassword}</span>
+                  </p>
+                  <p className="text-slate-600 break-all font-mono text-xs">{resetResult.resetLink}</p>
+                </div>
+                <p className="text-xs text-slate-500">
+                  User opens the link → enters temporary password → sets a new password.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={handleCopyResetDetails}>Copy all details</Button>
+                  <Button variant="outline" onClick={handleCopyResetLink}>Copy link only</Button>
+                  <Button variant="secondary" onClick={handleCloseResetPassword}>Done</Button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleCreatePasswordReset} className="space-y-4">
+                <p className="text-sm text-slate-500">
+                  Set a temporary password, then send the reset link to the user.
+                </p>
+                <div>
+                  <Input
+                    label="Temporary password"
+                    type="text"
+                    value={resetTempPassword}
+                    onChange={(e) => setResetTempPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    autoComplete="off"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setResetTempPassword(generateTempPassword())}
+                    className="text-xs text-asahi hover:underline mt-1"
+                  >
+                    Generate new password
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={resetLoading}>
+                    {resetLoading ? 'Creating…' : 'Create reset link'}
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={handleCloseResetPassword}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
           </Card>
         </Modal>
       )}
@@ -309,8 +608,8 @@ export function UserManagement() {
                         onChange={(e) => setAddUserForm((p) => ({ ...p, role: e.target.value }))}
                         className="w-full px-4 py-2 border border-slate-300 rounded-lg"
                       >
-                        {ROLES.filter((r) => r.value !== 'super_admin').map((r) => (
-                          <option key={r.value} value={r.value}>{r.label}</option>
+                        {assignmentRoles.map((r) => (
+                          <option key={r.slug} value={r.slug}>{r.name}</option>
                         ))}
                       </select>
                     </div>
@@ -398,20 +697,29 @@ export function UserManagement() {
                           disabled={row.id === user?.id}
                           className="px-3 py-1.5 border rounded-lg text-sm"
                         >
-                          {ROLES.filter((r) => r.value !== 'super_admin').map((r) => (
-                            <option key={r.value} value={r.value}>{r.label}</option>
+                          {assignmentRoles.map((r) => (
+                            <option key={r.slug} value={r.slug}>{r.name}</option>
                           ))}
                         </select>
                       )
                     ) : (
-                      <span className="text-sm text-slate-600">{ROLES.find((r) => r.value === row.role)?.label || row.role}</span>
+                      <span className="text-sm text-slate-600">{getRoleLabel(row.role, userRoles)}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {row.type === 'profile' && (
                         <Button variant="outline" className="text-sm py-1.5" onClick={() => setEditingProfile({ id: row.id, email: row.email, full_name: row.full_name, address: row.address || '', phone_number: row.phone_number || '' })}>
                           Edit
+                        </Button>
+                      )}
+                      {canResetRow(row) && (
+                        <Button
+                          variant="outline"
+                          className="text-sm py-1.5"
+                          onClick={() => handleOpenResetPassword(row)}
+                        >
+                          Reset password
                         </Button>
                       )}
                       {row.type === 'invite' ? (

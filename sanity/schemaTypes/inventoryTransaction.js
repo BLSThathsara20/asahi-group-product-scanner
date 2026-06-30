@@ -4,7 +4,15 @@ export default {
 	type: "document",
 	fields: [
 		{ name: "item", title: "Item", type: "reference", to: [{ type: "inventoryItem" }], validation: (R) => R.required() },
-		{ name: "type", title: "Type", type: "string", options: { list: ["in", "out"] }, validation: (R) => R.required() },
+		{
+			name: "type",
+			title: "Type",
+			type: "string",
+			options: {
+				list: ["in", "out", "created", "updated", "status"],
+			},
+			validation: (R) => R.required(),
+		},
 		{ name: "quantity", title: "Quantity", type: "number", initialValue: 1 },
 		{ name: "recipientName", title: "Recipient Name", type: "string" },
 		{ name: "purpose", title: "Purpose", type: "string" },

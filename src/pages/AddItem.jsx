@@ -364,7 +364,7 @@ export function AddItem() {
       });
       await createTransaction({
         item_id: item.id,
-        type: 'in',
+        type: 'created',
         notes: 'Item registered in spare parts',
         performed_by: user?.id,
       });
