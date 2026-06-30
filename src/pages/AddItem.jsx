@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,7 @@ import { QRScanner } from '../components/QR/QRScanner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ProductImage, ImageUploadOverlay } from '../components/ui/ProductImage';
 import { Modal } from '../components/ui/Modal';
 import { VehicleModelSelect } from '../components/VehicleModelSelect';
 import { StoreLocationSelect } from '../components/StoreLocationSelect';
@@ -53,6 +54,17 @@ export function AddItem() {
   const barcodeScannerRef = useRef(null);
   const barcodeInputRefs = useRef([]);
   const lastFocusedBarcodeIndex = useRef(0);
+
+  const photoPreviewUrl = useMemo(
+    () => (form.photo ? URL.createObjectURL(form.photo) : null),
+    [form.photo]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    };
+  }, [photoPreviewUrl]);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -691,11 +703,15 @@ export function AddItem() {
             </div>
             {form.photo && (
               <div className="mt-3 flex items-center gap-3 min-w-0">
-                <img
-                  src={URL.createObjectURL(form.photo)}
-                  alt="Preview"
-                  className="w-20 h-20 shrink-0 rounded-lg object-cover border border-slate-200"
-                />
+                <div className="relative shrink-0">
+                  <ProductImage
+                    src={photoPreviewUrl}
+                    alt="Preview"
+                    className="w-20 h-20 rounded-lg border border-slate-200"
+                    iconClassName="w-8 h-8"
+                  />
+                  <ImageUploadOverlay show={loading} />
+                </div>
                 <p className="text-sm text-slate-500 truncate">Chosen: {form.photo.name}</p>
               </div>
             )}

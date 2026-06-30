@@ -1,240 +1,219 @@
-import { supabase } from "../lib/supabase";
+import { sanityClient } from "../lib/sanity";
+import {
+	mapItem,
+	mapTransaction,
+	itemToSanity,
+	transactionToSanity,
+} from "../lib/sanityMappers";
+
 
 export async function createItem(item) {
-	const { data, error } = await supabase
-		.from("items")
-		.insert([item])
-		.select()
-		.single();
-	if (error) throw error;
-	return data;
+	const doc = await sanityClient.create(itemToSanity(item));
+	return mapItem(doc);
 }
 
-/** Get items with low stock (quantity <= reminder_count) for notifications */
 export async function getLowStockItems() {
-	const { data, error } = await supabase
-		.from("items")
-		.select("id, name, quantity, reminder_count, category")
-		.lte("quantity", 100); // optimization: only items that could be low stock
-	if (error) throw error;
-	const threshold = (r) => (r.reminder_count != null ? r.reminder_count : 1);
-	return (data || []).filter((r) => (r.quantity ?? 0) <= threshold(r));
+	const docs = await sanityClient.fetch(
+		`*[_type == "inventoryItem" && quantity <= coalesce(reminderCount, 1)]{
+			_id, name, quantity, reminderCount, category
+		}`
+	);
+	return (docs || []).map((d) => ({
+		id: d._id,
+		name: d.name,
+		quantity: d.quantity ?? 0,
+		reminder_count: d.reminderCount ?? 1,
+		category: d.category,
+	}));
 }
 
-/** Search item names for autocomplete (returns unique names matching query) */
 export async function searchItemNames(query) {
 	const q = String(query || "").trim();
 	if (!q || q.length < 2) return [];
-	const { data, error } = await supabase
-		.from("items")
-		.select("name")
-		.ilike("name", `%${q}%`)
-		.limit(20);
-	if (error) throw error;
+	const docs = await sanityClient.fetch(
+		`*[_type == "inventoryItem" && name match $pattern][0...20].name`,
+		{ pattern: `*${q}*` }
+	);
 	const seen = new Set();
-	return (data || [])
-		.map((r) => (r.name || "").trim())
+	return (docs || [])
+		.map((name) => (name || "").trim())
 		.filter((name) => name && !seen.has(name) && seen.add(name));
 }
 
 export async function getItemById(id) {
 	if (!id || typeof id !== "string") return null;
-	const { data, error } = await supabase
-		.from("items")
-		.select("*")
-		.eq("id", id)
-		.maybeSingle();
-	if (error) throw error;
-	return data;
+	const doc = await sanityClient.fetch(
+		`*[_type == "inventoryItem" && _id == $id][0]`,
+		{ id }
+	);
+	return mapItem(doc);
 }
 
 export async function getItemByQrId(qrId) {
-	const { data, error } = await supabase
-		.from("items")
-		.select("*")
-		.eq("qr_id", qrId)
-		.single();
-	if (error) throw error;
-	return data;
+	const doc = await sanityClient.fetch(
+		`*[_type == "inventoryItem" && qrId == $qrId][0]`,
+		{ qrId }
+	);
+	return mapItem(doc);
 }
 
 const AGL_INV_PREFIX = "AGL-INV-";
 const AGL_INV_REGEX = /^AGL-INV-(\d+)$/;
 
-/** Get next sequential product code: AGL-INV-1, AGL-INV-2, ... */
 export async function getNextItemCode() {
-	const { data, error } = await supabase
-		.from("items")
-		.select("qr_id")
-		.ilike("qr_id", `${AGL_INV_PREFIX}%`);
-	if (error) throw error;
+	const qrIds = await sanityClient.fetch(
+		`*[_type == "inventoryItem" && qrId match "AGL-INV-*"].qrId`
+	);
 	let maxNum = 0;
-	(data || []).forEach((row) => {
-		const m = (row.qr_id || "").match(AGL_INV_REGEX);
+	(qrIds || []).forEach((qrId) => {
+		const m = (qrId || "").match(AGL_INV_REGEX);
 		if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
 	});
 	return `${AGL_INV_PREFIX}${maxNum + 1}`;
 }
 
-/** Check if QR/barcode already exists (for duplicate prevention) */
 export async function checkQrIdExists(qrId) {
 	const normalized = String(qrId || "").trim();
 	if (!normalized) return false;
-	const { data, error } = await supabase
-		.from("items")
-		.select("id")
-		.eq("qr_id", normalized)
-		.maybeSingle();
-	if (error) throw error;
-	return !!data;
+	const count = await sanityClient.fetch(
+		`count(*[_type == "inventoryItem" && qrId == $qrId])`,
+		{ qrId: normalized }
+	);
+	return count > 0;
 }
 
-/** Check if barcode base is already used (exact match or as prefix of base_uniqueId, or in item_barcodes) */
 export async function checkBarcodeBaseExists(base) {
 	const normalized = String(base || "").trim();
 	if (!normalized) return false;
-	const { data: exact } = await supabase
-		.from("items")
-		.select("id")
-		.eq("qr_id", normalized)
-		.maybeSingle();
-	if (exact) return true;
-	const escaped = normalized.replace(/\\/g, "\\\\").replace(/_/g, "\\_").replace(/%/g, "\\%");
-	const { data: prefix } = await supabase
-		.from("items")
-		.select("id")
-		.ilike("qr_id", escaped + "\\_%")
-		.limit(1);
-	if (prefix && prefix.length > 0) return true;
-	const { data: alt } = await supabase
-		.from("item_barcodes")
-		.select("id")
-		.eq("barcode", normalized)
-		.maybeSingle();
-	return !!alt;
+
+	const exact = await sanityClient.fetch(
+		`count(*[_type == "inventoryItem" && qrId == $base])`,
+		{ base: normalized }
+	);
+	if (exact > 0) return true;
+
+	const prefix = await sanityClient.fetch(
+		`count(*[_type == "inventoryItem" && qrId match $pattern])`,
+		{ pattern: `${normalized}_*` }
+	);
+	if (prefix > 0) return true;
+
+	const alt = await sanityClient.fetch(
+		`count(*[_type == "itemBarcode" && barcode == $base])`,
+		{ base: normalized }
+	);
+	return alt > 0;
 }
 
-/** Get alt barcodes for an item (qr_id is primary, these are extras) */
 export async function getItemBarcodes(itemId) {
 	if (!itemId) return [];
-	const { data, error } = await supabase
-		.from("item_barcodes")
-		.select("barcode")
-		.eq("item_id", itemId)
-		.order("created_at", { ascending: true });
-	if (error) throw error;
-	return (data || []).map((r) => r.barcode || "").filter(Boolean);
+	const docs = await sanityClient.fetch(
+		`*[_type == "itemBarcode" && item._ref == $itemId] | order(_createdAt asc).barcode`,
+		{ itemId }
+	);
+	return (docs || []).filter(Boolean);
 }
 
-/** Replace all alt barcodes for an item (deletes existing, inserts new) */
 export async function syncItemBarcodes(itemId, barcodes) {
 	if (!itemId) return;
-	const { error: delErr } = await supabase.from("item_barcodes").delete().eq("item_id", itemId);
-	if (delErr) throw delErr;
+	const existing = await sanityClient.fetch(
+		`*[_type == "itemBarcode" && item._ref == $itemId]._id`,
+		{ itemId }
+	);
+	await Promise.all((existing || []).map((id) => sanityClient.delete(id)));
+
 	const normalized = (barcodes || []).filter((b) => String(b || "").trim());
 	if (normalized.length === 0) return;
-	const rows = normalized.map((barcode) => ({ item_id: itemId, barcode: String(barcode).trim() }));
-	const { error: insErr } = await supabase.from("item_barcodes").insert(rows);
-	if (insErr) throw insErr;
+
+	await Promise.all(
+		normalized.map((barcode) =>
+			sanityClient.create({
+				_type: "itemBarcode",
+				item: { _type: "reference", _ref: itemId },
+				barcode: String(barcode).trim(),
+			})
+		)
+	);
 }
 
-/** Insert additional barcodes for an item (qr_id is primary) */
 export async function createItemBarcodes(itemId, barcodes) {
 	const normalized = (barcodes || []).filter((b) => String(b || "").trim());
 	if (normalized.length === 0) return;
-	const rows = normalized.map((barcode) => ({ item_id: itemId, barcode: String(barcode).trim() }));
-	const { error } = await supabase.from("item_barcodes").insert(rows);
-	if (error) throw error;
+	await Promise.all(
+		normalized.map((barcode) =>
+			sanityClient.create({
+				_type: "itemBarcode",
+				item: { _type: "reference", _ref: itemId },
+				barcode: String(barcode).trim(),
+			})
+		)
+	);
 }
 
-/** Get item by qr_id or by barcode base (for product barcodes stored as base_uniqueId) or item_barcodes */
 export async function getItemByQrIdOrBase(barcode) {
 	const trimmed = String(barcode || "").trim();
 	if (!trimmed) return null;
-	const { data: exact } = await supabase
-		.from("items")
-		.select("*")
-		.eq("qr_id", trimmed)
-		.maybeSingle();
+
+	const exact = await getItemByQrId(trimmed);
 	if (exact) return exact;
-	const escaped = trimmed.replace(/\\/g, "\\\\").replace(/_/g, "\\_").replace(/%/g, "\\%");
-	const { data: prefix } = await supabase
-		.from("items")
-		.select("*")
-		.ilike("qr_id", escaped + "\\_%")
-		.limit(1);
-	if (prefix?.[0]) return prefix[0];
-	const { data: alt } = await supabase
-		.from("item_barcodes")
-		.select("item_id")
-		.eq("barcode", trimmed)
-		.maybeSingle();
-	if (alt) {
-		const { data: item } = await supabase.from("items").select("*").eq("id", alt.item_id).single();
-		return item;
-	}
+
+	const prefixDoc = await sanityClient.fetch(
+		`*[_type == "inventoryItem" && qrId match $pattern][0]`,
+		{ pattern: `${trimmed}_*` }
+	);
+	if (prefixDoc) return mapItem(prefixDoc);
+
+	const alt = await sanityClient.fetch(
+		`*[_type == "itemBarcode" && barcode == $barcode][0]{ "itemId": item._ref }`,
+		{ barcode: trimmed }
+	);
+	if (alt?.itemId) return getItemById(alt.itemId);
 	return null;
 }
 
 export async function updateItem(id, updates) {
-	const { data, error } = await supabase
-		.from("items")
-		.update({ ...updates, updated_at: new Date().toISOString() })
-		.eq("id", id)
-		.select()
-		.single();
-	if (error) throw error;
-	return data;
+	const patch = sanityClient.patch(id);
+	const sanityUpdates = itemToSanity(updates);
+	delete sanityUpdates._type;
+	Object.entries(sanityUpdates).forEach(([key, val]) => {
+		if (val !== undefined) patch.set({ [key]: val });
+	});
+	const doc = await patch.commit();
+	return mapItem(doc);
 }
 
-/**
- * Extract storage path from Supabase public URL.
- * URL format: .../storage/v1/object/public/item-photos/items/xxx.jpg
- */
-function getStoragePathFromUrl(photoUrl) {
-	if (!photoUrl || typeof photoUrl !== "string") return null;
-	const match = photoUrl.match(/\/item-photos\/(.+)$/);
-	return match ? match[1] : null;
-}
-
-/**
- * Delete item, its photo from storage, and related transactions (cascade).
- * Caller must ensure user is super_admin.
- */
 export async function deleteItem(id) {
-	const { data: item, error: fetchError } = await supabase
-		.from("items")
-		.select("id, photo_url")
-		.eq("id", id)
-		.maybeSingle();
-	if (fetchError) throw fetchError;
-	if (!item) throw new Error("Item not found");
-
-	const path = getStoragePathFromUrl(item.photo_url);
-	if (path) {
-		await supabase.storage.from("item-photos").remove([path]);
-	}
-
-	const { error } = await supabase.from("items").delete().eq("id", id);
-	if (error) throw error;
+	const txIds = await sanityClient.fetch(
+		`*[_type == "inventoryTransaction" && item._ref == $id]._id`,
+		{ id }
+	);
+	const barcodeIds = await sanityClient.fetch(
+		`*[_type == "itemBarcode" && item._ref == $id]._id`,
+		{ id }
+	);
+	await Promise.all([
+		...(txIds || []).map((tid) => sanityClient.delete(tid)),
+		...(barcodeIds || []).map((bid) => sanityClient.delete(bid)),
+		sanityClient.delete(id),
+	]);
 }
 
 export async function getTransactions(itemId) {
-	const { data, error } = await supabase
-		.from("item_transactions")
-		.select("*")
-		.eq("item_id", itemId)
-		.order("created_at", { ascending: false });
-	if (error) throw error;
-	return data || [];
+	const docs = await sanityClient.fetch(
+		`*[_type == "inventoryTransaction" && item._ref == $itemId] | order(createdAt desc)`,
+		{ itemId }
+	);
+	return (docs || []).map(mapTransaction);
 }
 
 export async function createTransaction(transaction) {
-	const { data, error } = await supabase
-		.from("item_transactions")
-		.insert([transaction])
-		.select()
-		.single();
-	if (error) throw error;
-	return data;
+	const doc = await sanityClient.create(transactionToSanity(transaction));
+	return mapTransaction(doc);
+}
+
+export async function getAllItems() {
+	const docs = await sanityClient.fetch(
+		`*[_type == "inventoryItem"] | order(_createdAt desc)`
+	);
+	return (docs || []).map(mapItem);
 }

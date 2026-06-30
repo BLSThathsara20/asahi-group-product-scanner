@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { checkSupabaseConnection } from '../services/healthService';
+import { checkSanityConnection } from '../services/healthService';
 import { Unavailable } from '../pages/Unavailable';
 
 export function ConnectionGuard({ children }) {
@@ -10,7 +10,7 @@ export function ConnectionGuard({ children }) {
     setConnected(null);
     setError('');
     try {
-      const result = await checkSupabaseConnection();
+      const result = await checkSanityConnection();
       setConnected(result.ok);
       setError(result.error || '');
     } catch (err) {

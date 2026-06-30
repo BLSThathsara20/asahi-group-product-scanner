@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { ProductImage, ImageUploadOverlay } from '../ui/ProductImage';
 import { VehicleModelSelect } from '../VehicleModelSelect';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
@@ -27,6 +28,17 @@ export function EditItemForm({ item, onSave, onCancel }) {
   const [uploading, setUploading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraError, setCameraError] = useState('');
+
+  const photoPreviewUrl = useMemo(
+    () => (form.photo ? URL.createObjectURL(form.photo) : null),
+    [form.photo]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    };
+  }, [photoPreviewUrl]);
 
   useEffect(() => {
     if (!item?.id) return;
@@ -225,22 +237,27 @@ export function EditItemForm({ item, onSave, onCancel }) {
         <label className="block text-sm font-medium text-slate-700 mb-2">Product Image</label>
         <p className="text-xs text-slate-500 mb-2">One image only. Add or replace.</p>
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-lg border border-slate-200 overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
+          <div className="relative w-20 h-20 rounded-lg border border-slate-200 overflow-hidden bg-slate-100 shrink-0">
             {form.photo ? (
-              <img
-                src={URL.createObjectURL(form.photo)}
+              <ProductImage
+                src={photoPreviewUrl}
                 alt="Preview"
-                className="w-full h-full object-cover"
+                className="w-full h-full"
+                iconClassName="w-8 h-8"
               />
             ) : item.photo_url ? (
-              <img
+              <ProductImage
                 src={item.photo_url}
                 alt={item.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
+                iconClassName="w-8 h-8"
               />
             ) : (
-              <NavIcon name="package" className="w-8 h-8 text-slate-400" />
+              <div className="w-full h-full flex items-center justify-center text-slate-400">
+                <NavIcon name="package" className="w-8 h-8" />
+              </div>
             )}
+            <ImageUploadOverlay show={uploading} />
           </div>
           <div className="flex gap-2">
             <Button

@@ -12,8 +12,9 @@ describe('HealthCheck', () => {
       timestamp: '2024-01-01T00:00:00.000Z',
       version: '1.0.0',
       checks: {
-        supabase: { ok: true, latencyMs: 50, error: null },
+        sanity: { ok: true, latencyMs: 50, error: null },
         auth: { ok: true, authenticated: false, error: null },
+        contentStats: { ok: true, data: { items: 1, transactions: 0, users: 1 } },
       },
     });
   });
@@ -31,9 +32,9 @@ describe('HealthCheck', () => {
     expect(await screen.findByText(/all systems operational/i)).toBeInTheDocument();
   });
 
-  it('displays Supabase check result', async () => {
+  it('displays Sanity check result', async () => {
     render(<HealthCheck />);
-    expect(await screen.findByText(/supabase/i)).toBeInTheDocument();
+    expect(await screen.findByText(/sanity/i)).toBeInTheDocument();
   });
 
   it('displays Auth check result', async () => {

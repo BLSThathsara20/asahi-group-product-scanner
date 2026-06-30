@@ -1,19 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkSupabaseConnection, runHealthCheck } from './healthService';
+import { checkSanityConnection, runHealthCheck } from './healthService';
 
-vi.mock('../lib/supabase', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        limit: vi.fn(() => Promise.resolve({ error: null })),
-      })),
-    })),
-    auth: {
-      getSession: vi.fn(() =>
-        Promise.resolve({ data: { session: null }, error: null })
-      ),
-    },
+vi.mock('../lib/sanity', () => ({
+  sanityClient: {
+    fetch: vi.fn(() => Promise.resolve(0)),
   },
+  isSanityConfigured: vi.fn(() => true),
+}));
+
+vi.mock('../lib/authStorage', () => ({
+  getStoredSession: vi.fn(() => null),
 }));
 
 describe('healthService', () => {
@@ -21,9 +17,9 @@ describe('healthService', () => {
     vi.clearAllMocks();
   });
 
-  describe('checkSupabaseConnection', () => {
+  describe('checkSanityConnection', () => {
     it('returns ok when connection succeeds', async () => {
-      const result = await checkSupabaseConnection();
+      const result = await checkSanityConnection();
       expect(result.ok).toBe(true);
       expect(result.latencyMs).toBeGreaterThanOrEqual(0);
     });
@@ -36,7 +32,7 @@ describe('healthService', () => {
       expect(result).toHaveProperty('timestamp');
       expect(result).toHaveProperty('version');
       expect(result).toHaveProperty('checks');
-      expect(result.checks).toHaveProperty('supabase');
+      expect(result.checks).toHaveProperty('sanity');
       expect(result.checks).toHaveProperty('auth');
     });
   });

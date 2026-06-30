@@ -1,132 +1,133 @@
-import { supabase } from '../lib/supabase';
+import bcrypt from "bcryptjs";
+import { sanityClient } from "../lib/sanity";
+import { mapUser, mapInvite } from "../lib/sanityMappers";
+import { getStoredSession } from "../lib/authStorage";
 
-export async function getProfiles() {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
+export async function hasSuperAdmin() {
+	const count = await sanityClient.fetch(
+		`count(*[_type == "appUser" && role == "super_admin"])`
+	);
+	return count > 0;
 }
 
-/** Returns { [id]: "full_name or email" } for display */
+export async function getProfiles() {
+	const docs = await sanityClient.fetch(
+		`*[_type == "appUser"] | order(_createdAt desc)`
+	);
+	return (docs || []).map(mapUser);
+}
+
 export async function getProfilesByIds(ids) {
-  const validIds = (ids || []).filter((id) => id != null && id !== '');
-  if (!validIds.length) return {};
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, email')
-    .in('id', validIds);
-  if (error) throw error;
-  const map = {};
-  (data || []).forEach((p) => {
-    map[p.id] = p.full_name?.trim() || p.email || 'Unknown';
-  });
-  return map;
+	const validIds = (ids || []).filter((id) => id != null && id !== "");
+	if (!validIds.length) return {};
+	const docs = await sanityClient.fetch(
+		`*[_type == "appUser" && _id in $ids]{ _id, fullName, email }`,
+		{ ids: validIds }
+	);
+	const map = {};
+	(docs || []).forEach((p) => {
+		map[p._id] = p.fullName?.trim() || p.email || "Unknown";
+	});
+	return map;
 }
 
 export async function updateProfileRole(id, role) {
-  const roleVal = role && String(role).trim();
-  if (!roleVal) throw new Error('Role is required');
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({ role: roleVal, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select('id');
-  if (error) throw error;
-  if (!data || data.length === 0) {
-    throw new Error('Role update failed. You may not have permission.');
-  }
-  return data[0];
+	const roleVal = role && String(role).trim();
+	if (!roleVal) throw new Error("Role is required");
+	await sanityClient.patch(id).set({ role: roleVal }).commit();
+	return { id };
 }
 
-const PROFILE_UPDATE_FIELDS = ['full_name', 'address', 'phone_number'];
+const PROFILE_UPDATE_FIELDS = {
+	full_name: "fullName",
+	address: "address",
+	phone_number: "phoneNumber",
+};
 
 export async function updateProfile(id, updates) {
-  const payload = { updated_at: new Date().toISOString() };
-  for (const key of PROFILE_UPDATE_FIELDS) {
-    if (key in updates) {
-      const val = updates[key];
-      payload[key] = val === '' || val === undefined ? null : String(val);
-    }
-  }
-  const { data, error } = await supabase
-    .from('profiles')
-    .update(payload)
-    .eq('id', id)
-    .select('id');
-  if (error) throw error;
-  if (!data || data.length === 0) {
-    throw new Error('Profile update failed. You may not have permission.');
-  }
-  return data[0];
+	const payload = {};
+	for (const [key, sanityKey] of Object.entries(PROFILE_UPDATE_FIELDS)) {
+		if (key in updates) {
+			const val = updates[key];
+			payload[sanityKey] = val === "" || val === undefined ? null : String(val);
+		}
+	}
+	if (Object.keys(payload).length === 0) return { id };
+	await sanityClient.patch(id).set(payload).commit();
+	return { id };
 }
 
 export async function deleteProfile(id) {
-  const { error } = await supabase.from('profiles').delete().eq('id', id);
-  if (error) throw error;
+	await sanityClient.delete(id);
 }
 
 export async function createInvite(email, role) {
-  const token = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-  const { error } = await supabase.from('user_invites').insert({
-    email,
-    role,
-    token,
-    created_by: (await supabase.auth.getUser()).data.user?.id,
-  });
-  if (error) throw error;
-  const baseUrl = window.location.origin;
-  return `${baseUrl}/invite?invite=${token}`;
+	const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+	const session = getStoredSession();
+	await sanityClient.create({
+		_type: "userInvite",
+		email: email.trim().toLowerCase(),
+		role,
+		token,
+		createdBy: session?.userId
+			? { _type: "reference", _ref: session.userId }
+			: undefined,
+	});
+	const baseUrl = window.location.origin;
+	return `${baseUrl}/invite?invite=${token}`;
 }
 
-/** Add user via activation link. Creates invite with temp password, returns activation URL. */
 export async function addUser(email, fullName, role, tempPassword) {
-  const token = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-  const { error } = await supabase.from('user_invites').insert({
-    email,
-    role,
-    token,
-    full_name: fullName || null,
-    temp_password: tempPassword,
-    created_by: (await supabase.auth.getUser()).data.user?.id,
-  });
-  if (error) throw error;
-  const base = typeof window !== 'undefined'
-    ? `${window.location.origin}${(import.meta.env?.BASE_URL || '').replace(/\/$/, '')}`
-    : '';
-  return { activationLink: `${base}/activate?token=${token}` };
+	const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+	const tempPasswordHash = await bcrypt.hash(tempPassword, 10);
+	const session = getStoredSession();
+	await sanityClient.create({
+		_type: "userInvite",
+		email: email.trim().toLowerCase(),
+		role,
+		token,
+		fullName: fullName || null,
+		tempPasswordHash,
+		createdBy: session?.userId
+			? { _type: "reference", _ref: session.userId }
+			: undefined,
+	});
+	const base =
+		typeof window !== "undefined"
+			? `${window.location.origin}${(import.meta.env?.BASE_URL || "").replace(/\/$/, "")}`
+			: "";
+	return { activationLink: `${base}/activate?token=${token}` };
 }
 
-/** Get pending invites (users who haven't activated yet) */
 export async function getPendingInvites() {
-  const { data, error } = await supabase
-    .from('user_invites')
-    .select('id, email, full_name, role, created_at, token')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
+	const docs = await sanityClient.fetch(
+		`*[_type == "userInvite"] | order(_createdAt desc)`
+	);
+	return (docs || []).map(mapInvite);
 }
 
-/** Delete a pending invite (user hasn't activated yet) */
 export async function deleteInvite(inviteId) {
-  const { error } = await supabase.from('user_invites').delete().eq('id', inviteId);
-  if (error) throw error;
+	await sanityClient.delete(inviteId);
 }
 
-/** Get invite by token (for activation page) */
 export async function getInviteByToken(token) {
-  const { data, error } = await supabase.rpc('get_invite_by_token', { t: token });
-  if (error) throw error;
-  return data?.[0] || null;
+	if (!token) return null;
+	const doc = await sanityClient.fetch(
+		`*[_type == "userInvite" && token == $token][0]`,
+		{ token }
+	);
+	return mapInvite(doc);
 }
 
-/** Verify temp password for activation */
 export async function verifyInviteTempPassword(token, tempPassword) {
-  const { data, error } = await supabase.rpc('verify_invite_temp_password', {
-    t: token,
-    pwd: tempPassword,
-  });
-  if (error) throw error;
-  return !!data;
+	const doc = await sanityClient.fetch(
+		`*[_type == "userInvite" && token == $token][0]{ tempPasswordHash }`,
+		{ token }
+	);
+	if (!doc?.tempPasswordHash) return false;
+	return bcrypt.compare(tempPassword, doc.tempPasswordHash);
+}
+
+export async function getInviteByTokenPublic(token) {
+	return getInviteByToken(token);
 }

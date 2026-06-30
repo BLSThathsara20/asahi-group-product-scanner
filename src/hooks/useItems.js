@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { getAllItems } from '../services/itemService';
 
 export function useItems() {
   const [items, setItems] = useState([]);
@@ -9,17 +9,15 @@ export function useItems() {
   const fetchItems = async () => {
     setLoading(true);
     setError(null);
-    const { data, err } = await supabase
-      .from('items')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (err) {
+    try {
+      const data = await getAllItems();
+      setItems(data || []);
+    } catch (err) {
       setError(err.message);
       setItems([]);
-    } else {
-      setItems(data || []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {

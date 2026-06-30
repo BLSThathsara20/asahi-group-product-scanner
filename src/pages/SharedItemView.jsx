@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { getItemById } from "../services/itemService";
 import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { ProductImage } from "../components/ui/ProductImage";
 import { NavIcon } from "../components/icons/NavIcons";
 
 export function SharedItemView() {
@@ -28,7 +29,16 @@ export function SharedItemView() {
 	if (loading) {
 		return (
 			<div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-				<div className="animate-pulse text-slate-400">Loading...</div>
+				<Card className="p-6 w-full max-w-lg">
+					<div className="flex flex-col sm:flex-row gap-6">
+						<div className="w-full sm:w-36 h-36 rounded-xl bg-slate-200 animate-pulse shrink-0" />
+						<div className="flex-1 space-y-4">
+							<div className="h-7 w-2/3 bg-slate-200 rounded animate-pulse" />
+							<div className="h-4 w-full bg-slate-100 rounded animate-pulse" />
+							<div className="h-24 w-full bg-slate-100 rounded-lg animate-pulse" />
+						</div>
+					</div>
+				</Card>
 			</div>
 		);
 	}
@@ -65,10 +75,11 @@ export function SharedItemView() {
 					<div className="flex flex-col sm:flex-row gap-6">
 						<div className="shrink-0">
 							{item.photo_url ? (
-								<img
+								<ProductImage
 									src={item.photo_url}
 									alt={item.name}
-									className="w-full sm:w-36 h-36 rounded-xl object-cover"
+									className="w-full sm:w-36 h-36 rounded-xl"
+									iconClassName="w-16 h-16"
 								/>
 							) : (
 								<div className="w-full sm:w-36 h-36 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400">

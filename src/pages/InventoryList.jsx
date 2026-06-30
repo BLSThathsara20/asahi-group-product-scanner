@@ -10,6 +10,7 @@ import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Pagination } from '../components/ui/Pagination';
+import { ProductImage } from '../components/ui/ProductImage';
 import { CheckOutForm, CheckInForm, EditItemForm } from '../components/Inventory';
 import { Modal } from '../components/ui/Modal';
 import { NavIcon } from '../components/icons/NavIcons';
@@ -200,7 +201,7 @@ export function InventoryList() {
     return (
       <Card className="p-6">
         <p className="text-red-600">Error: {error}</p>
-        <p className="text-sm text-slate-500 mt-2">Check SUPABASE_SETUP.md for connection guide.</p>
+        <p className="text-sm text-slate-500 mt-2">Check SANITY_SETUP.md for connection guide.</p>
       </Card>
     );
   }
@@ -305,9 +306,14 @@ export function InventoryList() {
                   <td className="px-4 py-2.5">
                     <Link to={`/inventory/${item.id}`} className="flex items-center gap-2.5">
                       {item.photo_url ? (
-                        <img src={item.photo_url} alt="" className="w-8 h-8 rounded object-cover" />
+                        <ProductImage
+                          src={item.photo_url}
+                          alt=""
+                          className="w-8 h-8 rounded shrink-0"
+                          iconClassName="w-4 h-4"
+                        />
                       ) : (
-                        <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400">
+                        <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
                           <NavIcon name="package" className="w-4 h-4" />
                         </div>
                       )}

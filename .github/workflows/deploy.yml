@@ -32,8 +32,10 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SANITY_PROJECT_ID: ${{ secrets.VITE_SANITY_PROJECT_ID }}
+          VITE_SANITY_DATASET: ${{ secrets.VITE_SANITY_DATASET }}
+          VITE_SANITY_TOKEN: ${{ secrets.VITE_SANITY_TOKEN }}
+          VITE_IMGBB_API_KEY: ${{ secrets.VITE_IMGBB_API_KEY }}
 
       - name: Fix SPA routing (404.html)
         run: cp dist/index.html dist/404.html

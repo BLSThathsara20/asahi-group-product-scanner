@@ -1,58 +1,61 @@
-import { supabase } from '../lib/supabase';
+import { sanityClient } from "../lib/sanity";
+import { mapCategory } from "../lib/sanityMappers";
 
 export async function getCategories() {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('sort_order', { ascending: true })
-    .order('name', { ascending: true });
-  if (error) throw error;
-  return data || [];
+	const docs = await sanityClient.fetch(
+		`*[_type == "category"] | order(sortOrder asc, name asc)`
+	);
+	return (docs || []).map(mapCategory);
 }
 
-/** Build flat list with display labels: "Parent" or "Parent > Child" */
 export function buildCategoryOptions(categories) {
-  const byParent = {};
-  (categories || []).forEach((c) => {
-    const pid = c.parent_id ?? 'root';
-    if (!byParent[pid]) byParent[pid] = [];
-    byParent[pid].push(c);
-  });
-  const options = [];
-  (byParent['root'] || []).forEach((p) => {
-    options.push({ value: p.name, label: p.name, id: p.id });
-    (byParent[p.id] || []).forEach((c) => {
-      options.push({ value: `${p.name} > ${c.name}`, label: `${p.name} > ${c.name}`, id: c.id });
-    });
-  });
-  return options;
+	const byParent = {};
+	(categories || []).forEach((c) => {
+		const pid = c.parent_id ?? "root";
+		if (!byParent[pid]) byParent[pid] = [];
+		byParent[pid].push(c);
+	});
+	const options = [];
+	(byParent["root"] || []).forEach((p) => {
+		options.push({ value: p.name, label: p.name, id: p.id });
+		(byParent[p.id] || []).forEach((c) => {
+			options.push({
+				value: `${p.name} > ${c.name}`,
+				label: `${p.name} > ${c.name}`,
+				id: c.id,
+			});
+		});
+	});
+	return options;
 }
 
 export async function createCategory(name, parentId = null) {
-  const { data, error } = await supabase
-    .from('categories')
-    .insert({ name: name.trim(), parent_id: parentId })
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+	const doc = await sanityClient.create({
+		_type: "category",
+		name: name.trim(),
+		parent: parentId
+			? { _type: "reference", _ref: parentId }
+			: undefined,
+		sortOrder: 0,
+	});
+	return mapCategory(doc);
 }
 
 export async function updateCategory(id, updates) {
-  const payload = { ...updates };
-  if ('name' in updates) payload.name = (updates.name || '').trim();
-  if ('parent_id' in updates) payload.parent_id = updates.parent_id || null;
-  const { data, error } = await supabase
-    .from('categories')
-    .update(payload)
-    .eq('id', id)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+	const patch = sanityClient.patch(id);
+	if ("name" in updates) patch.set({ name: (updates.name || "").trim() });
+	if ("parent_id" in updates) {
+		patch.set({
+			parent: updates.parent_id
+				? { _type: "reference", _ref: updates.parent_id }
+				: null,
+		});
+	}
+	if ("sort_order" in updates) patch.set({ sortOrder: updates.sort_order ?? 0 });
+	const doc = await patch.commit();
+	return mapCategory(doc);
 }
 
 export async function deleteCategory(id) {
-  const { error } = await supabase.from('categories').delete().eq('id', id);
-  if (error) throw error;
+	await sanityClient.delete(id);
 }

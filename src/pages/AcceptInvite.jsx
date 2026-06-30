@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { supabase } from '../lib/supabase';
+import { getInviteByTokenPublic } from '../services/userService';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -25,15 +25,10 @@ export function AcceptInvite() {
       setChecking(false);
       return;
     }
-    supabase
-      .from('user_invites')
-      .select('*')
-      .eq('token', token)
-      .single()
-      .then(({ data }) => {
-        setInvite(data);
-        setChecking(false);
-      });
+    getInviteByTokenPublic(token)
+      .then(setInvite)
+      .catch(() => setInvite(null))
+      .finally(() => setChecking(false));
   }, [token]);
 
   const handleSubmit = async (e) => {
@@ -41,7 +36,7 @@ export function AcceptInvite() {
     if (!invite) return;
     setLoading(true);
     try {
-      await signUp(invite.email, password, '', { invite_token: token }); // 4th arg = extra metadata
+      await signUp(invite.email, password, '', { invite_token: token });
       success('Account created! You can now sign in.');
       navigate('/login');
     } catch (err) {

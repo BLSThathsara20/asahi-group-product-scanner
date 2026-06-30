@@ -58,17 +58,17 @@ export function HealthCheck() {
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50">
             <div>
-              <p className="font-medium text-slate-800">Supabase</p>
+              <p className="font-medium text-slate-800">Sanity</p>
               <p className="text-sm text-slate-500">
-                {checks.supabase.ok
-                  ? `Connected (${checks.supabase.latencyMs}ms)`
-                  : checks.supabase.error}
+                {checks.sanity.ok
+                  ? `Connected (${checks.sanity.latencyMs}ms)`
+                  : checks.sanity.error}
               </p>
             </div>
             <span
-              className={`${checks.supabase.ok ? 'text-emerald-500' : 'text-red-500'}`}
+              className={`${checks.sanity.ok ? 'text-emerald-500' : 'text-red-500'}`}
             >
-              {checks.supabase.ok ? (
+              {checks.sanity.ok ? (
                 <Check className="w-6 h-6" strokeWidth={2} />
               ) : (
                 <X className="w-6 h-6" strokeWidth={2} />
@@ -100,23 +100,17 @@ export function HealthCheck() {
 
           <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50">
             <div>
-              <p className="font-medium text-slate-800">Database Storage</p>
+              <p className="font-medium text-slate-800">Content</p>
               <p className="text-sm text-slate-500">
-                {checks.dbStats?.ok && checks.dbStats?.data
-                  ? (() => {
-                      const d = checks.dbStats.data;
-                      const usedMb = (d.db_size_bytes / (1024 * 1024)).toFixed(2);
-                      const limitMb = d.free_tier_limit_mb ?? 500;
-                      const pct = Math.min(100, (d.db_size_bytes / (limitMb * 1024 * 1024)) * 100).toFixed(1);
-                      return `${d.db_size_pretty} used of ${limitMb} MB limit (${pct}%)`;
-                    })()
-                  : checks.dbStats?.error ?? '—'}
+                {checks.contentStats?.ok && checks.contentStats?.data
+                  ? `${checks.contentStats.data.items ?? 0} items · ${checks.contentStats.data.transactions ?? 0} transactions · ${checks.contentStats.data.users ?? 0} users`
+                  : checks.contentStats?.error ?? '—'}
               </p>
             </div>
             <span
-              className={`${checks.dbStats?.ok ? 'text-emerald-500' : 'text-amber-500'}`}
+              className={`${checks.contentStats?.ok ? 'text-emerald-500' : 'text-amber-500'}`}
             >
-              {checks.dbStats?.ok ? (
+              {checks.contentStats?.ok ? (
                 <Check className="w-6 h-6" strokeWidth={2} />
               ) : (
                 <X className="w-6 h-6" strokeWidth={2} />

@@ -16,6 +16,7 @@ import { Card } from "../components/ui/Card";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { ProductImage } from "../components/ui/ProductImage";
 import { QRCodeDisplay, BarcodeDisplay } from "../components/QR";
 import { NavIcon } from "../components/icons/NavIcons";
 import { CheckOutForm, CheckInForm, EditItemForm } from "../components/Inventory";
@@ -179,8 +180,19 @@ export function ItemDetail() {
 
 	if (loading) {
 		return (
-			<div className="flex items-center justify-center h-64">
-				<div className="animate-pulse text-slate-400">Loading...</div>
+			<div className="space-y-6">
+				<div className="h-5 w-24 bg-slate-200 rounded animate-pulse" />
+				<Card className="p-6">
+					<div className="flex flex-col sm:flex-row gap-6">
+						<div className="w-full sm:w-36 h-36 rounded-xl bg-slate-200 animate-pulse shrink-0" />
+						<div className="flex-1 space-y-4">
+							<div className="h-8 w-2/3 max-w-xs bg-slate-200 rounded animate-pulse" />
+							<div className="h-4 w-full bg-slate-100 rounded animate-pulse" />
+							<div className="h-4 w-4/5 bg-slate-100 rounded animate-pulse" />
+							<div className="h-32 w-full bg-slate-100 rounded-lg animate-pulse" />
+						</div>
+					</div>
+				</Card>
 			</div>
 		);
 	}
@@ -257,10 +269,11 @@ export function ItemDetail() {
 					<div className="shrink-0 relative">
 						{item.photo_url ? (
 							<>
-								<img
+								<ProductImage
 									src={item.photo_url}
 									alt={item.name}
-									className="w-full sm:w-36 h-36 rounded-xl object-cover"
+									className="w-full sm:w-36 h-36 rounded-xl"
+									iconClassName="w-16 h-16"
 								/>
 								<button
 									type="button"
@@ -422,12 +435,15 @@ export function ItemDetail() {
 					>
 						<NavIcon name="close" className="w-6 h-6" />
 					</button>
-					<img
-						src={item.photo_url}
-						alt={item.name}
-						className="max-w-full max-h-full object-contain"
-						onClick={(e) => e.stopPropagation()}
-					/>
+					<div onClick={(e) => e.stopPropagation()}>
+						<ProductImage
+							src={item.photo_url}
+							alt={item.name}
+							className="min-w-[200px] min-h-[200px] max-w-[90vw] max-h-[85vh] flex items-center justify-center"
+							imgClassName="max-w-full max-h-[85vh] w-auto h-auto object-contain"
+							iconClassName="w-16 h-16"
+						/>
+					</div>
 				</div>
 			)}
 
