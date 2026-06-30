@@ -2,6 +2,23 @@ import { useState, useEffect } from 'react';
 import { Check, X } from 'lucide-react';
 import { runHealthCheck } from '../services/healthService';
 import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { PageContainer, PageHeader, PageSkeleton } from '../components/ui/PageLayout';
+
+function CheckRow({ title, detail, ok, warn }) {
+  const iconClass = ok ? 'text-emerald-500' : warn ? 'text-amber-500' : 'text-red-500';
+  return (
+    <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-slate-50/80">
+      <div className="min-w-0">
+        <p className="font-medium text-slate-800">{title}</p>
+        <p className="text-sm text-slate-500 mt-0.5">{detail}</p>
+      </div>
+      <span className={iconClass}>
+        {ok ? <Check className="w-5 h-5" strokeWidth={2} /> : <X className="w-5 h-5" strokeWidth={2} />}
+      </span>
+    </div>
+  );
+}
 
 export function HealthCheck() {
   const [result, setResult] = useState(null);
@@ -17,108 +34,65 @@ export function HealthCheck() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-slate-400">Running health checks...</div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   const { healthy, timestamp, version, checks } = result;
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-800">Health Check</h2>
-        <button
-          onClick={refresh}
-          className="text-sm text-asahi font-medium hover:underline"
-        >
-          Refresh
-        </button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Health check"
+        subtitle="System status and connectivity"
+        action={
+          <Button variant="outline" className="text-sm" onClick={refresh}>
+            Refresh
+          </Button>
+        }
+      />
 
-      <Card className="p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <div
-            className={`w-4 h-4 rounded-full ${
-              healthy ? 'bg-emerald-500' : 'bg-red-500'
-            }`}
-          />
+      <Card className="p-5 sm:p-6">
+        <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-100">
+          <div className={`w-3 h-3 rounded-full shrink-0 ${healthy ? 'bg-emerald-500' : 'bg-red-500'}`} />
           <div>
             <p className="font-semibold text-slate-800">
               {healthy ? 'All systems operational' : 'Issues detected'}
             </p>
-            <p className="text-sm text-slate-500">
-              {timestamp} • v{version}
-            </p>
+            <p className="text-xs text-slate-500 mt-0.5">{timestamp} · v{version}</p>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50">
-            <div>
-              <p className="font-medium text-slate-800">Sanity</p>
-              <p className="text-sm text-slate-500">
-                {checks.sanity.ok
-                  ? `Connected (${checks.sanity.latencyMs}ms)`
-                  : checks.sanity.error}
-              </p>
-            </div>
-            <span
-              className={`${checks.sanity.ok ? 'text-emerald-500' : 'text-red-500'}`}
-            >
-              {checks.sanity.ok ? (
-                <Check className="w-6 h-6" strokeWidth={2} />
-              ) : (
-                <X className="w-6 h-6" strokeWidth={2} />
-              )}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50">
-            <div>
-              <p className="font-medium text-slate-800">Auth</p>
-              <p className="text-sm text-slate-500">
-                {checks.auth.ok
-                  ? checks.auth.authenticated
-                    ? 'Session active'
-                    : 'No session'
-                  : checks.auth.error}
-              </p>
-            </div>
-            <span
-              className={`${checks.auth.ok ? 'text-emerald-500' : 'text-red-500'}`}
-            >
-              {checks.auth.ok ? (
-                <Check className="w-6 h-6" strokeWidth={2} />
-              ) : (
-                <X className="w-6 h-6" strokeWidth={2} />
-              )}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50">
-            <div>
-              <p className="font-medium text-slate-800">Content</p>
-              <p className="text-sm text-slate-500">
-                {checks.contentStats?.ok && checks.contentStats?.data
-                  ? `${checks.contentStats.data.items ?? 0} items · ${checks.contentStats.data.transactions ?? 0} transactions · ${checks.contentStats.data.users ?? 0} users`
-                  : checks.contentStats?.error ?? '—'}
-              </p>
-            </div>
-            <span
-              className={`${checks.contentStats?.ok ? 'text-emerald-500' : 'text-amber-500'}`}
-            >
-              {checks.contentStats?.ok ? (
-                <Check className="w-6 h-6" strokeWidth={2} />
-              ) : (
-                <X className="w-6 h-6" strokeWidth={2} />
-              )}
-            </span>
-          </div>
+        <div className="space-y-3">
+          <CheckRow
+            title="Sanity"
+            detail={
+              checks.sanity.ok
+                ? `Connected (${checks.sanity.latencyMs}ms)`
+                : checks.sanity.error
+            }
+            ok={checks.sanity.ok}
+          />
+          <CheckRow
+            title="Auth"
+            detail={
+              checks.auth.ok
+                ? checks.auth.authenticated ? 'Session active' : 'No session'
+                : checks.auth.error
+            }
+            ok={checks.auth.ok}
+          />
+          <CheckRow
+            title="Content"
+            detail={
+              checks.contentStats?.ok && checks.contentStats?.data
+                ? `${checks.contentStats.data.items ?? 0} items · ${checks.contentStats.data.transactions ?? 0} transactions · ${checks.contentStats.data.users ?? 0} users`
+                : checks.contentStats?.error ?? '—'
+            }
+            ok={checks.contentStats?.ok}
+            warn={!checks.contentStats?.ok}
+          />
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

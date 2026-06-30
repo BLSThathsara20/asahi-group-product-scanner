@@ -4,6 +4,15 @@ import { useItems } from '../hooks/useItems';
 import { getTransactionsWithItems } from '../services/analyticsService';
 import { Card } from '../components/ui/Card';
 import { Pagination } from '../components/ui/Pagination';
+import {
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+  StatBlock,
+  SegmentPills,
+  filterInputClass,
+  filterSelectClass,
+} from '../components/ui/PageLayout';
 
 function formatDate(d) {
   if (!d) return '—';
@@ -119,84 +128,55 @@ export function Analytics() {
   }, [filtered]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-slate-400">Loading analytics...</div>
-      </div>
-    );
+    return <PageSkeleton variant="table" />;
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-800">Analytics</h2>
-      <p className="text-sm text-slate-500">
-        View checkouts, check-ins, and filter by date, product, or category.
-      </p>
+    <PageContainer width="wide">
+      <PageHeader
+        title="Analytics"
+        subtitle="Checkouts, check-ins, and transaction history"
+      />
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-xs font-medium text-slate-500 uppercase">Checkouts</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{stats.checkouts}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{stats.totalOutQty} items</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium text-slate-500 uppercase">Check-ins</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{stats.checkins}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{stats.totalInQty} items</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium text-slate-500 uppercase">Total transactions</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{filtered.length}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium text-slate-500 uppercase">Items in stock</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{items?.length ?? 0}</p>
-        </Card>
-      </div>
+      <Card className="p-5 sm:p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+          <StatBlock label="Checkouts" value={stats.checkouts} tone="warn" />
+          <StatBlock label="Check-ins" value={stats.checkins} tone="success" />
+          <StatBlock label="Transactions" value={filtered.length} />
+          <StatBlock label="Items" value={items?.length ?? 0} />
+        </div>
+        <p className="text-xs text-slate-400 mt-3">
+          {stats.totalOutQty} checked out · {stats.totalInQty} checked in (qty)
+        </p>
+      </Card>
 
-      {/* Filters */}
-      <Card className="p-4">
-        <h3 className="font-semibold text-slate-800 mb-4">Filters</h3>
-        <div className="flex flex-wrap gap-4">
+      <Card className="p-5 sm:p-6">
+        <p className="text-sm font-medium text-slate-600 mb-4">Filters</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-3">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">From date</label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            />
+            <label className="block text-xs text-slate-500 mb-1">From</label>
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={filterSelectClass} />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">To date</label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            />
+            <label className="block text-xs text-slate-500 mb-1">To</label>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={filterSelectClass} />
           </div>
           <div>
             <label className="block text-xs text-slate-500 mb-1">Type</label>
-            <select
+            <SegmentPills
+              options={[
+                { id: 'all', label: 'All' },
+                { id: 'out', label: 'Out' },
+                { id: 'in', label: 'In' },
+              ]}
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            >
-              <option value="all">All</option>
-              <option value="out">Checkout only</option>
-              <option value="in">Check-in only</option>
-            </select>
+              onChange={setTypeFilter}
+            />
           </div>
           <div>
             <label className="block text-xs text-slate-500 mb-1">Category</label>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm min-w-[140px]"
-            >
-              <option value="">All categories</option>
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={`${filterSelectClass} min-w-[140px]`}>
+              <option value="">All</option>
               {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -208,8 +188,8 @@ export function Analytics() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Product, purpose, recipient..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              placeholder="Product, purpose, recipient…"
+              className={filterInputClass}
             />
           </div>
         </div>
@@ -217,9 +197,11 @@ export function Analytics() {
 
       {/* Checkouts by day */}
       {checkoutByDay.length > 0 && (
-        <Card className="p-4 overflow-hidden">
-          <h3 className="font-semibold text-slate-800 mb-4">Checkouts by day ({checkoutByDay.length} days)</h3>
-          <div className="space-y-4">
+        <Card className="overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100">
+            <h3 className="text-sm font-medium text-slate-600">Checkouts by day</h3>
+          </div>
+          <div className="p-5 sm:p-6 space-y-4">
             {paginatedDays.map(({ date, transactions: txs }) => (
               <div key={date} className="border-b border-slate-100 last:border-0 pb-4 last:pb-0">
                 <p className="font-medium text-slate-700 mb-2">{formatDate(date)}</p>
@@ -266,10 +248,10 @@ export function Analytics() {
       )}
 
       {/* Transaction list */}
-      <Card className="p-4 overflow-hidden">
-        <h3 className="font-semibold text-slate-800 mb-4">
-          All transactions ({filtered.length})
-        </h3>
+      <Card className="overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h3 className="text-sm font-medium text-slate-600">All transactions ({filtered.length})</h3>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -327,6 +309,6 @@ export function Analytics() {
           onPageSizeChange={(s) => { setTxPageSize(s); setTxPage(1); }}
         />
       </Card>
-    </div>
+    </PageContainer>
   );
 }

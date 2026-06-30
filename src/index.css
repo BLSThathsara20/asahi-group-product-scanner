@@ -25,3 +25,81 @@ body {
 .safe-area-pt {
   padding-top: env(safe-area-inset-top, 0);
 }
+
+/* A4 label sheets */
+.a4-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 8mm;
+  box-sizing: border-box;
+}
+
+.a4-sheet-grid {
+  display: grid;
+  width: 100%;
+  height: calc(297mm - 16mm);
+  gap: 0;
+}
+
+.print-label-preview .a4-sheet {
+  max-width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .print-label-preview .a4-sheet {
+    width: 100%;
+    min-height: auto;
+    padding: 4mm;
+  }
+
+  .print-label-preview .a4-sheet-grid {
+    height: auto;
+    min-height: 240mm;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .no-print,
+  header,
+  nav,
+  aside,
+  footer,
+  .safe-area-pb {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  #print-labels-root {
+    display: block !important;
+  }
+
+  #print-labels-root .a4-sheet {
+    page-break-after: always;
+    break-after: page;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  #print-labels-root .a4-sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .label-cell {
+    border-color: #ccc !important;
+  }
+}

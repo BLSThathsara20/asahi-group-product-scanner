@@ -34,8 +34,9 @@ export function ScanQR() {
   }, [searchParams, navigate, openScanModal]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
-      <div className="animate-pulse text-slate-500">Opening...</div>
+    <div className="flex flex-col items-center justify-center min-h-[200px] gap-3">
+      <div className="w-8 h-8 border-2 border-slate-200 border-t-asahi rounded-full animate-spin" />
+      <p className="text-sm text-slate-500">Opening scanner…</p>
     </div>
   );
 }

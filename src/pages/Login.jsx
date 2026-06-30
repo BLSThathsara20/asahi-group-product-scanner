@@ -41,13 +41,11 @@ export function Login() {
         err?.status === 400 &&
         (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials'));
       if (isRateLimit) {
-        error('429 Too Many Requests — Please wait a few minutes and try again.');
+        error('Too many attempts. Please wait a few minutes and try again.');
       } else if (isEmailNotConfirmed) {
-        error(
-          '400 Bad Request — Email not confirmed. Check your inbox or disable "Confirm email" in Supabase Dashboard → Authentication → Providers → Email.'
-        );
+        error('Email not confirmed. Check your inbox or contact your admin.');
       } else if (isInvalidCreds) {
-        error('400 Bad Request — Unauthorized. No account? Create first admin to get started.');
+        error('Invalid email or password.');
       } else {
         error(msg || 'Sign in failed.');
       }
@@ -57,44 +55,45 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <Logo className="h-16 mx-auto object-contain" fallbackText="AsahiGroup" />
+            <Logo className="h-14 mx-auto object-contain" fallbackText="AsahiGroup" />
+            <h1 className="text-2xl font-semibold text-slate-800 tracking-tight mt-6">Sign in</h1>
+            <p className="text-sm text-slate-500 mt-1">Spare parts inventory</p>
           </div>
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-slate-800 mb-6">Sign in</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
-            </Button>
-          </form>
-          {showSetupLink && (
-            <p className="mt-4 text-center text-sm text-slate-500">
-              No account?{' '}
-              <Link to="/setup" className="text-asahi font-medium">
-                Create first admin
-              </Link>
-            </p>
-          )}
-        </Card>
+          <Card className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+              <Input
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Signing in…' : 'Sign in'}
+              </Button>
+            </form>
+            {showSetupLink && (
+              <p className="mt-4 text-center text-sm text-slate-500">
+                No account?{' '}
+                <Link to="/setup" className="text-asahi font-medium hover:underline">
+                  Create first admin
+                </Link>
+              </p>
+            )}
+          </Card>
         </div>
       </div>
       <Footer />

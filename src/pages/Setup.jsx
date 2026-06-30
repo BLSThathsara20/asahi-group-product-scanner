@@ -8,6 +8,7 @@ import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { Logo } from '../components/Layout/Logo';
 import { Footer } from '../components/Layout/Footer';
+import { PageSkeleton } from '../components/ui/PageLayout';
 
 export function Setup() {
   const [email, setEmail] = useState('blsthathsara@gmail.com');
@@ -46,7 +47,7 @@ export function Setup() {
         msg.toLowerCase().includes('email rate limit') ||
         err?.error === 'over_email_send_rate_limit';
       if (isRateLimit) {
-        error('429 Too Many Requests — Too many signup attempts. Please wait 10–15 minutes and try again.');
+        error('Too many signup attempts. Please wait and try again.');
       } else {
         error(msg);
       }
@@ -58,19 +59,19 @@ export function Setup() {
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
-        <div className="animate-pulse text-slate-400">Loading...</div>
+        <PageSkeleton />
       </div>
     );
   }
 
   if (hasUsers) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
+      <div className="min-h-screen flex flex-col bg-slate-50">
+        <div className="flex-1 flex items-center justify-center p-4">
           <Card className="p-6 max-w-md text-center">
             <p className="text-slate-600">An admin already exists.</p>
             <Link to="/login">
-              <Button className="mt-4">Go to Login</Button>
+              <Button className="mt-4">Go to sign in</Button>
             </Link>
           </Card>
         </div>
@@ -80,47 +81,28 @@ export function Setup() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Logo className="h-16 mx-auto object-contain" fallbackText="AsahiGroup" />
-          <p className="text-slate-500 mt-2">Create Super Admin</p>
-        </div>
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-slate-800 mb-6">First-time setup</h2>
-          <p className="text-sm text-slate-500 mb-6">
-            Create the first account. This user will be the super admin.
-          </p>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <Input
-              label="Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Optional"
-            />
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Super Admin'}
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-slate-500">
-            Already have an account? <Link to="/login" className="text-asahi font-medium">Sign in</Link>
-          </p>
-        </Card>
+          <div className="text-center mb-8">
+            <Logo className="h-14 mx-auto object-contain" fallbackText="AsahiGroup" />
+            <h1 className="text-2xl font-semibold text-slate-800 tracking-tight mt-6">First-time setup</h1>
+            <p className="text-sm text-slate-500 mt-1">Create the super admin account</p>
+          </div>
+          <Card className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Optional" />
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Creating…' : 'Create super admin'}
+              </Button>
+            </form>
+            <p className="mt-4 text-center text-sm text-slate-500">
+              Already have an account?{' '}
+              <Link to="/login" className="text-asahi font-medium hover:underline">Sign in</Link>
+            </p>
+          </Card>
         </div>
       </div>
       <Footer />

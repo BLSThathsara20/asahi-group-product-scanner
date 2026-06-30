@@ -8,6 +8,7 @@ import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { Logo } from '../components/Layout/Logo';
 import { Footer } from '../components/Layout/Footer';
+import { PageSkeleton } from '../components/ui/PageLayout';
 
 export function AcceptInvite() {
   const [searchParams] = useSearchParams();
@@ -49,7 +50,7 @@ export function AcceptInvite() {
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
-        <div className="animate-pulse text-slate-400">Loading...</div>
+        <PageSkeleton />
       </div>
     );
   }
@@ -60,7 +61,7 @@ export function AcceptInvite() {
         <Card className="p-6 max-w-md text-center">
           <p className="text-slate-600">Invalid or expired invite link.</p>
           <Link to="/login">
-            <Button className="mt-4">Go to Login</Button>
+            <Button className="mt-4">Go to sign in</Button>
           </Link>
         </Card>
       </div>
@@ -68,32 +69,31 @@ export function AcceptInvite() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <Logo className="h-16 mx-auto object-contain" fallbackText="AsahiGroup" />
-            <p className="text-slate-500 mt-2">Accept Invitation</p>
+            <Logo className="h-14 mx-auto object-contain" fallbackText="AsahiGroup" />
+            <h1 className="text-2xl font-semibold text-slate-800 tracking-tight mt-6">Accept invitation</h1>
+            <p className="text-sm text-slate-500 mt-1">Invited as {invite.role}</p>
           </div>
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-slate-800 mb-6">Create your account</h2>
-          <p className="text-sm text-slate-500 mb-4">You've been invited as {invite.role}.</p>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Email" value={invite.email} disabled />
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Choose a password"
-              required
-              minLength={6}
-            />
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Account'}
-            </Button>
-          </form>
-        </Card>
+          <Card className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input label="Email" value={invite.email} disabled />
+              <Input
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Choose a password"
+                required
+                minLength={6}
+              />
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Creating…' : 'Create account'}
+              </Button>
+            </form>
+          </Card>
         </div>
       </div>
       <Footer />

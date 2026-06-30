@@ -11,6 +11,14 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Pagination } from '../components/ui/Pagination';
 import { ProductImage } from '../components/ui/ProductImage';
+import {
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+  EmptyState,
+  filterInputClass,
+  filterSelectClass,
+} from '../components/ui/PageLayout';
 import { CheckOutForm, CheckInForm, EditItemForm } from '../components/Inventory';
 import { Modal } from '../components/ui/Modal';
 import { NavIcon } from '../components/icons/NavIcons';
@@ -190,103 +198,82 @@ export function InventoryList() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-slate-400">Loading...</div>
-      </div>
-    );
+    return <PageSkeleton variant="table" />;
   }
 
   if (error) {
     return (
-      <Card className="p-6">
-        <p className="text-red-600">Error: {error}</p>
-        <p className="text-sm text-slate-500 mt-2">Check SANITY_SETUP.md for connection guide.</p>
-      </Card>
+      <PageContainer width="wide">
+        <Card className="p-6">
+          <p className="text-red-600 font-medium">Could not load spare parts</p>
+          <p className="text-sm text-slate-500 mt-2">{error}</p>
+        </Card>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-xl font-semibold text-slate-800">Spare Parts</h2>
-        <Link to="/inventory/add">
-          <Button className="text-sm py-1.5 px-3">+ Add</Button>
-        </Link>
-      </div>
+    <PageContainer width="wide">
+      <PageHeader
+        title="Spare parts"
+        subtitle={`${items.length} item${items.length !== 1 ? 's' : ''} in inventory`}
+        action={
+          <Link to="/inventory/add">
+            <Button className="text-sm">+ Add part</Button>
+          </Link>
+        }
+      />
 
-      {/* Minimal filter bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-0 px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-asahi/40 focus:border-asahi/50 outline-none"
-        />
-        <div className="flex flex-wrap gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-asahi/40 outline-none"
-          >
-            <option value="all">Status</option>
-            <option value="in_stock">In Stock</option>
-            <option value="out">Out</option>
-            <option value="reserved">Reserved</option>
-          </select>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-asahi/40 outline-none min-w-[120px]"
-          >
-            <option value="all">Category</option>
-            {categoryOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <select
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-asahi/40 outline-none min-w-[120px]"
-          >
-            <option value="">Location</option>
-            <optgroup label="Rack">
-              {STORE_LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>{loc}</option>
+      <Card className="p-4">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Search name, code, category..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={filterInputClass}
+          />
+          <div className="flex flex-wrap gap-2">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
+              <option value="all">All statuses</option>
+              <option value="in_stock">In stock</option>
+              <option value="out">Out</option>
+              <option value="reserved">Reserved</option>
+            </select>
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={`${filterSelectClass} min-w-[120px]`}>
+              <option value="all">All categories</option>
+              {categoryOptions.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
               ))}
-            </optgroup>
-            {customLocations.length > 0 && (
-              <optgroup label="Other">
-                {customLocations.map((loc) => (
+            </select>
+            <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} className={`${filterSelectClass} min-w-[120px]`}>
+              <option value="">All locations</option>
+              <optgroup label="Rack">
+                {STORE_LOCATIONS.map((loc) => (
                   <option key={loc} value={loc}>{loc}</option>
                 ))}
               </optgroup>
-            )}
-          </select>
-          <div className="flex gap-1 ml-auto sm:ml-0">
-            <button
-              type="button"
-              onClick={handleExportPDF}
-              disabled={exporting || filtered.length === 0}
-              className="px-3 py-2 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
-            >
-              {exporting === 'pdf' ? '...' : 'PDF'}
-            </button>
-            <button
-              type="button"
-              onClick={handleExportExcel}
-              disabled={exporting || filtered.length === 0}
-              className="px-3 py-2 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
-            >
-              {exporting === 'excel' ? '...' : 'Excel'}
-            </button>
+              {customLocations.length > 0 && (
+                <optgroup label="Other">
+                  {customLocations.map((loc) => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+            <div className="flex gap-1 ml-auto">
+              <button type="button" onClick={handleExportPDF} disabled={exporting || filtered.length === 0} className="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50">
+                {exporting === 'pdf' ? 'Exporting…' : 'PDF'}
+              </button>
+              <button type="button" onClick={handleExportExcel} disabled={exporting || filtered.length === 0} className="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50">
+                {exporting === 'excel' ? 'Exporting…' : 'Excel'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Minimal table */}
-      <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+      <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -362,7 +349,16 @@ export function InventoryList() {
           </table>
         </div>
         {filtered.length === 0 && (
-          <div className="py-16 text-center text-slate-400 text-sm">No items found</div>
+          <EmptyState
+            icon="inventory"
+            title="No items found"
+            description={search || statusFilter !== 'all' || categoryFilter !== 'all' || locationFilter ? 'Try adjusting your filters' : 'Add your first spare part to get started'}
+            action={
+              !search && statusFilter === 'all' && categoryFilter === 'all' && !locationFilter ? (
+                <Link to="/inventory/add"><Button variant="outline">Add part</Button></Link>
+              ) : null
+            }
+          />
         )}
         {filtered.length > 0 && (
           <Pagination
@@ -373,7 +369,7 @@ export function InventoryList() {
             onPageSizeChange={handlePageSizeChange}
           />
         )}
-      </div>
+      </Card>
 
       {editingItem && editingItem.status === 'in_stock' && (
         <Modal onBackdropClick={() => setEditingItem(null)}>
@@ -407,6 +403,6 @@ export function InventoryList() {
           />
         </Modal>
       )}
-    </div>
+    </PageContainer>
   );
 }

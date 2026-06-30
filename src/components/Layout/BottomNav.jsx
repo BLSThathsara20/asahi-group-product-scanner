@@ -14,6 +14,7 @@ const mainNavItems = [
 const moreNavItems = [
   { scan: true, label: 'Scan QR', icon: 'scan' },
   { to: '/reports', label: 'Reports', icon: 'reports' },
+  { to: '/labels', label: 'Print Labels', icon: 'printer' },
   { to: '/analytics', label: 'Analytics', icon: 'analytics' },
   { to: '/categories', label: 'Categories', icon: 'folder', adminOnly: true },
   { to: '/health', label: 'Health', icon: 'health' },

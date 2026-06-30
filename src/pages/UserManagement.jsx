@@ -16,6 +16,7 @@ import { Input } from '../components/ui/Input';
 import { Pagination } from '../components/ui/Pagination';
 import { Modal } from '../components/ui/Modal';
 import { NavIcon } from '../components/icons/NavIcons';
+import { PageContainer, PageHeader, PageSkeleton } from '../components/ui/PageLayout';
 
 const ROLES = [
   { value: 'worker', label: 'Mechanic' },
@@ -211,26 +212,25 @@ export function UserManagement() {
 
   if (!isAdmin) {
     return (
-      <Card className="p-6">
-        <p className="text-slate-600">You don't have permission to access this page.</p>
-      </Card>
+      <PageContainer width="wide">
+        <Card className="p-6">
+          <p className="text-slate-600">You don't have permission to access this page.</p>
+        </Card>
+      </PageContainer>
     );
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-slate-400">Loading...</div>
-      </div>
-    );
+    return <PageSkeleton variant="table" />;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-800">User Management</h2>
-        <Button onClick={() => setShowAddUser(true)}>+ Add User</Button>
-      </div>
+    <PageContainer width="wide">
+      <PageHeader
+        title="Users"
+        subtitle={`${allUsers.length} user${allUsers.length !== 1 ? 's' : ''} and invites`}
+        action={<Button onClick={() => setShowAddUser(true)}>+ Add user</Button>}
+      />
 
       {editingProfile && (
         <Modal onBackdropClick={() => setEditingProfile(null)}>
@@ -447,6 +447,6 @@ export function UserManagement() {
           />
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

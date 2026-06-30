@@ -23,8 +23,8 @@ describe('HealthCheck', () => {
     vi.mocked(healthService.runHealthCheck).mockImplementation(
       () => new Promise(() => {})
     );
-    render(<HealthCheck />);
-    expect(screen.getByText(/running health checks/i)).toBeInTheDocument();
+    const { container } = render(<HealthCheck />);
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('displays healthy status when all checks pass', async () => {

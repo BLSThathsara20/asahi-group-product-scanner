@@ -13,6 +13,13 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { NavIcon } from '../components/icons/NavIcons';
+import {
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+  EmptyState,
+  filterSelectClass,
+} from '../components/ui/PageLayout';
 
 export function CategoryManager() {
   const { isAdmin } = useAuth();
@@ -99,18 +106,16 @@ export function CategoryManager() {
 
   if (!isAdmin) {
     return (
-      <Card className="p-6">
-        <p className="text-slate-600">You don't have permission to access this page.</p>
-      </Card>
+      <PageContainer>
+        <Card className="p-6">
+          <p className="text-slate-600">You don't have permission to access this page.</p>
+        </Card>
+      </PageContainer>
     );
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-slate-400">Loading...</div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   const CategoryRow = ({ cat, isChild, count }) => (
@@ -144,23 +149,23 @@ export function CategoryManager() {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-slate-800">Categories</h2>
-        <Button onClick={() => setShowAdd(true)} className="shrink-0">+ Add</Button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Categories"
+        subtitle="Organize spare parts by parent and child categories"
+        action={<Button onClick={() => setShowAdd(true)}>+ Add category</Button>}
+      />
 
-      <Card className="p-4">
-        <p className="text-sm text-slate-500 mb-4">
-          Parent and child categories for spare parts.
-        </p>
+      <Card className="overflow-hidden">
         {parents.length === 0 ? (
-          <div className="py-8 text-center text-slate-500">
-            <p>No categories yet.</p>
-            <Button variant="outline" className="mt-3" onClick={() => setShowAdd(true)}>Add first</Button>
-          </div>
+          <EmptyState
+            icon="folder"
+            title="No categories yet"
+            description="Create categories to organize your inventory"
+            action={<Button variant="outline" onClick={() => setShowAdd(true)}>Add first category</Button>}
+          />
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 px-4 sm:px-5">
             {parents.map((parent) => {
               const children = getChildren(parent.id);
               const parentCount = itemCountByCategory[parent.name] || 0;
@@ -188,7 +193,7 @@ export function CategoryManager() {
                 <select
                   value={form.parent_id}
                   onChange={(e) => setForm((p) => ({ ...p, parent_id: e.target.value }))}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-asahi/40 outline-none"
                 >
                   <option value="">— None (top-level category) —</option>
                   {parents.map((p) => (
@@ -224,7 +229,7 @@ export function CategoryManager() {
                 <select
                   value={editing.parent_id || ''}
                   onChange={(e) => setEditing((p) => ({ ...p, parent_id: e.target.value || null }))}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-asahi/40 outline-none"
                 >
                   <option value="">— None (top-level) —</option>
                   {parents.filter((p) => p.id !== editing.id).map((p) => (
@@ -250,6 +255,6 @@ export function CategoryManager() {
           </Card>
         </Modal>
       )}
-    </div>
+    </PageContainer>
   );
 }

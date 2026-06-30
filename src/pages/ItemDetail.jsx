@@ -17,6 +17,12 @@ import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { ProductImage } from "../components/ui/ProductImage";
+import {
+	PageContainer,
+	PageHeader,
+	PageSkeleton,
+	EmptyState,
+} from "../components/ui/PageLayout";
 import { QRCodeDisplay, BarcodeDisplay } from "../components/QR";
 import { NavIcon } from "../components/icons/NavIcons";
 import { CheckOutForm, CheckInForm, EditItemForm } from "../components/Inventory";
@@ -180,87 +186,76 @@ export function ItemDetail() {
 
 	if (loading) {
 		return (
-			<div className="space-y-6">
-				<div className="h-5 w-24 bg-slate-200 rounded animate-pulse" />
-				<Card className="p-6">
-					<div className="flex flex-col sm:flex-row gap-6">
-						<div className="w-full sm:w-36 h-36 rounded-xl bg-slate-200 animate-pulse shrink-0" />
-						<div className="flex-1 space-y-4">
-							<div className="h-8 w-2/3 max-w-xs bg-slate-200 rounded animate-pulse" />
-							<div className="h-4 w-full bg-slate-100 rounded animate-pulse" />
-							<div className="h-4 w-4/5 bg-slate-100 rounded animate-pulse" />
-							<div className="h-32 w-full bg-slate-100 rounded-lg animate-pulse" />
-						</div>
-					</div>
-				</Card>
-			</div>
+			<PageContainer width="wide">
+				<PageSkeleton variant="detail" />
+			</PageContainer>
 		);
 	}
 
 	if (!item) {
 		return (
-			<Card className="p-6">
-				<p className="text-slate-600">Item not found.</p>
-				<Button className="mt-4" onClick={() => navigate("/inventory")}>
-					Back to Spare Parts
-				</Button>
-			</Card>
+			<PageContainer width="wide">
+				<EmptyState
+					icon="package"
+					title="Item not found"
+					description="This item may have been removed"
+					action={
+						<Button onClick={() => navigate("/inventory")}>Back to spare parts</Button>
+					}
+				/>
+			</PageContainer>
 		);
 	}
 
-	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between gap-4">
-				<button
-					onClick={() => navigate(-1)}
-					className="text-slate-600 hover:text-slate-800 text-sm font-medium"
-				>
-					← Back
-				</button>
-				<div className="flex gap-2">
-					<Button
-						variant="outline"
-						onClick={async () => {
-							const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
-							const shareUrl = new URL(`${base ? base + "/" : ""}share/${id}`, window.location.origin).href;
-							await navigator.clipboard.writeText(shareUrl);
-							notifySuccess("Link copied to clipboard");
-						}}
-						title="Share item"
-						className="hidden sm:flex p-2"
-						aria-label="Share item"
-					>
-						<NavIcon name="share" className="w-4 h-4" />
+	const actionButtons = (
+		<div className="flex gap-2 flex-wrap justify-end">
+			<Button
+				variant="outline"
+				onClick={async () => {
+					const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+					const shareUrl = new URL(`${base ? base + "/" : ""}share/${id}`, window.location.origin).href;
+					await navigator.clipboard.writeText(shareUrl);
+					notifySuccess("Link copied to clipboard");
+				}}
+				title="Share item"
+				className="hidden sm:flex p-2"
+				aria-label="Share item"
+			>
+				<NavIcon name="share" className="w-4 h-4" />
+			</Button>
+			{item.status === "in_stock" && (
+				<>
+					<Button variant="outline" onClick={() => setShowEdit(true)} title="Edit item" className="p-2">
+						<NavIcon name="pencil" className="w-4 h-4" />
 					</Button>
-					{item.status === "in_stock" && (
-						<>
-							<Button
-								variant="outline"
-								onClick={() => setShowEdit(true)}
-								title="Edit item"
-								className="p-2"
-							>
-								<NavIcon name="pencil" className="w-4 h-4" />
-							</Button>
-							<Button onClick={() => setShowCheckOut(true)}>Check Out</Button>
-						</>
-					)}
-					{item.status === "out" && (
-						<Button onClick={() => setShowCheckIn(true)}>Check In</Button>
-					)}
-					{isSuperAdmin && (
-						<Button
-							variant="outline"
-							onClick={handleDelete}
-							disabled={deleting}
-							title="Delete item (super admin only)"
-							className="p-2 text-red-600 border-red-200 hover:bg-red-50"
-						>
-							<NavIcon name="trash" className="w-4 h-4" />
-						</Button>
-					)}
-				</div>
-			</div>
+					<Button onClick={() => setShowCheckOut(true)}>Check out</Button>
+				</>
+			)}
+			{item.status === "out" && (
+				<Button onClick={() => setShowCheckIn(true)}>Check in</Button>
+			)}
+			{isSuperAdmin && (
+				<Button
+					variant="outline"
+					onClick={handleDelete}
+					disabled={deleting}
+					title="Delete item"
+					className="p-2 text-red-600 border-red-200 hover:bg-red-50"
+				>
+					<NavIcon name="trash" className="w-4 h-4" />
+				</Button>
+			)}
+		</div>
+	);
+
+	return (
+		<PageContainer width="wide">
+			<PageHeader
+				title={item.name}
+				subtitle={item.qr_id}
+				onBack={() => navigate(-1)}
+				action={actionButtons}
+			/>
 
 			{/* Section 1: Item overview - ordered for clarity */}
 			<Card className="p-6">
@@ -293,8 +288,7 @@ export function ItemDetail() {
 					</div>
 					{/* Details - right on desktop, below photo on mobile */}
 					<div className="flex-1 min-w-0 space-y-4">
-						<h2 className="text-2xl font-bold text-slate-800">{item.name}</h2>
-						<p className="text-slate-600 text-sm mt-1">
+						<p className="text-slate-600 text-sm">
 							{item.description || "No description"}
 						</p>
 						{/* Key details - table format */}
@@ -605,6 +599,6 @@ export function ItemDetail() {
 			>
 				<NavIcon name="share" className="w-5 h-5" />
 			</button>
-		</div>
+		</PageContainer>
 	);
 }

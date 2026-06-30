@@ -8,6 +8,7 @@ import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { Logo } from '../components/Layout/Logo';
 import { Footer } from '../components/Layout/Footer';
+import { PageSkeleton } from '../components/ui/PageLayout';
 
 export function Activate() {
   const [searchParams] = useSearchParams();
@@ -44,7 +45,7 @@ export function Activate() {
       if (valid) {
         setStep(2);
       } else {
-        setError('Incorrect temporary password. Account will remain inactive.');
+        setError('Incorrect temporary password.');
       }
     } catch (err) {
       setError(err.message || 'Verification failed');
@@ -81,7 +82,7 @@ export function Activate() {
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
-        <div className="animate-pulse text-slate-400">Loading...</div>
+        <PageSkeleton />
       </div>
     );
   }
@@ -92,7 +93,7 @@ export function Activate() {
         <Card className="p-6 max-w-md text-center">
           <p className="text-slate-600">Invalid or expired activation link.</p>
           <Link to="/login">
-            <Button className="mt-4">Go to Login</Button>
+            <Button className="mt-4">Go to sign in</Button>
           </Link>
         </Card>
       </div>
@@ -100,19 +101,19 @@ export function Activate() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <Logo className="h-16 mx-auto object-contain" fallbackText="AsahiGroup" />
-            <p className="text-slate-500 mt-2">Activate your account</p>
+            <Logo className="h-14 mx-auto object-contain" fallbackText="AsahiGroup" />
+            <h1 className="text-2xl font-semibold text-slate-800 tracking-tight mt-6">Activate account</h1>
+            <p className="text-sm text-slate-500 mt-1">Step {step} of 2</p>
           </div>
           <Card className="p-6">
             {step === 1 ? (
               <>
-                <h2 className="text-xl font-semibold text-slate-800 mb-2">Enter temporary password</h2>
                 <p className="text-sm text-slate-500 mb-4">
-                  Your email is pre-filled. Enter the temporary password sent to you by your admin.
+                  Enter the temporary password sent by your admin.
                 </p>
                 <form onSubmit={handleVerifyTempPassword} className="space-y-4">
                   <Input label="Email" value={invite.email} disabled />
@@ -121,21 +122,17 @@ export function Activate() {
                     type="password"
                     value={tempPassword}
                     onChange={(e) => setTempPassword(e.target.value)}
-                    placeholder="Enter temporary password"
                     required
                   />
                   {error && <p className="text-sm text-red-600">{error}</p>}
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Verifying...' : 'Continue'}
+                    {loading ? 'Verifying…' : 'Continue'}
                   </Button>
                 </form>
               </>
             ) : (
               <>
-                <h2 className="text-xl font-semibold text-slate-800 mb-2">Set your password</h2>
-                <p className="text-sm text-slate-500 mb-4">
-                  Choose a new password to activate your account.
-                </p>
+                <p className="text-sm text-slate-500 mb-4">Choose a new password for your account.</p>
                 <form onSubmit={handleSetPassword} className="space-y-4">
                   <Input label="Email" value={invite.email} disabled />
                   <Input
@@ -143,7 +140,6 @@ export function Activate() {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Min 6 characters"
                     required
                     minLength={6}
                   />
@@ -152,13 +148,12 @@ export function Activate() {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat new password"
                     required
                     minLength={6}
                   />
                   {error && <p className="text-sm text-red-600">{error}</p>}
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Activating...' : 'Activate account'}
+                    {loading ? 'Activating…' : 'Activate account'}
                   </Button>
                 </form>
               </>

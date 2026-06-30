@@ -17,6 +17,7 @@ import { StoreLocationSelect } from '../components/StoreLocationSelect';
 import { CategorySelect } from '../components/CategorySelect';
 import { InfoTooltip } from '../components/ui/InfoTooltip';
 import { NavIcon } from '../components/icons/NavIcons';
+import { PageContainer, PageHeader } from '../components/ui/PageLayout';
 
 export function AddItem() {
   const navigate = useNavigate();
@@ -360,13 +361,11 @@ export function AddItem() {
   const addedByDisplay = profile?.full_name || user?.email || 'Unknown';
 
   return (
-    <div className="w-full max-w-xl min-w-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">Add New Item</h2>
-        <p className="text-sm text-slate-500">
-          Adding as: <span className="font-medium text-slate-700">{addedByDisplay}</span>
-        </p>
-      </div>
+    <PageContainer width="narrow">
+      <PageHeader
+        title="Add spare part"
+        subtitle={`Adding as ${addedByDisplay}`}
+      />
 
       <Card className="p-4 sm:p-6 overflow-hidden">
         <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
@@ -757,6 +756,6 @@ export function AddItem() {
           </div>
         </form>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

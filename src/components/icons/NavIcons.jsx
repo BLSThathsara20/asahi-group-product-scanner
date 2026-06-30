@@ -27,6 +27,7 @@ import {
 	Copy,
 	Eye,
 	Share2,
+	Printer,
 } from "lucide-react";
 
 export const NavIcons = {
@@ -60,6 +61,7 @@ export const NavIcons = {
 	copy: Copy,
 	eye: Eye,
 	share: Share2,
+	printer: Printer,
 };
 
 export function NavIcon({ name, className = "w-5 h-5" }) {

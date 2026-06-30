@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { checkSanityConnection } from '../services/healthService';
 import { Unavailable } from '../pages/Unavailable';
+import { PageSkeleton } from './ui/PageLayout';
 
 export function ConnectionGuard({ children }) {
   const [connected, setConnected] = useState(null);
@@ -25,8 +26,10 @@ export function ConnectionGuard({ children }) {
 
   if (connected === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-pulse text-slate-500">Checking connection...</div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="w-full max-w-md">
+          <PageSkeleton />
+        </div>
       </div>
     );
   }

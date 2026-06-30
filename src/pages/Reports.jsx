@@ -4,6 +4,12 @@ import { exportInventoryPDF, exportInventoryCSV } from '../services/reportServic
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useNotification } from '../context/NotificationContext';
+import {
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+  filterSelectClass,
+} from '../components/ui/PageLayout';
 
 export function Reports() {
   const { items, loading } = useItems();
@@ -53,56 +59,50 @@ export function Reports() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-slate-400">Loading...</div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-800">Spare Parts Reports</h2>
+    <PageContainer>
+      <PageHeader
+        title="Reports"
+        subtitle="Export spare parts inventory as PDF or CSV"
+      />
 
-      <Card className="p-6">
-        <h3 className="font-semibold text-slate-800 mb-4">Export</h3>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Filter by category</label>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full max-w-xs px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
-          >
-            <option value="">All categories</option>
-            {categoriesWithCount.map(({ name, count }) => (
-              <option key={name} value={name}>{count} {name}</option>
-            ))}
-          </select>
-        </div>
-        <p className="text-slate-500 text-sm mb-6">
-          Download spare parts as PDF or CSV.
-          {categoryFilter ? (
-            <> Showing {filteredItems.length} items in <strong>{categoryFilter}</strong>.</>
-          ) : (
-            <> {items.length} items total.</>
-          )}
-        </p>
-        <div className="flex flex-wrap gap-4">
-          <Button
-            onClick={handlePDF}
-            disabled={exporting}
-          >
-            {exporting === 'pdf' ? 'Generating...' : 'Download PDF'}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleCSV}
-            disabled={exporting}
-          >
-            {exporting === 'csv' ? 'Exporting...' : 'Download CSV'}
-          </Button>
+      <Card className="p-5 sm:p-6">
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-2">Category</label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className={`${filterSelectClass} w-full max-w-xs`}
+            >
+              <option value="">All categories</option>
+              {categoriesWithCount.map(({ name, count }) => (
+                <option key={name} value={name}>{name} ({count})</option>
+              ))}
+            </select>
+          </div>
+
+          <p className="text-sm text-slate-500">
+            {categoryFilter ? (
+              <>Exporting <strong className="text-slate-700">{filteredItems.length}</strong> items in {categoryFilter}.</>
+            ) : (
+              <><strong className="text-slate-700">{items.length}</strong> items total.</>
+            )}
+          </p>
+
+          <div className="flex flex-wrap gap-3 pt-1">
+            <Button onClick={handlePDF} disabled={exporting || filteredItems.length === 0}>
+              {exporting === 'pdf' ? 'Generating…' : 'Download PDF'}
+            </Button>
+            <Button variant="outline" onClick={handleCSV} disabled={exporting || filteredItems.length === 0}>
+              {exporting === 'csv' ? 'Exporting…' : 'Download CSV'}
+            </Button>
+          </div>
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

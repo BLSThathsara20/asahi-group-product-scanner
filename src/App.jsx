@@ -19,6 +19,7 @@ import { Analytics } from './pages/Analytics';
 import { HealthCheck } from './pages/HealthCheck';
 import { UserManagement } from './pages/UserManagement';
 import { CategoryManager } from './pages/CategoryManager';
+import { PrintLabels } from './pages/PrintLabels';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
               <Route path="analytics" element={<Analytics />} />
               <Route path="health" element={<HealthCheck />} />
               <Route path="categories" element={<CategoryManager />} />
+              <Route path="labels" element={<PrintLabels />} />
               <Route path="users" element={<UserManagement />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
