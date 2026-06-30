@@ -207,6 +207,7 @@ export function InventoryList() {
       refetch();
     } catch (err) {
       notifyError(err.message || 'Update failed');
+      throw err;
     }
   };
 

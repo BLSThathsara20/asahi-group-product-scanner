@@ -6,9 +6,27 @@ import {
 	transactionToSanity,
 } from "../lib/sanityMappers";
 import { getStoredSession } from "../lib/authStorage";
+import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
+import { triggerGoogleSheetSync } from "./googleSheetSyncService";
 
 function currentUserId() {
 	return getStoredSession()?.userId ?? null;
+}
+
+function notifySheetSync() {
+	triggerGoogleSheetSync();
+}
+
+/** Delete oldest actions when a part exceeds MAX_ITEM_ACTIONS rows. */
+async function pruneItemActions(itemId) {
+	if (!itemId) return;
+	const staleIds = await sanityClient.fetch(
+		`*[_type == "inventoryTransaction" && item._ref == $itemId]
+			| order(coalesce(createdAt, _createdAt) desc)[${MAX_ITEM_ACTIONS}...]._id`,
+		{ itemId }
+	);
+	if (!staleIds?.length) return;
+	await Promise.all(staleIds.map((id) => sanityClient.delete(id)));
 }
 
 
@@ -18,6 +36,7 @@ export async function createItem(item) {
 		added_by: item.added_by ?? currentUserId(),
 	};
 	const doc = await sanityClient.create(itemToSanity(payload));
+	notifySheetSync();
 	return mapItem(doc);
 }
 
@@ -197,6 +216,7 @@ export async function updateItem(id, updates) {
 		if (val !== undefined) patch.set({ [key]: val });
 	});
 	const doc = await patch.commit();
+	notifySheetSync();
 	return mapItem(doc);
 }
 
@@ -214,11 +234,19 @@ export async function deleteItem(id) {
 		...(barcodeIds || []).map((bid) => sanityClient.delete(bid)),
 		sanityClient.delete(id),
 	]);
+	notifySheetSync();
 }
 
 export async function getTransactions(itemId) {
+	const count = await sanityClient.fetch(
+		`count(*[_type == "inventoryTransaction" && item._ref == $itemId])`,
+		{ itemId }
+	);
+	if (count > MAX_ITEM_ACTIONS) await pruneItemActions(itemId);
+
 	const docs = await sanityClient.fetch(
-		`*[_type == "inventoryTransaction" && item._ref == $itemId] | order(createdAt desc) {
+		`*[_type == "inventoryTransaction" && item._ref == $itemId]
+			| order(coalesce(createdAt, _createdAt) desc)[0...${MAX_ITEM_ACTIONS}] {
 			...,
 			"performerName": coalesce(performedBy->fullName, performedBy->email)
 		}`,
@@ -235,6 +263,9 @@ export async function createTransaction(transaction) {
 	const doc = await sanityClient.create(
 		transactionToSanity({ ...transaction, performed_by: performedBy })
 	);
+	const itemId = transaction.item_id;
+	if (itemId) await pruneItemActions(itemId);
+	notifySheetSync();
 	return mapTransaction(doc);
 }
 

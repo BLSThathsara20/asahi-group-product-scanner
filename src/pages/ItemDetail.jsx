@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -15,7 +15,9 @@ import { getProfilesByIds } from "../services/userService";
 import { useNotification } from "../context/NotificationContext";
 import { buildItemEditSummary, ACTION_TYPE_LABELS, ACTION_TYPE_STYLES, formatActionSummary } from "../lib/itemActions";
 import { displayPerformer } from "../lib/performer";
+import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
 import { Card } from "../components/ui/Card";
+import { Pagination } from "../components/ui/Pagination";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { StatusBadge } from "../components/ui/StatusBadge";
@@ -47,7 +49,18 @@ export function ItemDetail() {
 	const [deleting, setDeleting] = useState(false);
 	const [barcodeAccordionOpen, setBarcodeAccordionOpen] = useState(false);
 	const [showImagePreview, setShowImagePreview] = useState(false);
+	const [actionPage, setActionPage] = useState(1);
+	const [actionPageSize, setActionPageSize] = useState(10);
 	const hasRetried = useRef(false);
+
+	const paginatedTransactions = useMemo(() => {
+		const start = (actionPage - 1) * actionPageSize;
+		return transactions.slice(start, start + actionPageSize);
+	}, [transactions, actionPage, actionPageSize]);
+
+	useEffect(() => {
+		setActionPage(1);
+	}, [id, transactions.length]);
 
 	const handleDelete = async () => {
 		if (!isSuperAdmin || !item?.id) return;
@@ -163,6 +176,7 @@ export function ItemDetail() {
 			load();
 		} catch (err) {
 			notifyError(err.message || "Update failed");
+			throw err;
 		}
 	};
 
@@ -483,10 +497,12 @@ export function ItemDetail() {
 			<Card>
 				<div className="p-4 border-b border-slate-200">
 					<h3 className="font-semibold text-slate-800">Action history</h3>
-					<p className="text-xs text-slate-500 mt-0.5">Check-ins, edits, and other activity on this part</p>
+					<p className="text-xs text-slate-500 mt-0.5">
+						Latest {MAX_ITEM_ACTIONS} actions kept per part · older rows removed from database
+					</p>
 				</div>
 				<div className="divide-y divide-slate-100">
-					{transactions.map((tx) => {
+					{paginatedTransactions.map((tx) => {
 						const who = displayPerformer(tx, performerNames);
 						return (
 						<div
@@ -528,6 +544,16 @@ export function ItemDetail() {
 						</div>
 					)}
 				</div>
+				<Pagination
+					page={actionPage}
+					totalItems={transactions.length}
+					pageSize={actionPageSize}
+					onPageChange={setActionPage}
+					onPageSizeChange={(size) => {
+						setActionPageSize(size);
+						setActionPage(1);
+					}}
+				/>
 			</Card>
 
 			{/* Barcode & QR Code - accordion at bottom (default closed) */}

@@ -775,8 +775,8 @@ export function AddItem() {
             )}
 
           <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
-            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-              {loading ? 'Adding...' : 'Add Spare Part'}
+            <Button type="submit" loading={loading} disabled={loading} className="w-full sm:w-auto">
+              {loading ? 'Adding…' : 'Add Spare Part'}
             </Button>
             <Button type="button" variant="secondary" onClick={() => navigate(-1)} className="w-full sm:w-auto">
               Cancel

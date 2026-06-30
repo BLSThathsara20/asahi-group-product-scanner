@@ -8,6 +8,7 @@ import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
 import { NavIcon } from '../icons/NavIcons';
 import { sanitizeBarcodeInput, BARCODE_MAX_LENGTH } from '../../lib/barcodeUtils';
+import { compressAndUploadImage } from '../../services/imageService';
 import { getItemBarcodes } from '../../services/itemService';
 
 export function EditItemForm({ item, onSave, onCancel }) {
@@ -25,7 +26,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
     photo: null,
     barcodes: [],
   });
-  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraError, setCameraError] = useState('');
 
@@ -147,7 +148,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setUploading(true);
+    setSaving(true);
     try {
       let photoUrl = item.photo_url;
       if (form.photo) {
@@ -155,7 +156,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         if (url) photoUrl = url;
       }
       const altBarcodes = (form.barcodes || []).map((b) => String(b || '').trim()).filter(Boolean);
-      onSave({
+      await onSave({
         name: form.name.trim(),
         description: form.description?.trim() || null,
         category: form.category?.trim() || null,
@@ -170,7 +171,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         barcodes: altBarcodes,
       });
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   };
 
@@ -274,7 +275,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
                 <NavIcon name="package" className="w-8 h-8" />
               </div>
             )}
-            <ImageUploadOverlay show={uploading} />
+            <ImageUploadOverlay show={saving} />
           </div>
           <div className="flex gap-2">
             <Button
@@ -321,10 +322,12 @@ export function EditItemForm({ item, onSave, onCancel }) {
         )}
 
       <div className="flex gap-2 pt-2">
-        <Button type="submit" disabled={uploading}>
-          {uploading ? 'Saving...' : 'Save'}
+        <Button type="submit" loading={saving}>
+          {saving ? 'Saving…' : 'Save'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={saving}>
+          Cancel
+        </Button>
       </div>
     </form>
   );

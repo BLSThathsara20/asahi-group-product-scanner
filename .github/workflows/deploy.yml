@@ -37,6 +37,8 @@ jobs:
           VITE_SANITY_TOKEN: ${{ secrets.VITE_SANITY_TOKEN }}
           VITE_SANITY_API_VERSION: ${{ secrets.VITE_SANITY_API_VERSION }}
           VITE_IMGBB_API_KEY: ${{ secrets.VITE_IMGBB_API_KEY }}
+          VITE_GOOGLE_SHEETS_SYNC_URL: ${{ secrets.VITE_GOOGLE_SHEETS_SYNC_URL }}
+          VITE_GOOGLE_SHEETS_SYNC_SECRET: ${{ secrets.VITE_GOOGLE_SHEETS_SYNC_SECRET }}
 
       - name: Fix SPA routing (404.html)
         run: cp dist/index.html dist/404.html
