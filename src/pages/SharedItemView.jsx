@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getItemById } from "../services/itemService";
+import { loginPathWithRedirect, rememberShareRedirect } from "../lib/authRedirect";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { StatusBadge } from "../components/ui/StatusBadge";
@@ -22,6 +23,12 @@ export function SharedItemView() {
 			.catch(() => setItem(null))
 			.finally(() => setLoading(false));
 	}, [id]);
+
+	useEffect(() => {
+		if (id && !user) rememberShareRedirect(id);
+	}, [id, user]);
+
+	const signInPath = loginPathWithRedirect(`/inventory/${id}`);
 
 	if (user && id) {
 		return <Navigate to={`/inventory/${id}`} replace />;
@@ -45,7 +52,7 @@ export function SharedItemView() {
 						icon="package"
 						title="Item not found"
 						description="This link may have expired"
-						action={<Link to="/login"><Button>Sign in</Button></Link>}
+						action={<Link to={signInPath}><Button>Sign in</Button></Link>}
 					/>
 				</Card>
 			</div>
@@ -57,7 +64,7 @@ export function SharedItemView() {
 			<div className="max-w-xl mx-auto space-y-6">
 				<div className="flex items-center justify-between">
 					<p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Shared item</p>
-					<Link to="/login" className="text-sm font-medium text-slate-600 hover:text-asahi transition-colors">
+					<Link to={signInPath} className="text-sm font-medium text-slate-600 hover:text-asahi transition-colors">
 						Sign in to manage
 					</Link>
 				</div>
@@ -126,7 +133,7 @@ export function SharedItemView() {
 					<p className="text-sm text-slate-500 mb-3">
 						Sign in for full details, checkout, and history.
 					</p>
-					<Link to="/login">
+					<Link to={signInPath}>
 						<Button>Sign in</Button>
 					</Link>
 				</div>

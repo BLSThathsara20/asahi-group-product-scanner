@@ -29,7 +29,7 @@ import {
 	PageSkeleton,
 	EmptyState,
 } from "../components/ui/PageLayout";
-import { QRCodeDisplay, BarcodeDisplay } from "../components/QR";
+import { ItemLabelExport } from "../components/Labels/ItemLabelExport";
 import { NavIcon } from "../components/icons/NavIcons";
 import { CheckOutForm, CheckInForm, EditItemForm } from "../components/Inventory";
 
@@ -610,15 +610,9 @@ export function ItemDetail() {
 									</ul>
 								</div>
 							)}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-								<div>
-									<h4 className="font-medium text-slate-700 mb-3">QR Code</h4>
-									<QRCodeDisplay qrId={item.qr_id} itemName={item.name} />
-								</div>
-								<div>
-									<h4 className="font-medium text-slate-700 mb-3">Barcode</h4>
-									<BarcodeDisplay barcodeId={item.qr_id} itemName={item.name} />
-								</div>
+							<div>
+								<h4 className="font-medium text-slate-700 mb-3">Label</h4>
+								<ItemLabelExport item={item} />
 							</div>
 						</div>
 					</div>

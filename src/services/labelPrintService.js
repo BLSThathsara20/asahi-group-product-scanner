@@ -56,10 +56,6 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
     cursorY += 2.5;
   }
 
-  doc.setFontSize(4.5);
-  doc.text('QR', innerX + innerW / 2, cursorY, { align: 'center' });
-  cursorY += 1.5;
-
   const qrSize = Math.min(innerW * 0.5, h * 0.28, 20);
   const qrX = innerX + (innerW - qrSize) / 2;
   const qrY = cursorY;
@@ -73,11 +69,6 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
   doc.text(truncateText(doc, code, innerW - 2), innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
   cursorY += 3;
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(4.5);
-  doc.text('Barcode', innerX + innerW / 2, cursorY, { align: 'center' });
-  cursorY += 1.5;
-
   const barW = innerW * 0.88;
   const barH = Math.min(h * 0.12, 8);
   const barX = innerX + (innerW - barW) / 2;
@@ -87,10 +78,10 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
   }
 }
 
-function getCellImages(itemId, pageIndex) {
+function getCellImages(labelKey, pageIndex) {
   const page = document.querySelector(`[data-page-index="${pageIndex}"]`);
-  const cell = page?.querySelector(`[data-item-id="${itemId}"]`) ||
-    document.querySelector(`[data-item-id="${itemId}"]`);
+  const cell = page?.querySelector(`[data-label-key="${labelKey}"]`) ||
+    document.querySelector(`[data-label-key="${labelKey}"]`);
   if (!cell) return { qrData: null, barcodeData: null };
 
   return {
@@ -122,13 +113,25 @@ export async function downloadLabelsPdf(items, maxRows = 4) {
 
       const col = i % COLS;
       const row = Math.floor(i / COLS);
-      const { qrData, barcodeData } = getCellImages(item.id, pageIdx);
+      const labelKey = item.labelKey || item.id;
+      const { qrData, barcodeData } = getCellImages(labelKey, pageIdx);
       drawLabelInCell(doc, item, qrData, barcodeData, col, row, COLS, rows);
     }
   }
 
   const slug = items.length === 1 ? items[0].qr_id : `${items.length}-items`;
   doc.save(`labels-${slug}.pdf`);
+}
+
+export function expandItemsWithQuantities(items, quantities = {}) {
+  return items.flatMap((item) => {
+    const raw = quantities[item.id] ?? 1;
+    const count = Math.max(1, Math.min(99, Number(raw) || 1));
+    return Array.from({ length: count }, (_, i) => ({
+      ...item,
+      labelKey: `${item.id}-${i}`,
+    }));
+  });
 }
 
 export function chunkItemsForPages(items, maxRows = 4) {

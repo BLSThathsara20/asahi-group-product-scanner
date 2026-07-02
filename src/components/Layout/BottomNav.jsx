@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useScanModal } from '../../context/ScanModalContext';
+import { AppLoginQrModal } from '../AppLoginQrModal';
 import { NavIcon } from '../icons/NavIcons';
 
 const mainNavItems = [
@@ -12,6 +13,7 @@ const mainNavItems = [
 ];
 
 const moreNavItems = [
+  { loginQr: true, label: 'App login QR', icon: 'share' },
   { scan: true, label: 'Scan QR', icon: 'scan' },
   { to: '/reports', label: 'Reports', icon: 'reports' },
   { to: '/labels', label: 'Print Labels', icon: 'printer' },
@@ -24,6 +26,7 @@ const moreNavItems = [
 export function BottomNav() {
   const [showMore, setShowMore] = useState(false);
   const [moreClosing, setMoreClosing] = useState(false);
+  const [showLoginQr, setShowLoginQr] = useState(false);
   const { isAdmin } = useAuth();
 
   const closeMore = useCallback(() => {
@@ -100,7 +103,20 @@ export function BottomNav() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {filteredMore.map((item) =>
-                item.scan ? (
+                item.loginQr ? (
+                  <button
+                    key="login-qr"
+                    type="button"
+                    onClick={() => {
+                      closeMore();
+                      setShowLoginQr(true);
+                    }}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                  >
+                    <NavIcon name={item.icon} className="w-6 h-6 shrink-0" />
+                    <span className="font-medium text-slate-800">{item.label}</span>
+                  </button>
+                ) : item.scan ? (
                   <button
                     key="scan-qr"
                     type="button"
@@ -129,6 +145,8 @@ export function BottomNav() {
           </div>
         </>
       )}
+
+      <AppLoginQrModal open={showLoginQr} onClose={() => setShowLoginQr(false)} />
     </>
   );
 }

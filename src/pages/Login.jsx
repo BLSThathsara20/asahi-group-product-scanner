@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { isSetupComplete } from '../services/setupService';
+import { clearPostLoginRedirect, resolvePostLoginPath } from '../lib/authRedirect';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -17,6 +18,8 @@ export function Login() {
   const { signIn } = useAuth();
   const { success, error } = useNotification();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     isSetupComplete().then((complete) => setShowSetupLink(!complete));
@@ -28,7 +31,9 @@ export function Login() {
     try {
       await signIn(email, password);
       success('Welcome back!');
-      navigate('/');
+      const redirectTo = resolvePostLoginPath(location, searchParams);
+      clearPostLoginRedirect();
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       const msg = err?.message || '';
       const errCode = err?.error || err?.code || '';

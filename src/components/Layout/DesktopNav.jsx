@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useScanModal } from '../../context/ScanModalContext';
+import { AppLoginQrModal } from '../AppLoginQrModal';
 import { Logo } from './Logo';
 import { NavIcon } from '../icons/NavIcons';
 
@@ -13,6 +14,7 @@ const mainNavItems = [
 ];
 
 const moreNavItems = [
+  { loginQr: true, label: 'App login QR', icon: 'share' },
   { scan: true, label: 'Scan QR', icon: 'scan' },
   { to: '/reports', label: 'Reports', icon: 'reports' },
   { to: '/labels', label: 'Print Labels', icon: 'printer' },
@@ -25,6 +27,7 @@ const moreNavItems = [
 export function DesktopNav() {
   const [showMore, setShowMore] = useState(false);
   const [moreClosing, setMoreClosing] = useState(false);
+  const [showLoginQr, setShowLoginQr] = useState(false);
   const { isAdmin } = useAuth();
 
   const closeMore = useCallback(() => {
@@ -92,7 +95,20 @@ export function DesktopNav() {
                 }`}
               >
               {filteredMore.map((item) =>
-                item.scan ? (
+                item.loginQr ? (
+                  <button
+                    key="login-qr"
+                    type="button"
+                    onClick={() => {
+                      closeMore();
+                      setShowLoginQr(true);
+                    }}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 w-full text-left"
+                  >
+                    <NavIcon name={item.icon} className="w-4 h-4 shrink-0" />
+                    {item.label}
+                  </button>
+                ) : item.scan ? (
                   <button
                     key="scan-qr"
                     type="button"
@@ -122,6 +138,7 @@ export function DesktopNav() {
           )}
         </div>
       </nav>
+      <AppLoginQrModal open={showLoginQr} onClose={() => setShowLoginQr(false)} />
     </aside>
   );
 }

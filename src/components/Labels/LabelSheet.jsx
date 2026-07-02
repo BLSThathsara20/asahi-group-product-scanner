@@ -21,8 +21,9 @@ export function LabelSheet({ items, maxRows = 4, pageIndex = 0 }) {
       >
         {items.map((item) => (
           <LabelCell
-            key={item.id}
+            key={item.labelKey || item.id}
             itemId={item.id}
+            labelKey={item.labelKey}
             name={item.name}
             code={item.qr_id}
             category={item.category}

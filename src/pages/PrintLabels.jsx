@@ -5,7 +5,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ProductImage } from '../components/ui/ProductImage';
 import { LabelSheet } from '../components/Labels/LabelSheet';
-import { COLS, chunkItemsForPages, downloadLabelsPdf } from '../services/labelPrintService';
+import { COLS, chunkItemsForPages, downloadLabelsPdf, expandItemsWithQuantities } from '../services/labelPrintService';
 import { NavIcon } from '../components/icons/NavIcons';
 import {
   PageContainer,
@@ -29,6 +29,7 @@ export function PrintLabels() {
   const [rows, setRows] = useState('4');
   const [listView, setListView] = useState('all');
   const [exporting, setExporting] = useState(false);
+  const [quantities, setQuantities] = useState({});
 
   const rowCount = Number(rows);
   const labelsPerSheet = COLS * rowCount;
@@ -49,9 +50,14 @@ export function PrintLabels() {
     [items, selectedIds]
   );
 
+  const labelItems = useMemo(
+    () => expandItemsWithQuantities(selectedItems, quantities),
+    [selectedItems, quantities]
+  );
+
   const labelPages = useMemo(
-    () => chunkItemsForPages(selectedItems, rowCount),
-    [selectedItems, rowCount]
+    () => chunkItemsForPages(labelItems, rowCount),
+    [labelItems, rowCount]
   );
 
   const listItems = useMemo(() => {
@@ -71,13 +77,20 @@ export function PrintLabels() {
   }, [listView, filtered, items, selectedIds, search]);
 
   const previewSummary = useMemo(() => {
-    if (selectedItems.length === 0) return null;
-    const n = selectedItems.length;
+    if (labelItems.length === 0) return null;
+    const n = labelItems.length;
     const pages = labelPages.length;
     const labelWord = n === 1 ? '1 label' : `${n} labels`;
     const pageWord = pages === 1 ? '1 A4 page' : `${pages} A4 pages`;
     return `${labelWord} · ${pageWord}`;
-  }, [selectedItems.length, labelPages.length]);
+  }, [labelItems.length, labelPages.length]);
+
+  const setQuantity = (id, value) => {
+    const parsed = Math.max(1, Math.min(99, Number(value) || 1));
+    setQuantities((prev) => ({ ...prev, [id]: parsed }));
+  };
+
+  const getQuantity = (id) => quantities[id] ?? 1;
 
   const toggleItem = (id) => {
     setSelectedIds((prev) => {
@@ -104,7 +117,7 @@ export function PrintLabels() {
   };
 
   const handlePrint = () => {
-    if (selectedItems.length === 0) {
+    if (labelItems.length === 0) {
       notifyError('Select at least one product');
       return;
     }
@@ -112,14 +125,14 @@ export function PrintLabels() {
   };
 
   const handleDownloadPdf = async () => {
-    if (selectedItems.length === 0) {
+    if (labelItems.length === 0) {
       notifyError('Select at least one product');
       return;
     }
     setExporting(true);
     try {
       await new Promise((r) => setTimeout(r, 400));
-      await downloadLabelsPdf(selectedItems, rowCount);
+      await downloadLabelsPdf(labelItems, rowCount);
       success('PDF downloaded');
     } catch (err) {
       notifyError(err.message || 'PDF export failed');
@@ -137,7 +150,7 @@ export function PrintLabels() {
       <div className="no-print space-y-6">
         <PageHeader
           title="Print labels"
-          subtitle="Each selected product gets one label — up to 3 per row on A4"
+          subtitle="Select products and set how many labels each needs — up to 3 per row on A4"
         />
 
         <Card className="p-4 sm:p-5">
@@ -195,13 +208,13 @@ export function PrintLabels() {
               {listItems.map((item) => {
                 const checked = selectedIds.has(item.id);
                 return (
-                  <li key={item.id}>
-                    <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50/80 transition-colors">
+                  <li key={item.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50/80 transition-colors">
+                    <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer min-h-[40px]">
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleItem(item.id)}
-                        className="w-4 h-4 rounded border-slate-300 text-asahi focus:ring-asahi/30"
+                        className="w-4 h-4 rounded border-slate-300 text-asahi focus:ring-asahi/30 shrink-0"
                       />
                       {item.photo_url ? (
                         <ProductImage
@@ -219,10 +232,27 @@ export function PrintLabels() {
                         <p className="font-medium text-slate-800 truncate">{item.name}</p>
                         <p className="text-xs font-mono text-slate-500 truncate">{item.qr_id || 'No code'}</p>
                       </div>
-                      {item.category && (
-                        <span className="text-xs text-slate-400 shrink-0 hidden sm:block">{item.category}</span>
-                      )}
                     </label>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <label htmlFor={`qty-${item.id}`} className="text-xs text-slate-500 whitespace-nowrap">
+                        How many
+                      </label>
+                      <input
+                        id={`qty-${item.id}`}
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={getQuantity(item.id)}
+                        onChange={(e) => setQuantity(item.id, e.target.value)}
+                        disabled={!checked}
+                        className="w-14 px-2 py-1.5 text-sm text-center border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-asahi/30 disabled:bg-slate-50 disabled:text-slate-400"
+                      />
+                    </div>
+                    {item.category && (
+                      <span className="text-xs text-slate-400 shrink-0 hidden lg:block w-20 truncate text-right">
+                        {item.category}
+                      </span>
+                    )}
                   </li>
                 );
               })}
@@ -257,7 +287,7 @@ export function PrintLabels() {
 
         <div className="print-preview-viewport rounded-xl border border-slate-200 bg-slate-100/80 p-4 sm:p-6">
           <div id="print-labels-root" className="print-preview-pages">
-            {selectedItems.length === 0 ? (
+            {labelItems.length === 0 ? (
               <div className="print-preview-empty">
                 <NavIcon name="printer" className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                 <p className="text-sm font-medium text-slate-500">Nothing to preview yet</p>
@@ -273,7 +303,7 @@ export function PrintLabels() {
                       Page {index + 1} of {labelPages.length}
                     </span>
                     <span className="text-xs text-slate-400">
-                      {pageItems.length} product{pageItems.length !== 1 ? 's' : ''}
+                      {pageItems.length} label{pageItems.length !== 1 ? 's' : ''}
                       {pageItems.length === 1 ? ` · ${pageItems[0].name}` : ''}
                     </span>
                   </div>
