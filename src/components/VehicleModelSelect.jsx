@@ -15,7 +15,7 @@ const VEHICLE_BRANDS = [
   'VW',
 ];
 
-export function VehicleModelSelect({ value, onChange, label = 'Vehicle Model (optional)', name = 'vehicle_model', placeholder }) {
+export function VehicleModelSelect({ value, onChange, label = 'Vehicle Model', name = 'vehicle_model', placeholder, required = false }) {
   const isInList = value && VEHICLE_BRANDS.includes(value);
   const [otherSelected, setOtherSelected] = useState(false);
   const showOtherInput = otherSelected || (value && !isInList);
@@ -28,6 +28,7 @@ export function VehicleModelSelect({ value, onChange, label = 'Vehicle Model (op
       )}
       <select
         name={name}
+        required={required}
         value={selectValue}
         onChange={(e) => {
           const v = e.target.value;

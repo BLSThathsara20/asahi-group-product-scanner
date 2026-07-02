@@ -25,11 +25,21 @@ const FIELD_LABELS = {
 	store_location: "Location",
 	vehicle_model: "Vehicle model",
 	agl_number: "AGL number",
+	unit_price: "Unit price",
 	reminder_count: "Low stock alert",
 	photo_url: "Photo",
 };
 
-export function buildItemEditSummary(before, updates) {
+function normalizeBarcodes(arr) {
+	return [...(arr || [])]
+		.map((b) => String(b).trim())
+		.filter(Boolean)
+		.sort()
+		.join("|");
+}
+
+export function buildItemEditSummary(before, updates, options = {}) {
+	const { beforeBarcodes } = options;
 	const parts = [];
 	for (const [key, val] of Object.entries(updates || {})) {
 		if (key === "barcodes") continue;
@@ -45,8 +55,10 @@ export function buildItemEditSummary(before, updates) {
 			parts.push(`${label} updated`);
 		}
 	}
-	if (Array.isArray(updates?.barcodes)) {
-		parts.push("Barcodes updated");
+	if (Array.isArray(updates?.barcodes) && beforeBarcodes !== undefined) {
+		if (normalizeBarcodes(updates.barcodes) !== normalizeBarcodes(beforeBarcodes)) {
+			parts.push("Barcodes updated");
+		}
 	}
 	return parts.length ? parts.join(" · ") : "Details updated";
 }

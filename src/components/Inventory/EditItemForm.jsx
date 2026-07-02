@@ -21,6 +21,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
     store_location: item.store_location || '',
     vehicle_model: item.vehicle_model || '',
     agl_number: item.agl_number || '',
+    unit_price: item.unit_price ?? '',
     quantity: item.quantity ?? 1,
     reminder_count: item.reminder_count ?? 1,
     photo: null,
@@ -110,7 +111,12 @@ export function EditItemForm({ item, onSave, onCancel }) {
     const { name, value, type } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === 'number' ? parseInt(value, 10) || 0 : value,
+      [name]:
+        type === 'number'
+          ? name === 'unit_price'
+            ? value
+            : parseInt(value, 10) || 0
+          : value,
     }));
   };
 
@@ -156,6 +162,11 @@ export function EditItemForm({ item, onSave, onCancel }) {
         if (url) photoUrl = url;
       }
       const altBarcodes = (form.barcodes || []).map((b) => String(b || '').trim()).filter(Boolean);
+      let unitPrice = null;
+      if (form.unit_price !== '' && form.unit_price != null) {
+        const parsed = Number(form.unit_price);
+        if (Number.isFinite(parsed) && parsed >= 0) unitPrice = parsed;
+      }
       await onSave({
         name: form.name.trim(),
         description: form.description?.trim() || null,
@@ -163,6 +174,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         store_location: form.store_location?.trim() || null,
         vehicle_model: form.vehicle_model?.trim() || null,
         agl_number: form.agl_number?.trim() || null,
+        unit_price: unitPrice,
         model_name: null,
         sku_code: null,
         quantity: form.quantity || 1,
@@ -192,6 +204,16 @@ export function EditItemForm({ item, onSave, onCancel }) {
           />
       </div>
       <Input label="AGL number (optional)" name="agl_number" value={form.agl_number} onChange={handleChange} placeholder="e.g. AGL-12345" />
+      <Input
+        label="Unit price (optional)"
+        name="unit_price"
+        type="number"
+        min={0}
+        step="0.01"
+        value={form.unit_price}
+        onChange={handleChange}
+        placeholder="e.g. 12.50"
+      />
       <CategorySelect label="Category" name="category" value={form.category} onChange={handleChange} placeholder="Select category" />
       <StoreLocationSelect label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" />
       <VehicleModelSelect label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} placeholder="Select vehicle make" />

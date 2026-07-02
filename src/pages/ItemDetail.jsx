@@ -165,7 +165,11 @@ export function ItemDetail() {
 	const handleSaveEdit = async (updates) => {
 		try {
 			const { barcodes, ...itemUpdates } = updates;
-			const summary = buildItemEditSummary(item, { ...itemUpdates, barcodes });
+			const summary = buildItemEditSummary(
+				item,
+				{ ...itemUpdates, barcodes },
+				{ beforeBarcodes: itemBarcodes }
+			);
 			await updateItem(id, itemUpdates);
 			if (Array.isArray(barcodes)) {
 				await syncItemBarcodes(id, barcodes);
@@ -393,6 +397,19 @@ export function ItemDetail() {
 											</td>
 											<td className="py-3 px-4 text-slate-800">
 												{item.agl_number}
+											</td>
+										</tr>
+									)}
+									{item.unit_price != null && (
+										<tr>
+											<td className="py-3 px-4 text-slate-500 font-medium">
+												Unit price
+											</td>
+											<td className="py-3 px-4 text-slate-800">
+												{Number(item.unit_price).toLocaleString(undefined, {
+													minimumFractionDigits: 2,
+													maximumFractionDigits: 2,
+												})}
 											</td>
 										</tr>
 									)}

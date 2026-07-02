@@ -42,6 +42,7 @@ export function AddItem() {
     store_location: '',
     vehicle_model: '',
     agl_number: '',
+    unit_price: '',
     added_date: new Date().toISOString().slice(0, 10),
     barcodes: [''],
     photo: null,
@@ -80,7 +81,12 @@ export function AddItem() {
     const { name, value, type } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === 'number' ? parseInt(value, 10) || 0 : value,
+      [name]:
+        type === 'number'
+          ? name === 'unit_price'
+            ? value
+            : parseInt(value, 10) || 0
+          : value,
     }));
     if (name.startsWith('barcode_')) {
       setBarcodeError('');
@@ -300,6 +306,27 @@ export function AddItem() {
       setError('Item name is required');
       return;
     }
+    if (!form.category?.trim()) {
+      setError('Category is required');
+      return;
+    }
+    if (!form.agl_number?.trim()) {
+      setError('AGL number is required');
+      return;
+    }
+    if (!form.vehicle_model?.trim()) {
+      setError('Vehicle model is required');
+      return;
+    }
+    let unitPrice = null;
+    if (form.unit_price !== '' && form.unit_price != null) {
+      const parsed = Number(form.unit_price);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        setError('Unit price must be a valid number');
+        return;
+      }
+      unitPrice = parsed;
+    }
     const allBarcodesTrimmed = (form.barcodes || []).map((b) => String(b || '').trim()).filter(Boolean);
     if (allBarcodesTrimmed.length === 0) {
       setError('At least one product barcode/QR code is required. Scan, enter, or use Auto Generate.');
@@ -344,12 +371,13 @@ export function AddItem() {
         qr_id: qrId,
         name: form.name.trim(),
         description: form.description.trim() || null,
-        category: form.category.trim() || null,
+        category: form.category.trim(),
         quantity: form.quantity || 1,
         reminder_count: form.reminder_count ?? 1,
         store_location: form.store_location.trim() || null,
-        vehicle_model: form.vehicle_model.trim() || null,
-        agl_number: form.agl_number?.trim() || null,
+        vehicle_model: form.vehicle_model.trim(),
+        agl_number: form.agl_number.trim(),
+        unit_price: unitPrice,
         model_name: null,
         sku_code: null,
         added_date: form.added_date
@@ -619,11 +647,23 @@ export function AddItem() {
           )}
 
           <Input
-            label="AGL number (optional)"
+            label="AGL number *"
             name="agl_number"
             value={form.agl_number}
             onChange={handleChange}
             placeholder="e.g. AGL-12345"
+            required
+          />
+
+          <Input
+            label="Unit price (optional)"
+            name="unit_price"
+            type="number"
+            min={0}
+            step="0.01"
+            value={form.unit_price}
+            onChange={handleChange}
+            placeholder="e.g. 12.50"
           />
 
           <div className="min-w-0">
@@ -642,11 +682,12 @@ export function AddItem() {
           </div>
 
           <CategorySelect
-            label="Category"
+            label="Category *"
             name="category"
             value={form.category}
             onChange={handleChange}
             placeholder="Select category"
+            required
           />
 
           <StoreLocationSelect
@@ -658,11 +699,12 @@ export function AddItem() {
           />
 
           <VehicleModelSelect
-            label="Vehicle Model (optional)"
+            label="Vehicle Model *"
             name="vehicle_model"
             value={form.vehicle_model}
             onChange={handleChange}
             placeholder="Select vehicle make"
+            required
           />
 
           <Input

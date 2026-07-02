@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCategories, buildCategoryOptions } from '../services/categoryService';
 
-export function CategorySelect({ value, onChange, label = 'Category', name = 'category', placeholder }) {
+export function CategorySelect({ value, onChange, label = 'Category', name = 'category', placeholder, required = false }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const options = buildCategoryOptions(categories);
@@ -24,6 +24,7 @@ export function CategorySelect({ value, onChange, label = 'Category', name = 'ca
       )}
       <select
         name={name}
+        required={required}
         value={selectValue}
         onChange={(e) => {
           const v = e.target.value;

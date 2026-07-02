@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { getCategories, buildCategoryOptions } from '../services/categoryService';
 import { STORE_LOCATIONS } from '../components/StoreLocationSelect';
 import { exportInventoryPDF, exportInventoryExcel } from '../services/reportService';
-import { updateItem, createTransaction, logItemAction } from '../services/itemService';
+import { updateItem, createTransaction, logItemAction, getItemBarcodes, syncItemBarcodes } from '../services/itemService';
 import { buildItemEditSummary } from '../lib/itemActions';
 import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
@@ -199,8 +199,17 @@ export function InventoryList() {
   const handleSaveEdit = async (updates) => {
     if (!editingItem) return;
     try {
-      const summary = buildItemEditSummary(editingItem, updates);
-      await updateItem(editingItem.id, updates);
+      const { barcodes, ...itemUpdates } = updates;
+      const beforeBarcodes = await getItemBarcodes(editingItem.id);
+      const summary = buildItemEditSummary(
+        editingItem,
+        { ...itemUpdates, barcodes },
+        { beforeBarcodes }
+      );
+      await updateItem(editingItem.id, itemUpdates);
+      if (Array.isArray(barcodes)) {
+        await syncItemBarcodes(editingItem.id, barcodes);
+      }
       await logItemAction(editingItem.id, { type: 'updated', notes: summary }, user?.id);
       success('Item updated');
       setEditingItem(null);

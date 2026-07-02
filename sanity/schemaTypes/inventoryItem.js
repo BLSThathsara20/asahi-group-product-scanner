@@ -24,6 +24,7 @@ export default {
 		{ name: "modelName", title: "Model Name", type: "string" },
 		{ name: "skuCode", title: "SKU Code", type: "string" },
 		{ name: "aglNumber", title: "AGL Number", type: "string" },
+		{ name: "unitPrice", title: "Unit Price", type: "number" },
 		{ name: "reminderCount", title: "Low Stock Alert At", type: "number", initialValue: 1 },
 		{ name: "addedBy", title: "Added By", type: "reference", to: [{ type: "appUser" }] },
 		{ name: "lastUsedBy", title: "Last Used By", type: "reference", to: [{ type: "appUser" }] },

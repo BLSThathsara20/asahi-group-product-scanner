@@ -44,6 +44,7 @@ export function mapItem(doc) {
 		model_name: doc.modelName || null,
 		sku_code: doc.skuCode || null,
 		agl_number: doc.aglNumber || null,
+		unit_price: doc.unitPrice ?? null,
 		reminder_count: doc.reminderCount ?? 1,
 		added_by: refId(doc.addedBy),
 		last_used_by: refId(doc.lastUsedBy),
@@ -126,6 +127,7 @@ export function itemToSanity(item) {
 	if (item.model_name !== undefined) doc.modelName = item.model_name;
 	if (item.sku_code !== undefined) doc.skuCode = item.sku_code;
 	if (item.agl_number !== undefined) doc.aglNumber = item.agl_number;
+	if (item.unit_price !== undefined) doc.unitPrice = item.unit_price;
 	if (item.reminder_count != null) doc.reminderCount = item.reminder_count;
 	if (item.added_by) doc.addedBy = { _type: "reference", _ref: item.added_by };
 	if (item.last_used_by) doc.lastUsedBy = { _type: "reference", _ref: item.last_used_by };
