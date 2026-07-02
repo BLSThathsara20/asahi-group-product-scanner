@@ -182,6 +182,9 @@ export function PrintLabels() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-slate-500">
               {selectedIds.size} selected
+              {labelItems.length > 0 && labelItems.length !== selectedIds.size
+                ? ` · ${labelItems.length} labels`
+                : ''}
             </p>
             <SegmentPills
               options={[
@@ -292,7 +295,7 @@ export function PrintLabels() {
                 <NavIcon name="printer" className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                 <p className="text-sm font-medium text-slate-500">Nothing to preview yet</p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Select products above — each gets one label on the sheet
+                  Select products and set How many — the same label repeats for each copy
                 </p>
               </div>
             ) : (
