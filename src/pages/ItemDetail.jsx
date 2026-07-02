@@ -13,7 +13,12 @@ import {
 } from "../services/itemService";
 import { getProfilesByIds } from "../services/userService";
 import { useNotification } from "../context/NotificationContext";
-import { buildItemEditSummary, ACTION_TYPE_LABELS, ACTION_TYPE_STYLES, formatActionSummary } from "../lib/itemActions";
+import {
+	buildItemEditSummary,
+	ACTION_TYPE_LABELS,
+	ACTION_TYPE_STYLES,
+	formatActionSummary,
+} from "../lib/itemActions";
 import { displayPerformer } from "../lib/performer";
 import { formatGbp } from "../lib/utils";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
@@ -31,7 +36,11 @@ import {
 } from "../components/ui/PageLayout";
 import { ItemLabelExport } from "../components/Labels/ItemLabelExport";
 import { NavIcon } from "../components/icons/NavIcons";
-import { CheckOutForm, CheckInForm, EditItemForm } from "../components/Inventory";
+import {
+	CheckOutForm,
+	CheckInForm,
+	EditItemForm,
+} from "../components/Inventory";
 
 export function ItemDetail() {
 	const { id } = useParams();
@@ -65,7 +74,12 @@ export function ItemDetail() {
 
 	const handleDelete = async () => {
 		if (!isSuperAdmin || !item?.id) return;
-		if (!confirm("Permanently delete this item? Photo and transaction history will be removed.")) return;
+		if (
+			!confirm(
+				"Permanently delete this item? Photo and transaction history will be removed.",
+			)
+		)
+			return;
 		setDeleting(true);
 		try {
 			await deleteItem(item.id);
@@ -169,7 +183,7 @@ export function ItemDetail() {
 			const summary = buildItemEditSummary(
 				item,
 				{ ...itemUpdates, barcodes },
-				{ beforeBarcodes: itemBarcodes }
+				{ beforeBarcodes: itemBarcodes },
 			);
 			await updateItem(id, itemUpdates);
 			if (Array.isArray(barcodes)) {
@@ -224,7 +238,9 @@ export function ItemDetail() {
 					title="Item not found"
 					description="This item may have been removed"
 					action={
-						<Button onClick={() => navigate("/inventory")}>Back to spare parts</Button>
+						<Button onClick={() => navigate("/inventory")}>
+							Back to spare parts
+						</Button>
 					}
 				/>
 			</PageContainer>
@@ -237,7 +253,10 @@ export function ItemDetail() {
 				variant="outline"
 				onClick={async () => {
 					const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
-					const shareUrl = new URL(`${base ? base + "/" : ""}share/${id}`, window.location.origin).href;
+					const shareUrl = new URL(
+						`${base ? base + "/" : ""}share/${id}`,
+						window.location.origin,
+					).href;
 					await navigator.clipboard.writeText(shareUrl);
 					notifySuccess("Link copied to clipboard");
 				}}
@@ -249,7 +268,12 @@ export function ItemDetail() {
 			</Button>
 			{item.status === "in_stock" && (
 				<>
-					<Button variant="outline" onClick={() => setShowEdit(true)} title="Edit item" className="p-2">
+					<Button
+						variant="outline"
+						onClick={() => setShowEdit(true)}
+						title="Edit item"
+						className="p-2"
+					>
 						<NavIcon name="pencil" className="w-4 h-4" />
 					</Button>
 					<Button onClick={() => setShowCheckOut(true)}>Check out</Button>
@@ -417,7 +441,10 @@ export function ItemDetail() {
 												Added
 											</td>
 											<td className="py-3 px-4 text-slate-800">
-												{new Date(item.added_date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+												{new Date(item.added_date).toLocaleString(undefined, {
+													dateStyle: "medium",
+													timeStyle: "short",
+												})}
 												{item.added_by && performerNames[item.added_by] && (
 													<span className="text-slate-500">
 														{" "}
@@ -513,44 +540,45 @@ export function ItemDetail() {
 				<div className="p-4 border-b border-slate-200">
 					<h3 className="font-semibold text-slate-800">Action history</h3>
 					<p className="text-xs text-slate-500 mt-0.5">
-						Latest {MAX_ITEM_ACTIONS} actions kept per part · older rows removed from database
+						Latest {MAX_ITEM_ACTIONS} actions kept per part · older rows removed
+						from database
 					</p>
 				</div>
 				<div className="divide-y divide-slate-100">
 					{paginatedTransactions.map((tx) => {
 						const who = displayPerformer(tx, performerNames);
 						return (
-						<div
-							key={tx.id}
-							className="p-4 flex items-start justify-between gap-4"
-						>
-							<div>
-								<span
-									className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-										ACTION_TYPE_STYLES[tx.type] || "bg-slate-100 text-slate-800"
-									}`}
-								>
-									{ACTION_TYPE_LABELS[tx.type] || tx.type}
-									{(tx.type === "in" || tx.type === "out") && (tx.quantity ?? 1) > 1
-										? ` ×${tx.quantity}`
-										: ""}
-								</span>
-								<p className="mt-1 text-slate-800 font-medium">
-									{formatActionSummary(tx)}
-								</p>
-								{tx.responsible_person && (
-									<p className="text-sm text-slate-500">
-										Responsible: {tx.responsible_person}
+							<div
+								key={tx.id}
+								className="p-4 flex items-start justify-between gap-4"
+							>
+								<div>
+									<span
+										className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+											ACTION_TYPE_STYLES[tx.type] ||
+											"bg-slate-100 text-slate-800"
+										}`}
+									>
+										{ACTION_TYPE_LABELS[tx.type] || tx.type}
+										{(tx.type === "in" || tx.type === "out") &&
+										(tx.quantity ?? 1) > 1
+											? ` ×${tx.quantity}`
+											: ""}
+									</span>
+									<p className="mt-1 text-slate-800 font-medium">
+										{formatActionSummary(tx)}
 									</p>
-								)}
-								{who && (
-									<p className="text-sm text-slate-500">By {who}</p>
-								)}
+									{tx.responsible_person && (
+										<p className="text-sm text-slate-500">
+											Responsible: {tx.responsible_person}
+										</p>
+									)}
+									{who && <p className="text-sm text-slate-500">By {who}</p>}
+								</div>
+								<span className="text-sm text-slate-500 whitespace-nowrap">
+									{new Date(tx.created_at).toLocaleString()}
+								</span>
 							</div>
-							<span className="text-sm text-slate-500 whitespace-nowrap">
-								{new Date(tx.created_at).toLocaleString()}
-							</span>
-						</div>
 						);
 					})}
 					{transactions.length === 0 && (
@@ -578,7 +606,7 @@ export function ItemDetail() {
 					onClick={() => setBarcodeAccordionOpen((o) => !o)}
 					className="w-full flex items-center justify-between gap-2 p-4 text-left hover:bg-slate-50 transition-colors"
 				>
-					<h3 className="font-semibold text-slate-800">Barcode & QR Code</h3>
+					<h3 className="font-semibold text-slate-800">Product label</h3>
 					<NavIcon
 						name={barcodeAccordionOpen ? "chevronDown" : "chevronRight"}
 						className="w-5 h-5 text-slate-500"
@@ -593,7 +621,9 @@ export function ItemDetail() {
 									<ul className="space-y-1.5 text-sm">
 										{item?.qr_id && (
 											<li className="flex items-center gap-2">
-												<span className="text-slate-500 w-16 shrink-0">Primary</span>
+												<span className="text-slate-500 w-16 shrink-0">
+													Primary
+												</span>
 												<code className="px-2 py-1 bg-slate-100 rounded font-mono text-slate-800 truncate max-w-[200px]">
 													{item.qr_id}
 												</code>
@@ -601,7 +631,9 @@ export function ItemDetail() {
 										)}
 										{itemBarcodes?.map((b, i) => (
 											<li key={i} className="flex items-center gap-2">
-												<span className="text-slate-500 w-16 shrink-0">Extra {i + 1}</span>
+												<span className="text-slate-500 w-16 shrink-0">
+													Extra {i + 1}
+												</span>
 												<code className="px-2 py-1 bg-slate-100 rounded font-mono text-slate-800 truncate max-w-[200px]">
 													{b}
 												</code>
@@ -610,10 +642,7 @@ export function ItemDetail() {
 									</ul>
 								</div>
 							)}
-							<div>
-								<h4 className="font-medium text-slate-700 mb-3">Label</h4>
-								<ItemLabelExport item={item} />
-							</div>
+							<ItemLabelExport item={item} />
 						</div>
 					</div>
 				)}
@@ -624,7 +653,10 @@ export function ItemDetail() {
 				type="button"
 				onClick={async () => {
 					const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
-					const shareUrl = new URL(`${base ? base + "/" : ""}share/${id}`, window.location.origin).href;
+					const shareUrl = new URL(
+						`${base ? base + "/" : ""}share/${id}`,
+						window.location.origin,
+					).href;
 					await navigator.clipboard.writeText(shareUrl);
 					notifySuccess("Link copied to clipboard");
 				}}

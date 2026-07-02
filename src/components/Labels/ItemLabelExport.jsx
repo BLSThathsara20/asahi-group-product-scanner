@@ -11,7 +11,7 @@ export function ItemLabelExport({ item }) {
     setExporting(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
-      await downloadLabelsPdf([item], 1);
+      await downloadLabelsPdf([{ ...item, labelKey: item.id }], 1);
     } finally {
       setExporting(false);
     }
@@ -21,14 +21,20 @@ export function ItemLabelExport({ item }) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <LabelCell
-        itemId={item.id}
-        name={item.name}
-        code={item.qr_id}
-        category={item.category}
-        vehicleModel={item.vehicle_model}
-        preview
-      />
+      <p className="text-sm text-slate-500 text-center max-w-md">
+        One label with part name, category, vehicle, QR code, and barcode — same layout as Print labels.
+      </p>
+      <div data-page-index="0" className="flex justify-center">
+        <LabelCell
+          itemId={item.id}
+          labelKey={item.id}
+          name={item.name}
+          code={item.qr_id}
+          category={item.category}
+          vehicleModel={item.vehicle_model}
+          preview
+        />
+      </div>
       <Button variant="outline" onClick={handleDownload} disabled={exporting}>
         {exporting ? 'Generating…' : 'Download label PDF'}
       </Button>
