@@ -15,6 +15,7 @@ import { getProfilesByIds } from "../services/userService";
 import { useNotification } from "../context/NotificationContext";
 import { buildItemEditSummary, ACTION_TYPE_LABELS, ACTION_TYPE_STYLES, formatActionSummary } from "../lib/itemActions";
 import { displayPerformer } from "../lib/performer";
+import { formatGbp } from "../lib/utils";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
 import { Card } from "../components/ui/Card";
 import { Pagination } from "../components/ui/Pagination";
@@ -406,10 +407,7 @@ export function ItemDetail() {
 												Unit price
 											</td>
 											<td className="py-3 px-4 text-slate-800">
-												{Number(item.unit_price).toLocaleString(undefined, {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
+												{formatGbp(item.unit_price)}
 											</td>
 										</tr>
 									)}

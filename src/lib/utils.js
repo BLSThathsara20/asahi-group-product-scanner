@@ -10,3 +10,9 @@ export function getQrCodeUrl(qrId) {
   const base = `${window.location.origin}${import.meta.env.BASE_URL}`.replace(/\/$/, '');
   return `${base}/scan?barcode=${encodeURIComponent(qrId)}`;
 }
+
+/** Format amount in British pounds */
+export function formatGbp(amount) {
+  if (amount == null || Number.isNaN(Number(amount))) return '—';
+  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(amount));
+}

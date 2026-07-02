@@ -20,7 +20,14 @@ export function LabelSheet({ items, maxRows = 4, pageIndex = 0 }) {
         }}
       >
         {items.map((item) => (
-          <LabelCell key={item.id} itemId={item.id} name={item.name} code={item.qr_id} />
+          <LabelCell
+            key={item.id}
+            itemId={item.id}
+            name={item.name}
+            code={item.qr_id}
+            category={item.category}
+            vehicleModel={item.vehicle_model}
+          />
         ))}
       </div>
     </div>

@@ -204,16 +204,22 @@ export function EditItemForm({ item, onSave, onCancel }) {
           />
       </div>
       <Input label="AGL number (optional)" name="agl_number" value={form.agl_number} onChange={handleChange} placeholder="e.g. AGL-12345" />
-      <Input
-        label="Unit price (optional)"
-        name="unit_price"
-        type="number"
-        min={0}
-        step="0.01"
-        value={form.unit_price}
-        onChange={handleChange}
-        placeholder="e.g. 12.50"
-      />
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Unit price £ (optional)</label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">£</span>
+          <input
+            name="unit_price"
+            type="number"
+            min={0}
+            step="0.01"
+            value={form.unit_price}
+            onChange={handleChange}
+            placeholder="12.50"
+            className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+          />
+        </div>
+      </div>
       <CategorySelect label="Category" name="category" value={form.category} onChange={handleChange} placeholder="Select category" />
       <StoreLocationSelect label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" />
       <VehicleModelSelect label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} placeholder="Select vehicle make" />

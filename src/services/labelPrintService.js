@@ -31,7 +31,7 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
   const { x, y, w, h } = cellRect(col, row, cols, rows);
   const pad = 2;
   const innerX = x + pad;
-  const innerY = y + pad;
+  let cursorY = y + pad + 3;
   const innerW = w - pad * 2;
 
   doc.setDrawColor(180);
@@ -40,26 +40,51 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   const title = truncateText(doc, item.name || code, innerW - 2);
-  doc.text(title, innerX + innerW / 2, innerY + 4, { align: 'center', maxWidth: innerW });
+  doc.text(title, innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
+  cursorY += 3.5;
 
-  const qrSize = Math.min(innerW * 0.55, h * 0.38, 22);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5);
+  if (item.category) {
+    const catLine = truncateText(doc, `Category: ${item.category}`, innerW - 2);
+    doc.text(catLine, innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
+    cursorY += 2.5;
+  }
+  if (item.vehicle_model) {
+    const vehicleLine = truncateText(doc, `Vehicle: ${item.vehicle_model}`, innerW - 2);
+    doc.text(vehicleLine, innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
+    cursorY += 2.5;
+  }
+
+  doc.setFontSize(4.5);
+  doc.text('QR', innerX + innerW / 2, cursorY, { align: 'center' });
+  cursorY += 1.5;
+
+  const qrSize = Math.min(innerW * 0.5, h * 0.28, 20);
   const qrX = innerX + (innerW - qrSize) / 2;
-  const qrY = innerY + 6;
+  const qrY = cursorY;
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
+  cursorY = qrY + qrSize + 2;
+
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(5);
+  doc.text(truncateText(doc, code, innerW - 2), innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
+  cursorY += 3;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(4.5);
+  doc.text('Barcode', innerX + innerW / 2, cursorY, { align: 'center' });
+  cursorY += 1.5;
 
   const barW = innerW * 0.88;
-  const barH = Math.min(h * 0.14, 10);
+  const barH = Math.min(h * 0.12, 8);
   const barX = innerX + (innerW - barW) / 2;
-  const barY = qrY + qrSize + 2;
+  const barY = cursorY;
   if (barcodeData) {
     doc.addImage(barcodeData, 'PNG', barX, barY, barW, barH);
   }
-
-  doc.setFont('courier', 'normal');
-  doc.setFontSize(5.5);
-  doc.text(code, innerX + innerW / 2, barY + barH + 3, { align: 'center', maxWidth: innerW });
 }
 
 function getCellImages(itemId, pageIndex) {
