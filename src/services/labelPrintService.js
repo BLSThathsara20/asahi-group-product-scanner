@@ -123,6 +123,74 @@ export async function downloadLabelsPdf(items, maxRows = 4) {
   doc.save(`labels-${slug}.pdf`);
 }
 
+const SMALL_LABEL_MM = 54;
+
+function drawSmallLabelPage(doc, item, qrData, barcodeData) {
+  const code = item.qr_id;
+  const pad = 1.5;
+  const innerW = SMALL_LABEL_MM - pad * 2;
+  let cursorY = pad + 2;
+
+  doc.setFontSize(5.5);
+  doc.setFont('helvetica', 'bold');
+  const title = truncateText(doc, item.name || code, innerW - 1);
+  doc.text(title, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
+  cursorY += 2.8;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(4);
+  if (item.category) {
+    const catLine = truncateText(doc, `Category: ${item.category}`, innerW - 1);
+    doc.text(catLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
+    cursorY += 2;
+  }
+  if (item.vehicle_model) {
+    const vehicleLine = truncateText(doc, `Vehicle: ${item.vehicle_model}`, innerW - 1);
+    doc.text(vehicleLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
+    cursorY += 2;
+  }
+
+  const qrSize = Math.min(innerW * 0.62, 18);
+  const qrX = (SMALL_LABEL_MM - qrSize) / 2;
+  const qrY = cursorY;
+  if (qrData) {
+    doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
+  }
+  cursorY = qrY + qrSize + 1.2;
+
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(3.5);
+  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_MM / 2, cursorY, {
+    align: 'center',
+    maxWidth: innerW,
+  });
+  cursorY += 2.2;
+
+  const barW = innerW * 0.92;
+  const barH = 8;
+  const barX = (SMALL_LABEL_MM - barW) / 2;
+  if (barcodeData) {
+    doc.addImage(barcodeData, 'PNG', barX, cursorY, barW, barH);
+  }
+}
+
+/** Single 54 x 54 mm label PDF for small thermal printers. */
+export async function downloadSmallLabelPdf(item) {
+  if (!item?.qr_id) return;
+
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const labelKey = `${item.labelKey || item.id}-small54`;
+  const { qrData, barcodeData } = getCellImages(labelKey, 0);
+
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: [SMALL_LABEL_MM, SMALL_LABEL_MM],
+    orientation: 'portrait',
+  });
+  drawSmallLabelPage(doc, item, qrData, barcodeData);
+  doc.save(`label-54mm-${item.qr_id}.pdf`);
+}
+
 export function expandItemsWithQuantities(items, quantities = {}) {
   return items.flatMap((item) => {
     const raw = quantities[item.id] ?? 1;
