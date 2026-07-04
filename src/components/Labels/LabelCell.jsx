@@ -45,7 +45,7 @@ export function LabelCell({ itemId, labelKey, name, code, category, vehicleModel
     >
       <p
         className={`font-semibold text-slate-800 leading-tight line-clamp-2 w-full px-0.5 ${
-          isSmall ? (preview ? 'text-[9px]' : 'text-[5px]') : preview ? 'text-sm' : 'text-[9px] sm:text-[10px]'
+          isSmall ? (preview ? 'text-[11px]' : 'text-[7px]') : preview ? 'text-sm' : 'text-[9px] sm:text-[10px]'
         }`}
       >
         {name}
@@ -53,7 +53,7 @@ export function LabelCell({ itemId, labelKey, name, code, category, vehicleModel
       {category ? (
         <p
           className={`text-slate-600 leading-tight line-clamp-1 w-full px-0.5 ${
-            isSmall ? (preview ? 'text-[7px]' : 'text-[4px]') : preview ? 'text-xs' : 'text-[7px]'
+            isSmall ? (preview ? 'text-[9px]' : 'text-[5.5px]') : preview ? 'text-xs' : 'text-[7px]'
           }`}
         >
           Category: {category}
@@ -62,7 +62,7 @@ export function LabelCell({ itemId, labelKey, name, code, category, vehicleModel
       {vehicleModel ? (
         <p
           className={`text-slate-600 leading-tight line-clamp-1 w-full px-0.5 ${
-            isSmall ? (preview ? 'text-[7px]' : 'text-[4px]') : preview ? 'text-xs' : 'text-[7px]'
+            isSmall ? (preview ? 'text-[9px]' : 'text-[5.5px]') : preview ? 'text-xs' : 'text-[7px]'
           }`}
         >
           Vehicle: {vehicleModel}
@@ -71,13 +71,15 @@ export function LabelCell({ itemId, labelKey, name, code, category, vehicleModel
       <div className="label-qr shrink-0 mt-0.5">
         <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
       </div>
-      <p
-        className={`font-mono text-slate-600 leading-none truncate w-full px-0.5 ${
-          isSmall ? (preview ? 'text-[6px]' : 'text-[4px]') : preview ? 'text-xs' : 'text-[6px]'
-        }`}
-      >
-        {code}
-      </p>
+      {!isSmall ? (
+        <p
+          className={`font-mono text-slate-600 leading-none truncate w-full px-0.5 ${
+            preview ? 'text-xs' : 'text-[6px]'
+          }`}
+        >
+          {code}
+        </p>
+      ) : null}
       <canvas
         ref={barcodeRef}
         className={`label-barcode max-w-full ${isSmall ? (preview ? 'h-7' : 'h-3.5') : preview ? 'h-12' : 'h-6'}`}

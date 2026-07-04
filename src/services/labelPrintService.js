@@ -131,23 +131,23 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const innerW = SMALL_LABEL_MM - pad * 2;
   let cursorY = pad + 2;
 
-  doc.setFontSize(5.5);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   const title = truncateText(doc, item.name || code, innerW - 1);
   doc.text(title, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-  cursorY += 2.8;
+  cursorY += 3.2;
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(4);
+  doc.setFontSize(5.5);
   if (item.category) {
     const catLine = truncateText(doc, `Category: ${item.category}`, innerW - 1);
     doc.text(catLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 2;
+    cursorY += 2.4;
   }
   if (item.vehicle_model) {
     const vehicleLine = truncateText(doc, `Vehicle: ${item.vehicle_model}`, innerW - 1);
     doc.text(vehicleLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 2;
+    cursorY += 2.4;
   }
 
   const qrSize = Math.min(innerW * 0.62, 18);
@@ -156,15 +156,7 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
-  cursorY = qrY + qrSize + 1.2;
-
-  doc.setFont('courier', 'normal');
-  doc.setFontSize(3.5);
-  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_MM / 2, cursorY, {
-    align: 'center',
-    maxWidth: innerW,
-  });
-  cursorY += 2.2;
+  cursorY = qrY + qrSize + 1.5;
 
   const barW = innerW * 0.92;
   const barH = 8;

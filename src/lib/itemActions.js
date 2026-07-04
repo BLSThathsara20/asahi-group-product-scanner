@@ -72,7 +72,12 @@ export function formatActionSummary(tx) {
 		return bits.join(" · ") || "Checked out";
 	}
 	if (tx.type === "in") {
-		return tx.notes || "Checked in";
+		const qty = tx.quantity ?? 1;
+		const qtyText = qty === 1 ? "1 unit checked in" : `${qty} units checked in`;
+		if (tx.notes && tx.notes !== "Item returned to spare parts") {
+			return `${qtyText} · ${tx.notes}`;
+		}
+		return qtyText;
 	}
 	return tx.notes || ACTION_TYPE_LABELS[tx.type] || tx.type;
 }

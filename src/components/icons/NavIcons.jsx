@@ -28,6 +28,7 @@ import {
 	Eye,
 	Share2,
 	Printer,
+	PackagePlus,
 } from "lucide-react";
 
 export const NavIcons = {
@@ -62,6 +63,7 @@ export const NavIcons = {
 	eye: Eye,
 	share: Share2,
 	printer: Printer,
+	packagePlus: PackagePlus,
 };
 
 export function NavIcon({ name, className = "w-5 h-5" }) {

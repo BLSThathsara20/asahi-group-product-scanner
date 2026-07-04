@@ -6,19 +6,26 @@ export function CheckInForm({ onSubmit, onCancel, item }) {
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const qty = parseInt(quantity, 10) || 0;
     if (qty < 1) {
       setErrors({ quantity: 'Quantity must be at least 1' });
       return;
     }
+    if (submitting) return;
     setErrors({});
-    onSubmit({
-      quantity: qty,
-      notes: notes.trim() || 'Item returned to spare parts',
-    });
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        quantity: qty,
+        notes: notes.trim() || 'Item returned to spare parts',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -70,8 +77,10 @@ export function CheckInForm({ onSubmit, onCancel, item }) {
           />
         </div>
         <div className="flex gap-2 pt-2">
-          <Button type="submit">Confirm Check In</Button>
-          <Button type="button" variant="secondary" onClick={onCancel}>
+          <Button type="submit" loading={submitting} disabled={submitting}>
+            {submitting ? 'Checking in…' : 'Confirm Check In'}
+          </Button>
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
             Cancel
           </Button>
         </div>

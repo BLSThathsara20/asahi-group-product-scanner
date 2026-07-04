@@ -142,39 +142,51 @@ export function ItemDetail() {
 	}, [id, loading, item]);
 
 	useEffect(() => {
-		if (!item) return;
-		if (searchParams.get("checkout") === "1" && item.status === "in_stock") {
+		if (!item || !id) return;
+		const checkout = searchParams.get("checkout") === "1";
+		const checkin = searchParams.get("checkin") === "1";
+		if (checkout && item.status === "in_stock") {
 			setShowCheckOut(true);
-		} else if (searchParams.get("checkin") === "1" && item.status === "out") {
+			navigate(`/inventory/${id}`, { replace: true });
+		} else if (checkin && item.status === "out") {
 			setShowCheckIn(true);
+			navigate(`/inventory/${id}`, { replace: true });
 		}
-	}, [item, searchParams]);
+	}, [item, searchParams, id, navigate]);
 
 	const handleCheckOut = async (data) => {
 		const qty = data.quantity ?? 1;
 		const newQty = Math.max(0, (item?.quantity ?? 0) - qty);
 		const recordedAt = new Date().toISOString();
-		await createTransaction({
-			item_id: id,
-			type: "out",
-			quantity: qty,
-			recipient_name: data.recipientName,
-			purpose: data.purpose,
-			responsible_person: data.responsiblePerson,
-			vehicle_model: data.vehicleModel || null,
-			notes: data.notes,
-			performed_by: user?.id,
-			created_at: recordedAt,
-		});
-		await updateItem(id, {
-			quantity: newQty,
-			status: newQty === 0 ? "out" : "in_stock",
-			last_used_date: recordedAt,
-			last_used_by: user?.id,
-		});
-		notifySuccess("Item checked out");
-		setShowCheckOut(false);
-		load();
+		try {
+			await createTransaction({
+				item_id: id,
+				type: "out",
+				quantity: qty,
+				recipient_name: data.recipientName,
+				purpose: data.purpose,
+				responsible_person: data.responsiblePerson,
+				vehicle_model: data.vehicleModel || null,
+				notes: data.notes,
+				performed_by: user?.id,
+				created_at: recordedAt,
+			});
+			await updateItem(id, {
+				quantity: newQty,
+				status: newQty === 0 ? "out" : "in_stock",
+				last_used_date: recordedAt,
+				last_used_by: user?.id,
+			});
+			notifySuccess("Item checked out");
+			setShowCheckOut(false);
+			if (searchParams.get("checkout") === "1") {
+				navigate(`/inventory/${id}`, { replace: true });
+			}
+			load();
+		} catch (err) {
+			notifyError(err.message || "Check out failed");
+			throw err;
+		}
 	};
 
 	const handleSaveEdit = async (updates) => {
@@ -203,23 +215,31 @@ export function ItemDetail() {
 		const qty = data.quantity ?? 1;
 		const newQty = (item?.quantity ?? 0) + qty;
 		const recordedAt = new Date().toISOString();
-		await createTransaction({
-			item_id: id,
-			type: "in",
-			quantity: qty,
-			notes: data.notes || "Item returned to spare parts",
-			performed_by: user?.id,
-			created_at: recordedAt,
-		});
-		await updateItem(id, {
-			quantity: newQty,
-			status: "in_stock",
-			last_used_date: recordedAt,
-			last_used_by: user?.id,
-		});
-		notifySuccess("Item checked in");
-		setShowCheckIn(false);
-		load();
+		try {
+			await createTransaction({
+				item_id: id,
+				type: "in",
+				quantity: qty,
+				notes: data.notes || "Item returned to spare parts",
+				performed_by: user?.id,
+				created_at: recordedAt,
+			});
+			await updateItem(id, {
+				quantity: newQty,
+				status: "in_stock",
+				last_used_date: recordedAt,
+				last_used_by: user?.id,
+			});
+			notifySuccess("Item checked in");
+			setShowCheckIn(false);
+			if (searchParams.get("checkin") === "1") {
+				navigate(`/inventory/${id}`, { replace: true });
+			}
+			load();
+		} catch (err) {
+			notifyError(err.message || "Check in failed");
+			throw err;
+		}
 	};
 
 	if (loading) {
@@ -280,7 +300,10 @@ export function ItemDetail() {
 				</>
 			)}
 			{item.status === "out" && (
-				<Button onClick={() => setShowCheckIn(true)}>Check in</Button>
+				<Button onClick={() => setShowCheckIn(true)} title="Check in">
+					<NavIcon name="packagePlus" className="w-4 h-4" />
+					Check in
+				</Button>
 			)}
 			{isSuperAdmin && (
 				<Button
@@ -519,7 +542,12 @@ export function ItemDetail() {
 			{showCheckOut && (
 				<CheckOutForm
 					onSubmit={handleCheckOut}
-					onCancel={() => setShowCheckOut(false)}
+					onCancel={() => {
+						setShowCheckOut(false);
+						if (searchParams.get("checkout") === "1") {
+							navigate(`/inventory/${id}`, { replace: true });
+						}
+					}}
 					item={item}
 					currentUserId={user?.id}
 					currentUserDisplay={profile?.full_name || user?.email}
@@ -561,8 +589,8 @@ export function ItemDetail() {
 									>
 										{ACTION_TYPE_LABELS[tx.type] || tx.type}
 										{(tx.type === "in" || tx.type === "out") &&
-										(tx.quantity ?? 1) > 1
-											? ` ×${tx.quantity}`
+										(tx.quantity ?? 1) > 0
+											? ` ×${tx.quantity ?? 1}`
 											: ""}
 									</span>
 									<p className="mt-1 text-slate-800 font-medium">

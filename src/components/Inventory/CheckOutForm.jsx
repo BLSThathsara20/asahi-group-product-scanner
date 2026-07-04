@@ -20,6 +20,7 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
     notes: '',
   });
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -98,17 +99,22 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
-    onSubmit({
-      quantity: form.quantity,
-      recipientName: form.recipientName,
-      purpose: form.purpose,
-      responsiblePerson: form.responsiblePerson,
-      vehicleModel: form.vehicleModel,
-      notes: form.notes,
-    });
+    if (!validate() || submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        quantity: form.quantity,
+        recipientName: form.recipientName,
+        purpose: form.purpose,
+        responsiblePerson: form.responsiblePerson,
+        vehicleModel: form.vehicleModel,
+        notes: form.notes,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const userDisplay = (u) => u.full_name?.trim() || u.email || 'Unknown';
@@ -264,8 +270,10 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
               />
           </div>
           <div className="flex gap-2 pt-2">
-            <Button type="submit">Confirm Check Out</Button>
-            <Button type="button" variant="secondary" onClick={onCancel}>
+            <Button type="submit" loading={submitting} disabled={submitting}>
+              {submitting ? 'Checking out…' : 'Confirm Check Out'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
               Cancel
             </Button>
           </div>
