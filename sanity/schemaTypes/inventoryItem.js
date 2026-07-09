@@ -19,10 +19,29 @@ export default {
 		},
 		{ name: "addedDate", title: "Added Date", type: "datetime" },
 		{ name: "lastUsedDate", title: "Last Used Date", type: "datetime" },
-		{ name: "vehicleModel", title: "Vehicle Model (legacy)", type: "string" },
+		{
+			name: "vehicleFitments",
+			title: "Vehicle Fitments",
+			type: "array",
+			of: [
+				{
+					type: "object",
+					fields: [
+						{ name: "make", title: "Vehicle Make", type: "string" },
+						{
+							name: "models",
+							title: "Vehicle Models",
+							type: "array",
+							of: [{ type: "string" }],
+						},
+					],
+				},
+			],
+		},
+		{ name: "vehicleModel", title: "Vehicle (legacy)", type: "string" },
 		{
 			name: "vehicleModels",
-			title: "Vehicle Models",
+			title: "Vehicle Makes (legacy)",
 			type: "array",
 			of: [{ type: "string" }],
 		},
@@ -30,7 +49,7 @@ export default {
 		{ name: "modelName", title: "Model Name (legacy)", type: "string" },
 		{
 			name: "modelNames",
-			title: "Part Models",
+			title: "Part Models (legacy)",
 			type: "array",
 			of: [{ type: "string" }],
 		},

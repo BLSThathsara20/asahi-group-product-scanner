@@ -7,7 +7,8 @@ import {
 	transactionToSanity,
 	deletionLogToSanity,
 } from "../lib/sanityMappers";
-import { formatVehicleModels } from "../lib/vehicleModels";
+import { formatVehicleFitments } from "../lib/vehicleFitments";
+import { ensureVehicleCatalogEntries } from "./vehicleCatalogService";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
 import { triggerGoogleSheetSync } from "./googleSheetSyncService";
 
@@ -44,6 +45,9 @@ export async function createItem(item) {
 		...item,
 		added_by: item.added_by ?? currentUserId(),
 	};
+	if (item.vehicle_fitments?.length) {
+		await ensureVehicleCatalogEntries(item.vehicle_fitments);
+	}
 	const doc = await sanityClient.create(itemToSanity(payload));
 	notifySheetSync();
 	return mapItem(doc);
@@ -210,6 +214,9 @@ export async function getItemByQrIdOrBase(barcode) {
 
 export async function updateItem(id, updates) {
 	const session = getStoredSession();
+	if (updates.vehicle_fitments?.length) {
+		await ensureVehicleCatalogEntries(updates.vehicle_fitments);
+	}
 	const patch = sanityClient.patch(id);
 	const sanityUpdates = itemToSanity(updates);
 	delete sanityUpdates._type;
@@ -270,7 +277,7 @@ export async function deleteItem(id, deletedBy) {
 			qr_id: item.qr_id,
 			name: item.name,
 			category: item.category,
-			vehicle_model: formatVehicleModels(item.vehicle_models),
+			vehicle_model: formatVehicleFitments(item),
 			agl_number: item.agl_number,
 			quantity: item.quantity,
 			status: item.status,

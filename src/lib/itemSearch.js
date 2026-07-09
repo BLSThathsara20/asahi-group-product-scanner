@@ -1,5 +1,4 @@
-import { normalizeVehicleModels } from "./vehicleModels";
-import { normalizePartModels } from "./partModels";
+import { itemMatchesVehicleFitmentSearch } from "./vehicleFitments";
 
 /** Match spare part against header/list search query. */
 export function matchesItemSearch(item, query) {
@@ -20,13 +19,5 @@ export function matchesItemSearch(item, query) {
 		return true;
 	}
 
-	if (normalizeVehicleModels(item).some((model) => model.toLowerCase().includes(q))) {
-		return true;
-	}
-
-	if (normalizePartModels(item).some((model) => model.toLowerCase().includes(q))) {
-		return true;
-	}
-
-	return false;
+	return itemMatchesVehicleFitmentSearch(item, q);
 }

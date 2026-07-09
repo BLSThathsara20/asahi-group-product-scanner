@@ -112,23 +112,18 @@ export function SharedItemView() {
 										<dd className="text-slate-800">{item.store_location}</dd>
 									</div>
 								)}
-								{item.vehicle_models?.length > 0 && (
-									<div className="flex justify-between gap-4 py-2 border-b border-slate-100">
-										<dt className="text-slate-500">
-											Vehicle{item.vehicle_models.length > 1 ? "s" : ""}
-										</dt>
-										<dd className="text-slate-800 text-right">
-											{item.vehicle_models.join(", ")}
-										</dd>
-									</div>
-								)}
-								{item.model_names?.length > 0 && (
-									<div className="flex justify-between gap-4 py-2 border-b border-slate-100">
-										<dt className="text-slate-500">
-											Part model{item.model_names.length > 1 ? "s" : ""}
-										</dt>
-										<dd className="text-slate-800 text-right">
-											{item.model_names.join(", ")}
+								{item.vehicle_fitments?.length > 0 && (
+									<div className="py-2 border-b border-slate-100">
+										<dt className="text-slate-500 mb-1">Vehicles</dt>
+										<dd className="text-slate-800 space-y-1">
+											{item.vehicle_fitments.map((entry) => (
+												<div key={entry.make}>
+													<span className="font-medium">{entry.make}</span>
+													{entry.models.length > 0 ? (
+														<span className="text-slate-600"> — {entry.models.join(", ")}</span>
+													) : null}
+												</div>
+											))}
 										</dd>
 									</div>
 								)}

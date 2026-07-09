@@ -1,5 +1,8 @@
-import { normalizeVehicleModels } from "./vehicleModels";
-import { normalizePartModels } from "./partModels";
+import {
+	normalizeVehicleFitments,
+	formatVehicleFitments,
+	fitmentsToSanity,
+} from "./vehicleFitments";
 
 function refId(ref) {
 	if (!ref) return null;
@@ -29,8 +32,8 @@ export function mapUser(doc) {
 
 export function mapItem(doc) {
 	if (!doc) return null;
-	const vehicle_models = normalizeVehicleModels(doc);
-	const model_names = normalizePartModels(doc);
+	const vehicle_fitments = normalizeVehicleFitments(doc);
+	const vehicle_models = vehicle_fitments.map((entry) => entry.make);
 	return {
 		id: doc._id,
 		qr_id: doc.qrId,
@@ -42,11 +45,10 @@ export function mapItem(doc) {
 		status: doc.status || "in_stock",
 		added_date: doc.addedDate || doc._createdAt,
 		last_used_date: doc.lastUsedDate || null,
+		vehicle_fitments,
 		vehicle_models,
 		vehicle_model: vehicle_models[0] || null,
 		store_location: doc.storeLocation || null,
-		model_names,
-		model_name: model_names[0] || null,
 		sku_code: doc.skuCode || null,
 		agl_number: doc.aglNumber || null,
 		unit_price: doc.unitPrice ?? null,
@@ -165,25 +167,23 @@ export function itemToSanity(item) {
 	if (item.status != null) doc.status = item.status;
 	if (item.added_date != null) doc.addedDate = item.added_date;
 	if (item.last_used_date !== undefined) doc.lastUsedDate = item.last_used_date;
-	if (item.vehicle_models !== undefined) {
-		const models = normalizeVehicleModels({ vehicle_models: item.vehicle_models });
-		doc.vehicleModels = models;
-		doc.vehicleModel = models[0] || null;
+	if (item.vehicle_fitments !== undefined) {
+		const fitments = normalizeVehicleFitments({ vehicle_fitments: item.vehicle_fitments });
+		doc.vehicleFitments = fitmentsToSanity(fitments);
+		doc.vehicleModels = fitments.map((entry) => entry.make);
+		doc.vehicleModel = formatVehicleFitments({ vehicle_fitments: fitments }) || null;
+	} else if (item.vehicle_models !== undefined) {
+		const fitments = normalizeVehicleFitments({ vehicle_models: item.vehicle_models });
+		doc.vehicleFitments = fitmentsToSanity(fitments);
+		doc.vehicleModels = fitments.map((entry) => entry.make);
+		doc.vehicleModel = fitments[0]?.make || null;
 	} else if (item.vehicle_model !== undefined) {
-		const models = normalizeVehicleModels({ vehicle_model: item.vehicle_model });
-		doc.vehicleModels = models;
-		doc.vehicleModel = models[0] || null;
+		const fitments = normalizeVehicleFitments({ vehicle_model: item.vehicle_model });
+		doc.vehicleFitments = fitmentsToSanity(fitments);
+		doc.vehicleModels = fitments.map((entry) => entry.make);
+		doc.vehicleModel = fitments[0]?.make || null;
 	}
 	if (item.store_location !== undefined) doc.storeLocation = item.store_location;
-	if (item.model_names !== undefined) {
-		const models = normalizePartModels({ model_names: item.model_names });
-		doc.modelNames = models;
-		doc.modelName = models[0] || null;
-	} else if (item.model_name !== undefined) {
-		const models = normalizePartModels({ model_name: item.model_name });
-		doc.modelNames = models;
-		doc.modelName = models[0] || null;
-	}
 	if (item.sku_code !== undefined) doc.skuCode = item.sku_code;
 	if (item.agl_number !== undefined) doc.aglNumber = item.agl_number;
 	if (item.unit_price !== undefined) doc.unitPrice = item.unit_price;

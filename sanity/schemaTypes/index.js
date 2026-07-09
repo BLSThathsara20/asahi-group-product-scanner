@@ -7,6 +7,7 @@ import itemBarcode from "./itemBarcode";
 import itemDeletionLog from "./itemDeletionLog";
 import passwordReset from "./passwordReset";
 import userRole from "./userRole";
+import vehicleModelCatalog from "./vehicleModelCatalog";
 
 export const schemaTypes = [
 	inventoryItem,
@@ -18,4 +19,5 @@ export const schemaTypes = [
 	itemDeletionLog,
 	passwordReset,
 	userRole,
+	vehicleModelCatalog,
 ];

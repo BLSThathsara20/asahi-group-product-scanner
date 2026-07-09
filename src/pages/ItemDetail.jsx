@@ -405,42 +405,31 @@ export function ItemDetail() {
 											</td>
 										</tr>
 									)}
-									{item.vehicle_models?.length > 0 && (
+									{item.vehicle_fitments?.length > 0 && (
 										<tr>
-											<td className="py-3 px-4 text-slate-500 font-medium">
+											<td className="py-3 px-4 text-slate-500 font-medium align-top">
 												<span className="inline-flex items-center gap-1">
-													<NavIcon name="car" className="w-3.5 h-3.5" /> Vehicle
-													{item.vehicle_models.length > 1 ? "s" : ""}
+													<NavIcon name="car" className="w-3.5 h-3.5" /> Vehicles
 												</span>
 											</td>
 											<td className="py-3 px-4 text-slate-800">
-												<div className="flex flex-wrap gap-1.5">
-													{item.vehicle_models.map((model) => (
-														<span
-															key={model}
-															className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-sm"
-														>
-															{model}
-														</span>
-													))}
-												</div>
-											</td>
-										</tr>
-									)}
-									{item.model_names?.length > 0 && (
-										<tr>
-											<td className="py-3 px-4 text-slate-500 font-medium">
-												Part model{item.model_names.length > 1 ? "s" : ""}
-											</td>
-											<td className="py-3 px-4 text-slate-800">
-												<div className="flex flex-wrap gap-1.5">
-													{item.model_names.map((model) => (
-														<span
-															key={model}
-															className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-sm"
-														>
-															{model}
-														</span>
+												<div className="space-y-2">
+													{item.vehicle_fitments.map((entry) => (
+														<div key={entry.make}>
+															<p className="font-medium text-slate-800">{entry.make}</p>
+															{entry.models.length > 0 ? (
+																<div className="mt-1 flex flex-wrap gap-1.5">
+																	{entry.models.map((model) => (
+																		<span
+																			key={`${entry.make}-${model}`}
+																			className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-sm"
+																		>
+																			{model}
+																		</span>
+																	))}
+																</div>
+															) : null}
+														</div>
 													))}
 												</div>
 											</td>

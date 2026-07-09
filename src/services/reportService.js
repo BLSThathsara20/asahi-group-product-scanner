@@ -1,7 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { LOGO_URL } from '../lib/branding';
-import { formatVehicleModels } from '../lib/vehicleModels';
-import { formatPartModels } from '../lib/partModels';
+import { formatVehicleFitments } from '../lib/vehicleFitments';
 
 const statusLabels = { in_stock: 'In Stock', out: 'Out', reserved: 'Reserved' };
 
@@ -108,7 +107,7 @@ export async function exportInventoryPDF(items, categoryFilter = null) {
       (item.store_location || '-').slice(0, 10),
       String(item.quantity || 0),
       statusLabels[item.status] || item.status,
-      formatVehicleModels(item).slice(0, 10) || '-',
+      formatVehicleFitments(item).slice(0, 10) || '-',
     ];
     row.forEach((val, i) => {
       doc.text(val, x, y);
@@ -128,12 +127,10 @@ export async function exportInventoryExcel(items) {
   const rows = items.map((item) => ({
     Name: item.name || '',
     'QR ID': item.qr_id || '',
-    'Part Models': formatPartModels(item),
-    'SKU Code': item.sku_code || '',
     Description: item.description || '',
     Category: item.category || '',
     'Store Location': item.store_location || '',
-    'Vehicle Models': formatVehicleModels(item),
+    Vehicles: formatVehicleFitments(item),
     Quantity: item.quantity ?? '',
     Status: statusLabels[item.status] || item.status,
     'Added Date': item.added_date ? new Date(item.added_date).toLocaleString() : '',
@@ -146,16 +143,14 @@ export async function exportInventoryExcel(items) {
 }
 
 export function exportInventoryCSV(items, categoryFilter = null) {
-  const headers = ['Name', 'QR ID', 'Part Models', 'SKU Code', 'Description', 'Category', 'Store Location', 'Vehicle Models', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
+  const headers = ['Name', 'QR ID', 'Description', 'Category', 'Store Location', 'Vehicles', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
   const rows = items.map((item) => [
     `"${(item.name || '').replace(/"/g, '""')}"`,
     item.qr_id || '',
-    formatPartModels(item),
-    item.sku_code || '',
     `"${(item.description || '').replace(/"/g, '""')}"`,
     item.category || '',
     item.store_location || '',
-    formatVehicleModels(item),
+    `"${formatVehicleFitments(item).replace(/"/g, '""')}"`,
     item.quantity ?? '',
     statusLabels[item.status] || item.status,
     item.added_by || '',

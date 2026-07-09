@@ -12,8 +12,8 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ProductImage, ImageUploadOverlay } from '../components/ui/ProductImage';
 import { Modal } from '../components/ui/Modal';
-import { VehicleModelsSelect } from '../components/VehicleModelsSelect';
-import { MultiValueInput } from '../components/MultiValueInput';
+import { VehicleFitmentEditor } from '../components/VehicleFitmentEditor';
+import { hasRequiredVehicleFitments } from '../lib/vehicleFitments';
 import { StoreLocationSelect } from '../components/StoreLocationSelect';
 import { CategorySelect } from '../components/CategorySelect';
 import { InfoTooltip } from '../components/ui/InfoTooltip';
@@ -41,8 +41,7 @@ export function AddItem() {
     quantity: 1,
     reminder_count: 1,
     store_location: '',
-    vehicle_models: [],
-    model_names: [],
+    vehicle_fitments: [],
     agl_number: '',
     unit_price: '',
     added_date: new Date().toISOString().slice(0, 10),
@@ -316,8 +315,8 @@ export function AddItem() {
       setError('AGL number is required');
       return;
     }
-    if (!form.vehicle_models?.length) {
-      setError('At least one vehicle model is required');
+    if (!hasRequiredVehicleFitments(form.vehicle_fitments)) {
+      setError('Add at least one vehicle make and model');
       return;
     }
     let unitPrice = null;
@@ -377,8 +376,7 @@ export function AddItem() {
         quantity: form.quantity || 1,
         reminder_count: form.reminder_count ?? 1,
         store_location: form.store_location.trim() || null,
-        vehicle_models: form.vehicle_models,
-        model_names: form.model_names,
+        vehicle_fitments: form.vehicle_fitments,
         agl_number: form.agl_number.trim(),
         unit_price: unitPrice,
         added_date: form.added_date
@@ -705,20 +703,11 @@ export function AddItem() {
             placeholder="Select location"
           />
 
-          <VehicleModelsSelect
-            label="Vehicle Models *"
-            value={form.vehicle_models}
-            onChange={(models) => setForm((prev) => ({ ...prev, vehicle_models: models }))}
-            placeholder="Add vehicle make"
+          <VehicleFitmentEditor
+            label="Vehicle compatibility"
+            value={form.vehicle_fitments}
+            onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
             required
-          />
-
-          <MultiValueInput
-            label="Part Models (optional)"
-            value={form.model_names}
-            onChange={(models) => setForm((prev) => ({ ...prev, model_names: models }))}
-            placeholder="e.g. Civic, Accord"
-            addLabel="Add"
           />
 
           <Input

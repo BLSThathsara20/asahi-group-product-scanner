@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LabelCell } from './LabelCell';
 import { Button } from '../ui/Button';
 import { downloadLabelsPdf, downloadSmallLabelPdf } from '../../services/labelPrintService';
-import { formatVehicleModels } from '../../lib/vehicleModels';
+import { formatVehicleFitments } from '../../lib/vehicleFitments';
 
 export function ItemLabelExport({ item }) {
   const [exportingA4, setExportingA4] = useState(false);
@@ -44,7 +44,7 @@ export function ItemLabelExport({ item }) {
             name={item.name}
             code={item.qr_id}
             category={item.category}
-            vehicleModel={formatVehicleModels(item)}
+            vehicleModel={formatVehicleFitments(item)}
             preview
           />
         </div>
@@ -64,7 +64,7 @@ export function ItemLabelExport({ item }) {
             name={item.name}
             code={item.qr_id}
             category={item.category}
-            vehicleModel={formatVehicleModels(item)}
+            vehicleModel={formatVehicleFitments(item)}
             variant="small54"
             preview
           />
