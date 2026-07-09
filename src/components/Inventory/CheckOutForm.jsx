@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { VehicleModelSelect } from '../VehicleModelSelect';
+import { normalizeVehicleModels } from '../../lib/vehicleModels';
 import { getProfiles } from '../../services/userService';
 
 export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentUserDisplay }) {
@@ -24,10 +25,11 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
 
   useEffect(() => {
     if (item) {
+      const models = normalizeVehicleModels(item);
       setForm((prev) => ({
         ...prev,
         quantity: 1,
-        vehicleModel: item.vehicle_model || '',
+        vehicleModel: models[0] || '',
       }));
       setErrors((prev) => ({ ...prev, quantity: '' }));
     }
@@ -226,6 +228,7 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
             value={form.vehicleModel}
             onChange={handleChange}
             placeholder="Select vehicle make"
+            allowedModels={item ? normalizeVehicleModels(item) : null}
           />
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">

@@ -1,5 +1,7 @@
 /** Labels and styling for spare-part action history entries. */
 
+import { vehicleModelsChanged } from "./vehicleModels";
+
 export const ACTION_TYPE_LABELS = {
 	in: "Check in",
 	out: "Check out",
@@ -23,6 +25,7 @@ const FIELD_LABELS = {
 	quantity: "Quantity",
 	status: "Status",
 	store_location: "Location",
+	vehicle_models: "Vehicle models",
 	vehicle_model: "Vehicle model",
 	agl_number: "AGL number",
 	unit_price: "Unit price",
@@ -42,7 +45,7 @@ export function buildItemEditSummary(before, updates, options = {}) {
 	const { beforeBarcodes } = options;
 	const parts = [];
 	for (const [key, val] of Object.entries(updates || {})) {
-		if (key === "barcodes") continue;
+		if (key === "barcodes" || key === "vehicle_models") continue;
 		const label = FIELD_LABELS[key] || key;
 		const prev = before?.[key];
 		const next = val;
@@ -58,6 +61,11 @@ export function buildItemEditSummary(before, updates, options = {}) {
 	if (Array.isArray(updates?.barcodes) && beforeBarcodes !== undefined) {
 		if (normalizeBarcodes(updates.barcodes) !== normalizeBarcodes(beforeBarcodes)) {
 			parts.push("Barcodes updated");
+		}
+	}
+	if (Array.isArray(updates?.vehicle_models)) {
+		if (vehicleModelsChanged(before, updates.vehicle_models)) {
+			parts.push("Vehicle models updated");
 		}
 	}
 	return parts.length ? parts.join(" · ") : "Details updated";

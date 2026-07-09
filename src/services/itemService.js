@@ -7,7 +7,7 @@ import {
 	transactionToSanity,
 	deletionLogToSanity,
 } from "../lib/sanityMappers";
-import { getStoredSession } from "../lib/authStorage";
+import { formatVehicleModels } from "../lib/vehicleModels";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
 import { triggerGoogleSheetSync } from "./googleSheetSyncService";
 
@@ -270,7 +270,7 @@ export async function deleteItem(id, deletedBy) {
 			qr_id: item.qr_id,
 			name: item.name,
 			category: item.category,
-			vehicle_model: item.vehicle_model,
+			vehicle_model: formatVehicleModels(item.vehicle_models),
 			agl_number: item.agl_number,
 			quantity: item.quantity,
 			status: item.status,

@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ProductImage } from '../ui/ProductImage';
-import { VehicleModelSelect } from '../VehicleModelSelect';
+import { VehicleModelsSelect } from '../VehicleModelsSelect';
+import { normalizeVehicleModels } from '../../lib/vehicleModels';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
 import { NavIcon } from '../icons/NavIcons';
@@ -19,7 +20,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
     description: item.description || '',
     category: item.category || '',
     store_location: item.store_location || '',
-    vehicle_model: item.vehicle_model || '',
+    vehicle_models: normalizeVehicleModels(item),
     agl_number: item.agl_number || '',
     unit_price: item.unit_price ?? '',
     quantity: item.quantity ?? 1,
@@ -172,7 +173,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         description: form.description?.trim() || null,
         category: form.category?.trim() || null,
         store_location: form.store_location?.trim() || null,
-        vehicle_model: form.vehicle_model?.trim() || null,
+        vehicle_models: form.vehicle_models,
         agl_number: form.agl_number?.trim() || null,
         unit_price: unitPrice,
         model_name: null,
@@ -222,7 +223,12 @@ export function EditItemForm({ item, onSave, onCancel }) {
       </div>
       <CategorySelect label="Category" name="category" value={form.category} onChange={handleChange} placeholder="Select category" />
       <StoreLocationSelect label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" />
-      <VehicleModelSelect label="Vehicle Model" name="vehicle_model" value={form.vehicle_model} onChange={handleChange} placeholder="Select vehicle make" />
+      <VehicleModelsSelect
+        label="Vehicle Models"
+        value={form.vehicle_models}
+        onChange={(models) => setForm((prev) => ({ ...prev, vehicle_models: models }))}
+        placeholder="Add vehicle make"
+      />
       <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
       <Input label="Low stock alert at" name="reminder_count" type="number" min={0} value={form.reminder_count} onChange={handleChange} />
 

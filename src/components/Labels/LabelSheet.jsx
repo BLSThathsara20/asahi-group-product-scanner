@@ -1,4 +1,5 @@
 import { LabelCell } from './LabelCell';
+import { formatVehicleModels } from '../../lib/vehicleModels';
 
 const COLS = 3;
 
@@ -27,7 +28,7 @@ export function LabelSheet({ items, maxRows = 4, pageIndex = 0 }) {
             name={item.name}
             code={item.qr_id}
             category={item.category}
-            vehicleModel={item.vehicle_model}
+            vehicleModel={formatVehicleModels(item)}
           />
         ))}
       </div>

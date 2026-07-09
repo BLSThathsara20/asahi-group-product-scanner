@@ -112,10 +112,14 @@ export function SharedItemView() {
 										<dd className="text-slate-800">{item.store_location}</dd>
 									</div>
 								)}
-								{item.vehicle_model && (
+								{item.vehicle_models?.length > 0 && (
 									<div className="flex justify-between gap-4 py-2 border-b border-slate-100">
-										<dt className="text-slate-500">Vehicle</dt>
-										<dd className="text-slate-800">{item.vehicle_model}</dd>
+										<dt className="text-slate-500">
+											Vehicle{item.vehicle_models.length > 1 ? "s" : ""}
+										</dt>
+										<dd className="text-slate-800 text-right">
+											{item.vehicle_models.join(", ")}
+										</dd>
 									</div>
 								)}
 								{item.agl_number && (

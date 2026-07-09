@@ -20,7 +20,6 @@ import {
 	formatActionSummary,
 } from "../lib/itemActions";
 import { displayPerformer } from "../lib/performer";
-import { formatGbp } from "../lib/utils";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
 import { Card } from "../components/ui/Card";
 import { Pagination } from "../components/ui/Pagination";
@@ -406,15 +405,25 @@ export function ItemDetail() {
 											</td>
 										</tr>
 									)}
-									{item.vehicle_model && (
+									{item.vehicle_models?.length > 0 && (
 										<tr>
 											<td className="py-3 px-4 text-slate-500 font-medium">
 												<span className="inline-flex items-center gap-1">
 													<NavIcon name="car" className="w-3.5 h-3.5" /> Vehicle
+													{item.vehicle_models.length > 1 ? "s" : ""}
 												</span>
 											</td>
 											<td className="py-3 px-4 text-slate-800">
-												{item.vehicle_model}
+												<div className="flex flex-wrap gap-1.5">
+													{item.vehicle_models.map((model) => (
+														<span
+															key={model}
+															className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-sm"
+														>
+															{model}
+														</span>
+													))}
+												</div>
 											</td>
 										</tr>
 									)}

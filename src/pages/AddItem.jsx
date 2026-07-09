@@ -12,7 +12,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ProductImage, ImageUploadOverlay } from '../components/ui/ProductImage';
 import { Modal } from '../components/ui/Modal';
-import { VehicleModelSelect } from '../components/VehicleModelSelect';
+import { VehicleModelsSelect } from '../components/VehicleModelsSelect';
 import { StoreLocationSelect } from '../components/StoreLocationSelect';
 import { CategorySelect } from '../components/CategorySelect';
 import { InfoTooltip } from '../components/ui/InfoTooltip';
@@ -40,7 +40,7 @@ export function AddItem() {
     quantity: 1,
     reminder_count: 1,
     store_location: '',
-    vehicle_model: '',
+    vehicle_models: [],
     agl_number: '',
     unit_price: '',
     added_date: new Date().toISOString().slice(0, 10),
@@ -314,8 +314,8 @@ export function AddItem() {
       setError('AGL number is required');
       return;
     }
-    if (!form.vehicle_model?.trim()) {
-      setError('Vehicle model is required');
+    if (!form.vehicle_models?.length) {
+      setError('At least one vehicle model is required');
       return;
     }
     let unitPrice = null;
@@ -375,7 +375,7 @@ export function AddItem() {
         quantity: form.quantity || 1,
         reminder_count: form.reminder_count ?? 1,
         store_location: form.store_location.trim() || null,
-        vehicle_model: form.vehicle_model.trim(),
+        vehicle_models: form.vehicle_models,
         agl_number: form.agl_number.trim(),
         unit_price: unitPrice,
         model_name: null,
@@ -704,12 +704,11 @@ export function AddItem() {
             placeholder="Select location"
           />
 
-          <VehicleModelSelect
-            label="Vehicle Model *"
-            name="vehicle_model"
-            value={form.vehicle_model}
-            onChange={handleChange}
-            placeholder="Select vehicle make"
+          <VehicleModelsSelect
+            label="Vehicle Models *"
+            value={form.vehicle_models}
+            onChange={(models) => setForm((prev) => ({ ...prev, vehicle_models: models }))}
+            placeholder="Add vehicle make"
             required
           />
 

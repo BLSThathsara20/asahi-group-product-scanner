@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { formatVehicleModels } from '../lib/vehicleModels';
 
 const A4_W = 210;
 const A4_H = 297;
@@ -50,8 +51,8 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
     doc.text(catLine, innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
     cursorY += 2.5;
   }
-  if (item.vehicle_model) {
-    const vehicleLine = truncateText(doc, `Vehicle: ${item.vehicle_model}`, innerW - 2);
+  if (item.vehicle_models?.length || item.vehicle_model) {
+    const vehicleLine = truncateText(doc, `Vehicle: ${formatVehicleModels(item)}`, innerW - 2);
     doc.text(vehicleLine, innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
     cursorY += 2.5;
   }
@@ -144,8 +145,8 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     doc.text(catLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
     cursorY += 2.4;
   }
-  if (item.vehicle_model) {
-    const vehicleLine = truncateText(doc, `Vehicle: ${item.vehicle_model}`, innerW - 1);
+  if (item.vehicle_models?.length || item.vehicle_model) {
+    const vehicleLine = truncateText(doc, `Vehicle: ${formatVehicleModels(item)}`, innerW - 1);
     doc.text(vehicleLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
     cursorY += 2.4;
   }

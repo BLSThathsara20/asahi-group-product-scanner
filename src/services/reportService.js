@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { LOGO_URL } from '../lib/branding';
+import { formatVehicleModels } from '../lib/vehicleModels';
 
 const statusLabels = { in_stock: 'In Stock', out: 'Out', reserved: 'Reserved' };
 
@@ -106,7 +107,7 @@ export async function exportInventoryPDF(items, categoryFilter = null) {
       (item.store_location || '-').slice(0, 10),
       String(item.quantity || 0),
       statusLabels[item.status] || item.status,
-      (item.vehicle_model || '-').slice(0, 10),
+      formatVehicleModels(item).slice(0, 10) || '-',
     ];
     row.forEach((val, i) => {
       doc.text(val, x, y);
@@ -131,7 +132,7 @@ export async function exportInventoryExcel(items) {
     Description: item.description || '',
     Category: item.category || '',
     'Store Location': item.store_location || '',
-    'Vehicle Model': item.vehicle_model || '',
+    'Vehicle Models': formatVehicleModels(item),
     Quantity: item.quantity ?? '',
     Status: statusLabels[item.status] || item.status,
     'Added Date': item.added_date ? new Date(item.added_date).toLocaleString() : '',
@@ -144,7 +145,7 @@ export async function exportInventoryExcel(items) {
 }
 
 export function exportInventoryCSV(items, categoryFilter = null) {
-  const headers = ['Name', 'QR ID', 'Model Name', 'SKU Code', 'Description', 'Category', 'Store Location', 'Vehicle Model', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
+  const headers = ['Name', 'QR ID', 'Model Name', 'SKU Code', 'Description', 'Category', 'Store Location', 'Vehicle Models', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
   const rows = items.map((item) => [
     `"${(item.name || '').replace(/"/g, '""')}"`,
     item.qr_id || '',
@@ -153,7 +154,7 @@ export function exportInventoryCSV(items, categoryFilter = null) {
     `"${(item.description || '').replace(/"/g, '""')}"`,
     item.category || '',
     item.store_location || '',
-    item.vehicle_model || '',
+    formatVehicleModels(item),
     item.quantity ?? '',
     statusLabels[item.status] || item.status,
     item.added_by || '',

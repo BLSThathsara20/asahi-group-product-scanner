@@ -10,6 +10,7 @@ import { StatusBadge } from './ui/StatusBadge';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { sanitizeBarcodeInput } from '../lib/barcodeUtils';
+import { itemMatchesVehicleSearch } from '../lib/vehicleModels';
 
 const PAGE_SIZE = 10;
 
@@ -27,7 +28,7 @@ export function HeaderSearch({ open, onClose }) {
       item.qr_id?.toLowerCase().includes(query.toLowerCase()) ||
       item.category?.toLowerCase().includes(query.toLowerCase()) ||
       item.store_location?.toLowerCase().includes(query.toLowerCase()) ||
-      item.vehicle_model?.toLowerCase().includes(query.toLowerCase()) ||
+      itemMatchesVehicleSearch(item, query) ||
       item.description?.toLowerCase().includes(query.toLowerCase())
   );
 

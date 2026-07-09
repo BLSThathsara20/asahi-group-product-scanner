@@ -1,4 +1,4 @@
-/** Map Sanity documents to app-friendly shapes (Supabase-like field names) */
+import { normalizeVehicleModels } from "./vehicleModels";
 
 function refId(ref) {
 	if (!ref) return null;
@@ -28,6 +28,7 @@ export function mapUser(doc) {
 
 export function mapItem(doc) {
 	if (!doc) return null;
+	const vehicle_models = normalizeVehicleModels(doc);
 	return {
 		id: doc._id,
 		qr_id: doc.qrId,
@@ -39,7 +40,8 @@ export function mapItem(doc) {
 		status: doc.status || "in_stock",
 		added_date: doc.addedDate || doc._createdAt,
 		last_used_date: doc.lastUsedDate || null,
-		vehicle_model: doc.vehicleModel || null,
+		vehicle_models,
+		vehicle_model: vehicle_models[0] || null,
 		store_location: doc.storeLocation || null,
 		model_name: doc.modelName || null,
 		sku_code: doc.skuCode || null,
@@ -160,7 +162,15 @@ export function itemToSanity(item) {
 	if (item.status != null) doc.status = item.status;
 	if (item.added_date != null) doc.addedDate = item.added_date;
 	if (item.last_used_date !== undefined) doc.lastUsedDate = item.last_used_date;
-	if (item.vehicle_model !== undefined) doc.vehicleModel = item.vehicle_model;
+	if (item.vehicle_models !== undefined) {
+		const models = normalizeVehicleModels({ vehicle_models: item.vehicle_models });
+		doc.vehicleModels = models;
+		doc.vehicleModel = models[0] || null;
+	} else if (item.vehicle_model !== undefined) {
+		const models = normalizeVehicleModels({ vehicle_model: item.vehicle_model });
+		doc.vehicleModels = models;
+		doc.vehicleModel = models[0] || null;
+	}
 	if (item.store_location !== undefined) doc.storeLocation = item.store_location;
 	if (item.model_name !== undefined) doc.modelName = item.model_name;
 	if (item.sku_code !== undefined) doc.skuCode = item.sku_code;

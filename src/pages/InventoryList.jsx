@@ -7,6 +7,7 @@ import { STORE_LOCATIONS } from '../components/StoreLocationSelect';
 import { exportInventoryPDF, exportInventoryExcel } from '../services/reportService';
 import { updateItem, createTransaction, logItemAction, getItemBarcodes, syncItemBarcodes } from '../services/itemService';
 import { buildItemEditSummary } from '../lib/itemActions';
+import { itemMatchesVehicleSearch } from '../lib/vehicleModels';
 import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -57,7 +58,7 @@ export function InventoryList() {
       item.qr_id?.toLowerCase().includes(search.toLowerCase()) ||
       item.category?.toLowerCase().includes(search.toLowerCase()) ||
       item.store_location?.toLowerCase().includes(search.toLowerCase()) ||
-      item.vehicle_model?.toLowerCase().includes(search.toLowerCase()) ||
+      itemMatchesVehicleSearch(item, search) ||
       item.model_name?.toLowerCase().includes(search.toLowerCase()) ||
       item.sku_code?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || item.status === statusFilter;

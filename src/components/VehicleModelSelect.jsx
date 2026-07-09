@@ -15,8 +15,11 @@ const VEHICLE_BRANDS = [
   'VW',
 ];
 
-export function VehicleModelSelect({ value, onChange, label = 'Vehicle Model', name = 'vehicle_model', placeholder, required = false }) {
-  const isInList = value && VEHICLE_BRANDS.includes(value);
+export { VEHICLE_BRANDS };
+
+export function VehicleModelSelect({ value, onChange, label = 'Vehicle Model', name = 'vehicle_model', placeholder, required = false, allowedModels = null }) {
+  const brands = Array.isArray(allowedModels) && allowedModels.length > 0 ? allowedModels : VEHICLE_BRANDS;
+  const isInList = value && brands.includes(value);
   const [otherSelected, setOtherSelected] = useState(false);
   const showOtherInput = otherSelected || (value && !isInList);
   const selectValue = isInList ? value : (showOtherInput ? 'Other' : '');
@@ -43,10 +46,10 @@ export function VehicleModelSelect({ value, onChange, label = 'Vehicle Model', n
         className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
       >
         <option value="">{placeholder || 'Select vehicle make'}</option>
-        {VEHICLE_BRANDS.map((b) => (
+        {brands.map((b) => (
           <option key={b} value={b}>{b}</option>
         ))}
-        <option value="Other">Other</option>
+        {!allowedModels?.length && <option value="Other">Other</option>}
       </select>
       {showOtherInput && (
         <input
