@@ -229,42 +229,53 @@ export async function updateItem(id, updates) {
 	return mapItem(doc);
 }
 
+/** Permanently remove a spare part and every Sanity document tied to it. */
 export async function deleteItem(id, deletedBy) {
-	const item = await getItemById(id);
-	const barcodes = item ? await getItemBarcodes(id) : [];
+	if (!id) return;
+
+	const related = await sanityClient.fetch(
+		`{
+			"item": *[_type == "inventoryItem" && _id == $id][0]{
+				...,
+				"photoAssetId": photo.asset._ref
+			},
+			"transactionIds": *[_type == "inventoryTransaction" && item._ref == $id]._id,
+			"barcodeIds": *[_type == "itemBarcode" && item._ref == $id]._id
+		}`,
+		{ id }
+	);
+
+	const rawItem = related?.item;
+	if (!rawItem) return;
+
+	const item = mapItem(rawItem);
+	const barcodes = await getItemBarcodes(id);
 	const deletedAt = new Date().toISOString();
 
-	if (item) {
-		await sanityClient.create(
-			deletionLogToSanity({
-				item_id: id,
-				qr_id: item.qr_id,
-				name: item.name,
-				category: item.category,
-				vehicle_model: item.vehicle_model,
-				agl_number: item.agl_number,
-				quantity: item.quantity,
-				status: item.status,
-				barcodes,
-				deleted_by: deletedBy ?? currentUserId(),
-				deleted_at: deletedAt,
-			})
-		);
-	}
+	await sanityClient.create(
+		deletionLogToSanity({
+			item_id: id,
+			qr_id: item.qr_id,
+			name: item.name,
+			category: item.category,
+			vehicle_model: item.vehicle_model,
+			agl_number: item.agl_number,
+			quantity: item.quantity,
+			status: item.status,
+			barcodes,
+			deleted_by: deletedBy ?? currentUserId(),
+			deleted_at: deletedAt,
+		})
+	);
 
-	const txIds = await sanityClient.fetch(
-		`*[_type == "inventoryTransaction" && item._ref == $id]._id`,
-		{ id }
-	);
-	const barcodeIds = await sanityClient.fetch(
-		`*[_type == "itemBarcode" && item._ref == $id]._id`,
-		{ id }
-	);
-	await Promise.all([
-		...(txIds || []).map((tid) => sanityClient.delete(tid)),
-		...(barcodeIds || []).map((bid) => sanityClient.delete(bid)),
-		sanityClient.delete(id),
-	]);
+	const idsToDelete = [
+		...(related.transactionIds || []),
+		...(related.barcodeIds || []),
+		id,
+		rawItem.photoAssetId,
+	].filter(Boolean);
+
+	await Promise.all(idsToDelete.map((docId) => sanityClient.delete(docId)));
 	notifySheetSync();
 }
 

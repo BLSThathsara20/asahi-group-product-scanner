@@ -76,7 +76,7 @@ export function ItemDetail() {
 		if (!isAdmin || !item?.id) return;
 		if (
 			!confirm(
-				"Permanently delete this item? Photo and transaction history will be removed. This action is recorded in the deletion log.",
+				"Permanently delete this spare part? All actions, barcodes, photos, and history will be removed. A summary is kept in the deletion log.",
 			)
 		)
 			return;
