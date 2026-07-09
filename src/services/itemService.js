@@ -252,7 +252,19 @@ export async function deleteItem(id, deletedBy) {
 	const barcodes = await getItemBarcodes(id);
 	const deletedAt = new Date().toISOString();
 
-	await sanityClient.create(
+	// Single ordered transaction: drop references before the item itself.
+	const mutation = sanityClient.transaction();
+	for (const txId of related.transactionIds || []) {
+		mutation.delete(txId);
+	}
+	for (const barcodeId of related.barcodeIds || []) {
+		mutation.delete(barcodeId);
+	}
+	mutation.delete(id);
+	if (rawItem.photoAssetId) {
+		mutation.delete(rawItem.photoAssetId);
+	}
+	mutation.create(
 		deletionLogToSanity({
 			item_id: id,
 			qr_id: item.qr_id,
@@ -268,14 +280,7 @@ export async function deleteItem(id, deletedBy) {
 		})
 	);
 
-	const idsToDelete = [
-		...(related.transactionIds || []),
-		...(related.barcodeIds || []),
-		id,
-		rawItem.photoAssetId,
-	].filter(Boolean);
-
-	await Promise.all(idsToDelete.map((docId) => sanityClient.delete(docId)));
+	await mutation.commit();
 	notifySheetSync();
 }
 
