@@ -20,6 +20,7 @@ import {
 	formatActionSummary,
 } from "../lib/itemActions";
 import { displayPerformer } from "../lib/performer";
+import { formatGbp } from "../lib/utils";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
 import { Card } from "../components/ui/Card";
 import { Pagination } from "../components/ui/Pagination";
