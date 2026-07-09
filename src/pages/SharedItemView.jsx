@@ -122,6 +122,16 @@ export function SharedItemView() {
 										</dd>
 									</div>
 								)}
+								{item.model_names?.length > 0 && (
+									<div className="flex justify-between gap-4 py-2 border-b border-slate-100">
+										<dt className="text-slate-500">
+											Part model{item.model_names.length > 1 ? "s" : ""}
+										</dt>
+										<dd className="text-slate-800 text-right">
+											{item.model_names.join(", ")}
+										</dd>
+									</div>
+								)}
 								{item.agl_number && (
 									<div className="flex justify-between gap-4 py-2">
 										<dt className="text-slate-500">AGL number</dt>

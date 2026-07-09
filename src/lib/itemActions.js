@@ -1,6 +1,7 @@
 /** Labels and styling for spare-part action history entries. */
 
 import { vehicleModelsChanged } from "./vehicleModels";
+import { partModelsChanged } from "./partModels";
 
 export const ACTION_TYPE_LABELS = {
 	in: "Check in",
@@ -27,7 +28,8 @@ const FIELD_LABELS = {
 	store_location: "Location",
 	vehicle_models: "Vehicle models",
 	vehicle_model: "Vehicle model",
-	agl_number: "AGL number",
+	model_names: "Part models",
+	model_name: "Part model",
 	unit_price: "Unit price",
 	reminder_count: "Low stock alert",
 	photo_url: "Photo",
@@ -45,7 +47,7 @@ export function buildItemEditSummary(before, updates, options = {}) {
 	const { beforeBarcodes } = options;
 	const parts = [];
 	for (const [key, val] of Object.entries(updates || {})) {
-		if (key === "barcodes" || key === "vehicle_models") continue;
+		if (key === "barcodes" || key === "vehicle_models" || key === "model_names") continue;
 		const label = FIELD_LABELS[key] || key;
 		const prev = before?.[key];
 		const next = val;
@@ -66,6 +68,11 @@ export function buildItemEditSummary(before, updates, options = {}) {
 	if (Array.isArray(updates?.vehicle_models)) {
 		if (vehicleModelsChanged(before, updates.vehicle_models)) {
 			parts.push("Vehicle models updated");
+		}
+	}
+	if (Array.isArray(updates?.model_names)) {
+		if (partModelsChanged(before, updates.model_names)) {
+			parts.push("Part models updated");
 		}
 	}
 	return parts.length ? parts.join(" · ") : "Details updated";

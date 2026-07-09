@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { LOGO_URL } from '../lib/branding';
 import { formatVehicleModels } from '../lib/vehicleModels';
+import { formatPartModels } from '../lib/partModels';
 
 const statusLabels = { in_stock: 'In Stock', out: 'Out', reserved: 'Reserved' };
 
@@ -127,7 +128,7 @@ export async function exportInventoryExcel(items) {
   const rows = items.map((item) => ({
     Name: item.name || '',
     'QR ID': item.qr_id || '',
-    'Model Name': item.model_name || '',
+    'Part Models': formatPartModels(item),
     'SKU Code': item.sku_code || '',
     Description: item.description || '',
     Category: item.category || '',
@@ -145,11 +146,11 @@ export async function exportInventoryExcel(items) {
 }
 
 export function exportInventoryCSV(items, categoryFilter = null) {
-  const headers = ['Name', 'QR ID', 'Model Name', 'SKU Code', 'Description', 'Category', 'Store Location', 'Vehicle Models', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
+  const headers = ['Name', 'QR ID', 'Part Models', 'SKU Code', 'Description', 'Category', 'Store Location', 'Vehicle Models', 'Quantity', 'Status', 'Added By', 'Added Date', 'Last Used By', 'Last Used'];
   const rows = items.map((item) => [
     `"${(item.name || '').replace(/"/g, '""')}"`,
     item.qr_id || '',
-    item.model_name || '',
+    formatPartModels(item),
     item.sku_code || '',
     `"${(item.description || '').replace(/"/g, '""')}"`,
     item.category || '',

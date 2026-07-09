@@ -13,6 +13,7 @@ import { Input } from '../components/ui/Input';
 import { ProductImage, ImageUploadOverlay } from '../components/ui/ProductImage';
 import { Modal } from '../components/ui/Modal';
 import { VehicleModelsSelect } from '../components/VehicleModelsSelect';
+import { MultiValueInput } from '../components/MultiValueInput';
 import { StoreLocationSelect } from '../components/StoreLocationSelect';
 import { CategorySelect } from '../components/CategorySelect';
 import { InfoTooltip } from '../components/ui/InfoTooltip';
@@ -41,6 +42,7 @@ export function AddItem() {
     reminder_count: 1,
     store_location: '',
     vehicle_models: [],
+    model_names: [],
     agl_number: '',
     unit_price: '',
     added_date: new Date().toISOString().slice(0, 10),
@@ -376,10 +378,9 @@ export function AddItem() {
         reminder_count: form.reminder_count ?? 1,
         store_location: form.store_location.trim() || null,
         vehicle_models: form.vehicle_models,
+        model_names: form.model_names,
         agl_number: form.agl_number.trim(),
         unit_price: unitPrice,
-        model_name: null,
-        sku_code: null,
         added_date: form.added_date
           ? (new Date().toISOString().slice(0, 10) === form.added_date
               ? new Date()
@@ -710,6 +711,14 @@ export function AddItem() {
             onChange={(models) => setForm((prev) => ({ ...prev, vehicle_models: models }))}
             placeholder="Add vehicle make"
             required
+          />
+
+          <MultiValueInput
+            label="Part Models (optional)"
+            value={form.model_names}
+            onChange={(models) => setForm((prev) => ({ ...prev, model_names: models }))}
+            placeholder="e.g. Civic, Accord"
+            addLabel="Add"
           />
 
           <Input

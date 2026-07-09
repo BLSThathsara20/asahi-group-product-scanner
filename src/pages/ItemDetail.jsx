@@ -427,13 +427,22 @@ export function ItemDetail() {
 											</td>
 										</tr>
 									)}
-									{item.model_name && (
+									{item.model_names?.length > 0 && (
 										<tr>
 											<td className="py-3 px-4 text-slate-500 font-medium">
-												Model
+												Part model{item.model_names.length > 1 ? "s" : ""}
 											</td>
 											<td className="py-3 px-4 text-slate-800">
-												{item.model_name}
+												<div className="flex flex-wrap gap-1.5">
+													{item.model_names.map((model) => (
+														<span
+															key={model}
+															className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-sm"
+														>
+															{model}
+														</span>
+													))}
+												</div>
 											</td>
 										</tr>
 									)}

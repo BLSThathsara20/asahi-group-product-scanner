@@ -4,7 +4,9 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ProductImage } from '../ui/ProductImage';
 import { VehicleModelsSelect } from '../VehicleModelsSelect';
+import { MultiValueInput } from '../MultiValueInput';
 import { normalizeVehicleModels } from '../../lib/vehicleModels';
+import { normalizePartModels } from '../../lib/partModels';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
 import { NavIcon } from '../icons/NavIcons';
@@ -21,6 +23,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
     category: item.category || '',
     store_location: item.store_location || '',
     vehicle_models: normalizeVehicleModels(item),
+    model_names: normalizePartModels(item),
     agl_number: item.agl_number || '',
     unit_price: item.unit_price ?? '',
     quantity: item.quantity ?? 1,
@@ -174,10 +177,9 @@ export function EditItemForm({ item, onSave, onCancel }) {
         category: form.category?.trim() || null,
         store_location: form.store_location?.trim() || null,
         vehicle_models: form.vehicle_models,
+        model_names: form.model_names,
         agl_number: form.agl_number?.trim() || null,
         unit_price: unitPrice,
-        model_name: null,
-        sku_code: null,
         quantity: form.quantity || 1,
         reminder_count: form.reminder_count ?? 1,
         photo_url: photoUrl,
@@ -228,6 +230,13 @@ export function EditItemForm({ item, onSave, onCancel }) {
         value={form.vehicle_models}
         onChange={(models) => setForm((prev) => ({ ...prev, vehicle_models: models }))}
         placeholder="Add vehicle make"
+      />
+      <MultiValueInput
+        label="Part Models"
+        value={form.model_names}
+        onChange={(models) => setForm((prev) => ({ ...prev, model_names: models }))}
+        placeholder="e.g. Civic, Accord"
+        addLabel="Add"
       />
       <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
       <Input label="Low stock alert at" name="reminder_count" type="number" min={0} value={form.reminder_count} onChange={handleChange} />

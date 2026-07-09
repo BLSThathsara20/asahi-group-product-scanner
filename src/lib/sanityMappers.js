@@ -1,4 +1,5 @@
 import { normalizeVehicleModels } from "./vehicleModels";
+import { normalizePartModels } from "./partModels";
 
 function refId(ref) {
 	if (!ref) return null;
@@ -29,6 +30,7 @@ export function mapUser(doc) {
 export function mapItem(doc) {
 	if (!doc) return null;
 	const vehicle_models = normalizeVehicleModels(doc);
+	const model_names = normalizePartModels(doc);
 	return {
 		id: doc._id,
 		qr_id: doc.qrId,
@@ -43,7 +45,8 @@ export function mapItem(doc) {
 		vehicle_models,
 		vehicle_model: vehicle_models[0] || null,
 		store_location: doc.storeLocation || null,
-		model_name: doc.modelName || null,
+		model_names,
+		model_name: model_names[0] || null,
 		sku_code: doc.skuCode || null,
 		agl_number: doc.aglNumber || null,
 		unit_price: doc.unitPrice ?? null,
@@ -172,7 +175,15 @@ export function itemToSanity(item) {
 		doc.vehicleModel = models[0] || null;
 	}
 	if (item.store_location !== undefined) doc.storeLocation = item.store_location;
-	if (item.model_name !== undefined) doc.modelName = item.model_name;
+	if (item.model_names !== undefined) {
+		const models = normalizePartModels({ model_names: item.model_names });
+		doc.modelNames = models;
+		doc.modelName = models[0] || null;
+	} else if (item.model_name !== undefined) {
+		const models = normalizePartModels({ model_name: item.model_name });
+		doc.modelNames = models;
+		doc.modelName = models[0] || null;
+	}
 	if (item.sku_code !== undefined) doc.skuCode = item.sku_code;
 	if (item.agl_number !== undefined) doc.aglNumber = item.agl_number;
 	if (item.unit_price !== undefined) doc.unitPrice = item.unit_price;

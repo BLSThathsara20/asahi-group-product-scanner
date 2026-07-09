@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { ProductImage } from '../components/ui/ProductImage';
 import { LabelSheet } from '../components/Labels/LabelSheet';
 import { COLS, chunkItemsForPages, downloadLabelsPdf, expandItemsWithQuantities } from '../services/labelPrintService';
+import { matchesItemSearch } from '../lib/itemSearch';
 import { NavIcon } from '../components/icons/NavIcons';
 import {
   PageContainer,
@@ -35,14 +36,8 @@ export function PrintLabels() {
   const labelsPerSheet = COLS * rowCount;
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return items;
-    return items.filter(
-      (item) =>
-        item.name?.toLowerCase().includes(q) ||
-        item.qr_id?.toLowerCase().includes(q) ||
-        item.category?.toLowerCase().includes(q)
-    );
+    if (!search.trim()) return items;
+    return items.filter((item) => matchesItemSearch(item, search));
   }, [items, search]);
 
   const selectedItems = useMemo(
@@ -65,13 +60,7 @@ export function PrintLabels() {
       ? items.filter((item) => selectedIds.has(item.id))
       : filtered;
     if (listView === 'selected' && search.trim()) {
-      const q = search.toLowerCase().trim();
-      list = list.filter(
-        (item) =>
-          item.name?.toLowerCase().includes(q) ||
-          item.qr_id?.toLowerCase().includes(q) ||
-          item.category?.toLowerCase().includes(q)
-      );
+      list = list.filter((item) => matchesItemSearch(item, search));
     }
     return list;
   }, [listView, filtered, items, selectedIds, search]);

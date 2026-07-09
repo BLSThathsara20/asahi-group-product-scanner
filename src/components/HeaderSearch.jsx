@@ -10,7 +10,7 @@ import { StatusBadge } from './ui/StatusBadge';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { sanitizeBarcodeInput } from '../lib/barcodeUtils';
-import { itemMatchesVehicleSearch } from '../lib/vehicleModels';
+import { matchesItemSearch } from '../lib/itemSearch';
 
 const PAGE_SIZE = 10;
 
@@ -21,16 +21,7 @@ export function HeaderSearch({ open, onClose }) {
   const [page, setPage] = useState(1);
   const inputRef = useRef(null);
 
-  const filtered = items.filter(
-    (item) =>
-      !query.trim() ||
-      item.name?.toLowerCase().includes(query.toLowerCase()) ||
-      item.qr_id?.toLowerCase().includes(query.toLowerCase()) ||
-      item.category?.toLowerCase().includes(query.toLowerCase()) ||
-      item.store_location?.toLowerCase().includes(query.toLowerCase()) ||
-      itemMatchesVehicleSearch(item, query) ||
-      item.description?.toLowerCase().includes(query.toLowerCase())
-  );
+  const filtered = items.filter((item) => matchesItemSearch(item, query));
 
   useEffect(() => {
     if (open) {
