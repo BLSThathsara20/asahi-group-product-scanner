@@ -40,9 +40,7 @@ jobs:
           VITE_GOOGLE_SHEETS_SYNC_SECRET: ${{ secrets.VITE_GOOGLE_SHEETS_SYNC_SECRET }}
 
       - name: Prepare static site
-        run: |
-          cp dist/index.html dist/404.html
-          touch dist/.nojekyll
+        run: touch dist/.nojekyll
 
       - name: Publish to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
