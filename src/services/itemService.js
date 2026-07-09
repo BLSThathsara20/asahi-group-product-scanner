@@ -2,8 +2,10 @@ import { sanityClient } from "../lib/sanity";
 import {
 	mapItem,
 	mapTransaction,
+	mapDeletionLog,
 	itemToSanity,
 	transactionToSanity,
+	deletionLogToSanity,
 } from "../lib/sanityMappers";
 import { getStoredSession } from "../lib/authStorage";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
@@ -227,7 +229,29 @@ export async function updateItem(id, updates) {
 	return mapItem(doc);
 }
 
-export async function deleteItem(id) {
+export async function deleteItem(id, deletedBy) {
+	const item = await getItemById(id);
+	const barcodes = item ? await getItemBarcodes(id) : [];
+	const deletedAt = new Date().toISOString();
+
+	if (item) {
+		await sanityClient.create(
+			deletionLogToSanity({
+				item_id: id,
+				qr_id: item.qr_id,
+				name: item.name,
+				category: item.category,
+				vehicle_model: item.vehicle_model,
+				agl_number: item.agl_number,
+				quantity: item.quantity,
+				status: item.status,
+				barcodes,
+				deleted_by: deletedBy ?? currentUserId(),
+				deleted_at: deletedAt,
+			})
+		);
+	}
+
 	const txIds = await sanityClient.fetch(
 		`*[_type == "inventoryTransaction" && item._ref == $id]._id`,
 		{ id }
@@ -242,6 +266,17 @@ export async function deleteItem(id) {
 		sanityClient.delete(id),
 	]);
 	notifySheetSync();
+}
+
+export async function getDeletionLogs({ limit = 100 } = {}) {
+	const docs = await sanityClient.fetch(
+		`*[_type == "itemDeletionLog"] | order(coalesce(deletedAt, _createdAt) desc)[0...$limit] {
+			...,
+			"deleterName": coalesce(deletedBy->fullName, deletedBy->email)
+		}`,
+		{ limit }
+	);
+	return (docs || []).map(mapDeletionLog);
 }
 
 export async function getTransactions(itemId) {

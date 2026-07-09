@@ -22,6 +22,7 @@ import { HealthCheck } from './pages/HealthCheck';
 import { UserManagement } from './pages/UserManagement';
 import { CategoryManager } from './pages/CategoryManager';
 import { PrintLabels } from './pages/PrintLabels';
+import { DeletedItemsLog } from './pages/DeletedItemsLog';
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
               <Route path="categories" element={<AdminRedirect><CategoryManager /></AdminRedirect>} />
               <Route path="labels" element={<PrintLabels />} />
               <Route path="users" element={<AdminRedirect><UserManagement /></AdminRedirect>} />
+              <Route path="deleted-items" element={<AdminRedirect><DeletedItemsLog /></AdminRedirect>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

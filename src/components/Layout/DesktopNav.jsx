@@ -22,6 +22,7 @@ const moreNavItems = [
   { to: '/categories', label: 'Categories', icon: 'folder', adminOnly: true },
   { to: '/health', label: 'Health', icon: 'health', adminOnly: true },
   { to: '/users', label: 'Users', icon: 'users', adminOnly: true },
+  { to: '/deleted-items', label: 'Deleted parts', icon: 'trash', adminOnly: true },
 ];
 
 export function DesktopNav() {

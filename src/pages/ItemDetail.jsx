@@ -46,7 +46,7 @@ export function ItemDetail() {
 	const { id } = useParams();
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
-	const { user, profile, isSuperAdmin } = useAuth();
+	const { user, profile, isAdmin } = useAuth();
 	const { success: notifySuccess, error: notifyError } = useNotification();
 	const [item, setItem] = useState(null);
 	const [itemBarcodes, setItemBarcodes] = useState([]);
@@ -73,16 +73,16 @@ export function ItemDetail() {
 	}, [id, transactions.length]);
 
 	const handleDelete = async () => {
-		if (!isSuperAdmin || !item?.id) return;
+		if (!isAdmin || !item?.id) return;
 		if (
 			!confirm(
-				"Permanently delete this item? Photo and transaction history will be removed.",
+				"Permanently delete this item? Photo and transaction history will be removed. This action is recorded in the deletion log.",
 			)
 		)
 			return;
 		setDeleting(true);
 		try {
-			await deleteItem(item.id);
+			await deleteItem(item.id, user?.id);
 			notifySuccess("Item deleted");
 			navigate("/inventory");
 		} catch (err) {
@@ -305,7 +305,7 @@ export function ItemDetail() {
 					Check in
 				</Button>
 			)}
-			{isSuperAdmin && (
+			{isAdmin && (
 				<Button
 					variant="outline"
 					onClick={handleDelete}

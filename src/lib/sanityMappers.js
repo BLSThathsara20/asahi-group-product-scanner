@@ -109,6 +109,44 @@ export function mapPasswordReset(doc) {
 	};
 }
 
+export function mapDeletionLog(doc) {
+	if (!doc) return null;
+	return {
+		id: doc._id,
+		item_id: doc.itemId || null,
+		qr_id: doc.qrId || null,
+		name: doc.name,
+		category: doc.category || null,
+		vehicle_model: doc.vehicleModel || null,
+		agl_number: doc.aglNumber || null,
+		quantity: doc.quantity ?? null,
+		status: doc.status || null,
+		barcodes: doc.barcodes || [],
+		deleted_by: refId(doc.deletedBy),
+		deleted_at: doc.deletedAt || doc._createdAt,
+		deleter_name: doc.deleterName?.trim() || null,
+	};
+}
+
+export function deletionLogToSanity(log) {
+	return {
+		_type: "itemDeletionLog",
+		itemId: log.item_id,
+		qrId: log.qr_id || null,
+		name: log.name,
+		category: log.category || null,
+		vehicleModel: log.vehicle_model || null,
+		aglNumber: log.agl_number || null,
+		quantity: log.quantity ?? null,
+		status: log.status || null,
+		barcodes: log.barcodes?.length ? log.barcodes : undefined,
+		deletedBy: log.deleted_by
+			? { _type: "reference", _ref: log.deleted_by }
+			: undefined,
+		deletedAt: log.deleted_at || new Date().toISOString(),
+	};
+}
+
 export function itemToSanity(item) {
 	const doc = {
 		_type: "inventoryItem",
