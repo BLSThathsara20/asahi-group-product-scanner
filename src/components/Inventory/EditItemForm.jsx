@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { FormField } from '../ui/FormField';
+import { formInputClass, formTextareaClass } from '../../lib/formFieldStyles';
 import { ProductImage } from '../ui/ProductImage';
 import { VehicleFitmentEditor } from '../VehicleFitmentEditor';
 import { normalizeVehicleFitments } from '../../lib/vehicleFitments';
@@ -188,23 +190,22 @@ export function EditItemForm({ item, onSave, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
-        <Input name="name" value={form.name} onChange={handleChange} required />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+      <FormField variant="name" label="Name" required>
+        <Input name="name" variant="name" value={form.name} onChange={handleChange} required />
+      </FormField>
+      <FormField variant="description" label="Description">
         <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
             rows={2}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none"
+            className={formTextareaClass('description')}
           />
-      </div>
-      <Input label="AGL number (optional)" name="agl_number" value={form.agl_number} onChange={handleChange} placeholder="e.g. AGL-12345" />
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Unit price £ (optional)</label>
+      </FormField>
+      <FormField variant="agl" label="AGL number">
+        <Input name="agl_number" variant="agl" value={form.agl_number} onChange={handleChange} placeholder="AGL000" />
+      </FormField>
+      <FormField variant="price" label="Unit price £ (optional)">
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">£</span>
           <input
@@ -215,23 +216,33 @@ export function EditItemForm({ item, onSave, onCancel }) {
             value={form.unit_price}
             onChange={handleChange}
             placeholder="12.50"
-            className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+            className={`pl-8 pr-4 ${formInputClass('price')}`}
           />
         </div>
+      </FormField>
+      <FormField variant="category" label="Category">
+        <CategorySelect name="category" value={form.category} onChange={handleChange} placeholder="Select category" showLabel={false} />
+      </FormField>
+      <FormField variant="location" label="Store Location">
+        <StoreLocationSelect name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" showLabel={false} />
+      </FormField>
+      <FormField variant="vehicle" label="Vehicle compatibility">
+        <VehicleFitmentEditor
+          key={item.id}
+          value={form.vehicle_fitments}
+          onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
+        />
+      </FormField>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <FormField variant="quantity" label="Quantity">
+        <Input name="quantity" type="number" min={1} variant="quantity" value={form.quantity} onChange={handleChange} />
+      </FormField>
+      <FormField variant="quantity" label="Low stock alert at">
+        <Input name="reminder_count" type="number" min={0} variant="quantity" value={form.reminder_count} onChange={handleChange} />
+      </FormField>
       </div>
-      <CategorySelect label="Category" name="category" value={form.category} onChange={handleChange} placeholder="Select category" />
-      <StoreLocationSelect label="Store Location" name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" />
-      <VehicleFitmentEditor
-        label="Vehicle compatibility"
-        value={form.vehicle_fitments}
-        onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
-      />
-      <Input label="Quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} />
-      <Input label="Low stock alert at" name="reminder_count" type="number" min={0} value={form.reminder_count} onChange={handleChange} />
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Barcodes</label>
-        <p className="text-xs text-slate-500 mb-2">Primary (QR ID) is fixed. Add extra barcodes for the same product.</p>
+      <FormField variant="barcode" label="Barcodes" hint="Primary (QR ID) is fixed. Add extra barcodes for the same product.">
         <div className="rounded-lg border border-slate-200 p-3 space-y-2 bg-slate-50/50">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Primary</span>
@@ -275,16 +286,14 @@ export function EditItemForm({ item, onSave, onCancel }) {
                 }}
                 maxLength={BARCODE_MAX_LENGTH * 2}
                 placeholder="Barcode"
-                className="flex-1 min-w-0 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none text-sm"
+                className={`flex-1 min-w-0 text-sm ${formInputClass('barcode')}`}
               />
             </div>
           ))}
         </div>
-      </div>
+      </FormField>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-2">Product Image</label>
-        <p className="text-xs text-slate-500 mb-2">One image only. Add or replace.</p>
+      <FormField variant="photo" label="Product Image" hint="One image only. Add or replace.">
         <div className="flex items-center gap-4">
           <div className="relative w-20 h-20 rounded-lg border border-slate-200 overflow-hidden bg-slate-100 shrink-0">
             {form.photo ? (
@@ -319,7 +328,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
             </Button>
           </div>
         </div>
-      </div>
+      </FormField>
 
       {showCamera &&
         createPortal(

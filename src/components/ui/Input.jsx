@@ -1,4 +1,6 @@
-export function Input({ label, error, className = '', ...props }) {
+import { formInputClass } from '../../lib/formFieldStyles';
+
+export function Input({ label, error, variant = 'default', className = '', inputClassName = '', ...props }) {
   return (
     <div className={className}>
       {label && (
@@ -7,9 +9,7 @@ export function Input({ label, error, className = '', ...props }) {
         </label>
       )}
       <input
-        className={`w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none ${
-          error ? 'border-red-500' : ''
-        }`}
+        className={`${formInputClass(variant, inputClassName)} ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
         {...props}
       />
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

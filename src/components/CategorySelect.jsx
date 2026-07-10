@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getCategories, buildCategoryOptions } from '../services/categoryService';
 
-export function CategorySelect({ value, onChange, label = 'Category', name = 'category', placeholder, required = false }) {
+import { formInputClass, formSelectClass } from '../lib/formFieldStyles';
+
+export function CategorySelect({ value, onChange, label = 'Category', name = 'category', placeholder, required = false, variant = 'category', showLabel = true }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const options = buildCategoryOptions(categories);
@@ -19,7 +21,7 @@ export function CategorySelect({ value, onChange, label = 'Category', name = 'ca
 
   return (
     <div>
-      {label && (
+      {showLabel && label && (
         <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
       )}
       <select
@@ -36,7 +38,7 @@ export function CategorySelect({ value, onChange, label = 'Category', name = 'ca
             onChange({ target: { name, value: v } });
           }
         }}
-        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+        className={formSelectClass(variant)}
       >
         <option value="">{placeholder || 'Select category'}</option>
         {options.map((opt) => (
@@ -50,7 +52,7 @@ export function CategorySelect({ value, onChange, label = 'Category', name = 'ca
           value={value || ''}
           onChange={(e) => onChange({ target: { name, value: e.target.value } })}
           placeholder="Enter category"
-          className="mt-2 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+          className={`mt-2 ${formInputClass(variant)}`}
         />
       )}
       {loading && (

@@ -2,16 +2,44 @@ import { useEffect, useMemo, useState } from 'react';
 import { VEHICLE_BRANDS } from './VehicleModelSelect';
 import { getVehicleModelsForMake } from '../services/vehicleCatalogService';
 import { normalizeVehicleFitments } from '../lib/vehicleFitments';
+import { formInputClass, formSelectClass } from '../lib/formFieldStyles';
+
+function applyMakeToState(make, setSelectedMake, setCustomMake) {
+  if (!make) {
+    setSelectedMake('');
+    setCustomMake('');
+    return;
+  }
+  if (VEHICLE_BRANDS.includes(make)) {
+    setSelectedMake(make);
+    setCustomMake('');
+  } else {
+    setSelectedMake('Other');
+    setCustomMake(make);
+  }
+}
+
+function getMakeStateFromFitments(fitments) {
+  const activeMake = fitments[fitments.length - 1]?.make || fitments[0]?.make || '';
+  if (!activeMake) return { selectedMake: '', customMake: '' };
+  if (VEHICLE_BRANDS.includes(activeMake)) return { selectedMake: activeMake, customMake: '' };
+  return { selectedMake: 'Other', customMake: activeMake };
+}
 
 export function VehicleFitmentEditor({
   value = [],
   onChange,
-  label = 'Vehicle compatibility',
+  label = null,
   required = false,
 }) {
-  const fitments = normalizeVehicleFitments({ vehicle_fitments: value });
-  const [selectedMake, setSelectedMake] = useState('');
-  const [customMake, setCustomMake] = useState('');
+  const fitments = useMemo(() => normalizeVehicleFitments({ vehicle_fitments: value }), [value]);
+  const fitmentsKey = useMemo(
+    () => fitments.map((entry) => `${entry.make}:${entry.models.join(',')}`).join('|'),
+    [fitments]
+  );
+
+  const [selectedMake, setSelectedMake] = useState(() => getMakeStateFromFitments(fitments).selectedMake);
+  const [customMake, setCustomMake] = useState(() => getMakeStateFromFitments(fitments).customMake);
   const [modelDraft, setModelDraft] = useState('');
   const [catalogModels, setCatalogModels] = useState([]);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -20,6 +48,30 @@ export function VehicleFitmentEditor({
     if (selectedMake === 'Other') return customMake.trim();
     return selectedMake.trim();
   }, [selectedMake, customMake]);
+
+  useEffect(() => {
+    if (!fitments.length) {
+      setSelectedMake('');
+      setCustomMake('');
+      return;
+    }
+
+    const current = selectedMake === 'Other' ? customMake.trim() : selectedMake.trim();
+    const hasActiveSelection = current && fitments.some(
+      (entry) => entry.make.toLowerCase() === current.toLowerCase()
+    );
+
+    if (!hasActiveSelection) {
+      const next = getMakeStateFromFitments(fitments);
+      setSelectedMake(next.selectedMake);
+      setCustomMake(next.customMake);
+    }
+  }, [fitmentsKey]);
+
+  const selectActiveMake = (make) => {
+    applyMakeToState(make, setSelectedMake, setCustomMake);
+    setModelDraft('');
+  };
 
   useEffect(() => {
     if (!effectiveMake || (selectedMake === 'Other' && !customMake.trim())) {
@@ -86,7 +138,7 @@ export function VehicleFitmentEditor({
             setSelectedMake(e.target.value);
             if (e.target.value !== 'Other') setCustomMake('');
           }}
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+          className={formSelectClass('vehicle')}
         >
           <option value="">Select vehicle make</option>
           {VEHICLE_BRANDS.map((brand) => (
@@ -102,7 +154,7 @@ export function VehicleFitmentEditor({
             value={customMake}
             onChange={(e) => setCustomMake(e.target.value)}
             placeholder="Enter vehicle make"
-            className="mt-2 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+            className={`mt-2 ${formInputClass('vehicle')}`}
           />
         )}
       </div>
@@ -123,7 +175,7 @@ export function VehicleFitmentEditor({
             list="vehicle-model-suggestions"
             placeholder={effectiveMake ? 'Type or select model' : 'Select make first'}
             disabled={!effectiveMake}
-            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none disabled:bg-slate-50"
+            className={`flex-1 ${formInputClass('vehicle')}`}
           />
           <button
             type="button"
@@ -151,10 +203,20 @@ export function VehicleFitmentEditor({
       </div>
 
       {fitments.length > 0 && (
-        <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="space-y-2 rounded-lg border-2 border-emerald-200 bg-emerald-50/40 p-3">
           {fitments.map((entry) => (
             <div key={entry.make}>
-              <p className="text-sm font-semibold text-slate-800">{entry.make}</p>
+              <button
+                type="button"
+                onClick={() => selectActiveMake(entry.make)}
+                className={`text-sm font-semibold rounded-md px-1.5 py-0.5 -ml-1.5 transition-colors ${
+                  effectiveMake.toLowerCase() === entry.make.toLowerCase()
+                    ? 'text-emerald-800 bg-emerald-100'
+                    : 'text-slate-800 hover:bg-emerald-100/70'
+                }`}
+              >
+                {entry.make}
+              </button>
               <div className="mt-1 flex flex-wrap gap-2">
                 {entry.models.map((model) => (
                   <span

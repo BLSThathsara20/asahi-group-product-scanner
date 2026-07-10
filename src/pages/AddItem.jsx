@@ -16,9 +16,10 @@ import { VehicleFitmentEditor } from '../components/VehicleFitmentEditor';
 import { hasRequiredVehicleFitments } from '../lib/vehicleFitments';
 import { StoreLocationSelect } from '../components/StoreLocationSelect';
 import { CategorySelect } from '../components/CategorySelect';
-import { InfoTooltip } from '../components/ui/InfoTooltip';
 import { NavIcon } from '../components/icons/NavIcons';
 import { PageContainer, PageHeader } from '../components/ui/PageLayout';
+import { FormField } from '../components/ui/FormField';
+import { formInputClass, formTextareaClass } from '../lib/formFieldStyles';
 import {
   extractBarcode,
   sanitizeBarcodeInput,
@@ -42,7 +43,7 @@ export function AddItem() {
     reminder_count: 1,
     store_location: '',
     vehicle_fitments: [],
-    agl_number: '',
+    agl_number: 'AGL000',
     unit_price: '',
     added_date: new Date().toISOString().slice(0, 10),
     barcodes: [''],
@@ -426,10 +427,11 @@ export function AddItem() {
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>
           )}
 
-          <div className="relative">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Item Name *</label>
+          <FormField variant="name" label="Item Name" required>
+            <div className="relative">
             <Input
               name="name"
+              variant="name"
               value={form.name}
               onChange={handleChange}
               onFocus={() => form.name.trim().length >= 2 && nameSuggestions.length > 0 && setNameSuggestionsOpen(true)}
@@ -462,13 +464,15 @@ export function AddItem() {
                 ) : null}
               </div>
             )}
-          </div>
+            </div>
+          </FormField>
 
-          <div>
-            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
-              Product Barcode / QR Code *
-              <InfoTooltip text="Physical scanner: focus here and scan. Camera: click Scan. Or type manually. Same product can have multiple barcodes." />
-            </label>
+          <FormField
+            variant="barcode"
+            label="Product Barcode / QR Code"
+            required
+            hint="Physical scanner: focus here and scan. Camera: click Scan. Or type manually."
+          >
             <div className="flex flex-col gap-2">
               {(form.barcodes || ['']).map((barcode, index) => (
                 <div key={index} className="flex gap-2 items-center">
@@ -498,9 +502,7 @@ export function AddItem() {
                     }}
                     maxLength={BARCODE_MAX_LENGTH * 2}
                     placeholder={index === 0 ? 'Focus here, then scan — or click Scan for camera' : `Barcode ${index + 1}`}
-                    className={`flex-1 min-w-0 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none ${
-                      barcodeError ? 'border-red-500' : 'border-slate-300'
-                    } ${barcodeChecking ? 'opacity-70' : ''}`}
+                    className={`flex-1 min-w-0 ${formInputClass('barcode', barcodeError ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : '')} ${barcodeChecking ? 'opacity-70' : ''}`}
                   />
                   {index === 0 && (
                     <button
@@ -582,7 +584,7 @@ export function AddItem() {
                 If auto-generated, you must print the barcode and place it on the item.
               </p>
             )}
-          </div>
+          </FormField>
 
           {showBarcodeScanner && (
             <Modal onBackdropClick={async () => {
@@ -645,17 +647,18 @@ export function AddItem() {
             </Modal>
           )}
 
+          <FormField variant="agl" label="AGL number" required>
           <Input
-            label="AGL number *"
             name="agl_number"
+            variant="agl"
             value={form.agl_number}
             onChange={handleChange}
-            placeholder="e.g. AGL-12345"
+            placeholder="AGL000"
             required
           />
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Unit price £ (optional)</label>
+          <FormField variant="price" label="Unit price £ (optional)">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">£</span>
               <input
@@ -666,87 +669,86 @@ export function AddItem() {
                 value={form.unit_price}
                 onChange={handleChange}
                 placeholder="12.50"
-                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+                className={`pl-8 pr-4 ${formInputClass('price')}`}
               />
             </div>
-          </div>
+          </FormField>
 
-          <div className="min-w-0">
-            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
-              Description
-              <InfoTooltip text="Optional details about the spare part." />
-            </label>
+          <FormField variant="description" label="Description" hint="Optional details about the spare part.">
             <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
                 placeholder="Optional details..."
                 rows={3}
-                className="w-full min-w-0 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+                className={formTextareaClass('description', 'min-w-0')}
               />
-          </div>
+          </FormField>
 
+          <FormField variant="category" label="Category" required>
           <CategorySelect
-            label="Category *"
             name="category"
             value={form.category}
             onChange={handleChange}
             placeholder="Select category"
             required
+            showLabel={false}
           />
+          </FormField>
 
+          <FormField variant="location" label="Store Location">
           <StoreLocationSelect
-            label="Store Location"
             name="store_location"
             value={form.store_location}
             onChange={handleChange}
             placeholder="Select location"
+            showLabel={false}
           />
+          </FormField>
 
+          <FormField variant="vehicle" label="Vehicle compatibility" required>
           <VehicleFitmentEditor
-            label="Vehicle compatibility"
             value={form.vehicle_fitments}
             onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
             required
           />
+          </FormField>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <FormField variant="date" label="Added Date">
           <Input
-            label="Added Date"
             name="added_date"
             type="date"
+            variant="date"
             value={form.added_date}
             onChange={handleDateChange}
           />
+          </FormField>
 
+          <FormField variant="quantity" label="Quantity">
           <Input
-            label="Quantity"
             name="quantity"
             type="number"
             min={1}
+            variant="quantity"
             value={form.quantity}
             onChange={handleChange}
           />
+          </FormField>
 
-          <div>
-            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
-              Low stock alert at
-              <InfoTooltip text="Notify when quantity falls to this or below. Default 1." />
-            </label>
+          <FormField variant="quantity" label="Low stock alert at" hint="Notify when quantity falls to this or below.">
             <input
               type="number"
               name="reminder_count"
               min={0}
               value={form.reminder_count}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none"
+              className={formInputClass('quantity')}
             />
+          </FormField>
           </div>
 
-          <div className="min-w-0">
-            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-2">
-              Product Image
-              <InfoTooltip text="Capture a photo with camera or choose from your device. Helps identify the spare part." />
-            </label>
+          <FormField variant="photo" label="Product Image" hint="Capture a photo with camera or choose from your device. Helps identify the spare part.">
             <div className="flex flex-wrap gap-2">
               <input
                 ref={fileInputRef}
@@ -758,7 +760,7 @@ export function AddItem() {
               <Button
                 type="button"
                 onClick={startCamera}
-                className="ring-2 ring-asahi ring-offset-2 p-3"
+                className="ring-2 ring-orange-400 ring-offset-2 p-3"
                 title="Open Camera"
               >
                 <NavIcon name="camera" className="w-6 h-6" />
@@ -767,7 +769,7 @@ export function AddItem() {
                 type="button"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                className="p-3"
+                className="p-3 border-orange-300 text-orange-800 hover:bg-orange-50"
                 title="Choose from Library"
               >
                 <NavIcon name="folder" className="w-6 h-6" />
@@ -779,7 +781,7 @@ export function AddItem() {
                   <ProductImage
                     src={photoPreviewUrl}
                     alt="Preview"
-                    className="w-20 h-20 rounded-lg border border-slate-200"
+                    className="w-20 h-20 rounded-lg border-2 border-orange-200"
                     iconClassName="w-8 h-8"
                   />
                   <ImageUploadOverlay show={loading} />
@@ -787,7 +789,7 @@ export function AddItem() {
                 <p className="text-sm text-slate-500 truncate">Chosen: {form.photo.name}</p>
               </div>
             )}
-          </div>
+          </FormField>
 
           {showCamera &&
             createPortal(
