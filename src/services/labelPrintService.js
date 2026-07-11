@@ -125,9 +125,9 @@ export async function downloadLabelsPdf(items, maxRows = 4) {
 }
 
 const SMALL_LABEL_MM = 54;
-const SMALL_NAME_FONT = 14;
-const SMALL_MAKE_FONT = 11;
-const SMALL_MODELS_FONT = 10;
+const SMALL_NAME_FONT = 10;
+const SMALL_MAKE_FONT = 8;
+const SMALL_MODELS_FONT = 7;
 
 function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const code = item.qr_id;
@@ -140,14 +140,14 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   doc.setFont('helvetica', 'bold');
   const title = truncateText(doc, item.name || code, innerW - 1);
   doc.text(title, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-  cursorY += 5;
+  cursorY += 4;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5.5);
   if (item.category) {
     const catLine = truncateText(doc, `Category: ${item.category}`, innerW - 1);
     doc.text(catLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 2.4;
+    cursorY += 2.2;
   }
 
   if (fitments.length) {
@@ -156,14 +156,14 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
       doc.setFontSize(SMALL_MAKE_FONT);
       const makeLine = truncateText(doc, entry.make, innerW - 1);
       doc.text(makeLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-      cursorY += 3.8;
+      cursorY += 3;
 
       if (entry.models.length) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(SMALL_MODELS_FONT);
         const modelsLine = truncateText(doc, entry.models.join(', '), innerW - 1);
         doc.text(modelsLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-        cursorY += 3.6;
+        cursorY += 2.8;
       }
     }
   } else if (item.vehicle_model) {
@@ -171,12 +171,12 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     doc.setFontSize(SMALL_MAKE_FONT);
     const vehicleLine = truncateText(doc, formatVehicleFitments(item), innerW - 1);
     doc.text(vehicleLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 3.8;
+    cursorY += 3;
   }
 
   const barH = 8;
   const remainingH = SMALL_LABEL_MM - cursorY - barH - 1.5;
-  const qrSize = Math.min(innerW * 0.62, Math.max(12, remainingH * 0.9), 16);
+  const qrSize = Math.min(innerW * 0.62, Math.max(12, remainingH * 0.9), 18);
   const qrX = (SMALL_LABEL_MM - qrSize) / 2;
   const qrY = cursorY;
   if (qrData) {

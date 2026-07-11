@@ -59,7 +59,7 @@ export function LabelCell({
     >
       <p
         className={`font-semibold text-slate-800 leading-tight line-clamp-2 w-full px-0.5 ${
-          isSmall ? (preview ? 'text-[22px]' : 'text-[14px]') : preview ? 'text-sm' : 'text-[9px] sm:text-[10px]'
+          isSmall ? (preview ? 'text-[15px]' : 'text-[10px]') : preview ? 'text-sm' : 'text-[9px] sm:text-[10px]'
         }`}
       >
         {name}
@@ -82,11 +82,11 @@ export function LabelCell({
         <div className="w-full px-0.5 space-y-0.5">
           {fitments.map((entry) => (
             <div key={entry.make}>
-              <p className={`font-bold text-slate-800 leading-tight line-clamp-1 ${preview ? 'text-[18px]' : 'text-[11px]'}`}>
+              <p className={`font-bold text-slate-800 leading-tight line-clamp-1 ${preview ? 'text-[12px]' : 'text-[8px]'}`}>
                 {entry.make}
               </p>
               {entry.models.length > 0 ? (
-                <p className={`text-slate-700 leading-tight line-clamp-2 ${preview ? 'text-[16px]' : 'text-[10px]'}`}>
+                <p className={`text-slate-700 leading-tight line-clamp-2 ${preview ? 'text-[11px]' : 'text-[7px]'}`}>
                   {entry.models.join(', ')}
                 </p>
               ) : null}
@@ -96,7 +96,7 @@ export function LabelCell({
       ) : vehicleModel ? (
         <p
           className={`text-slate-600 leading-tight line-clamp-1 w-full px-0.5 ${
-            isSmall ? (preview ? 'text-[18px]' : 'text-[11px]') : preview ? 'text-xs' : 'text-[7px]'
+            isSmall ? (preview ? 'text-[12px]' : 'text-[8px]') : preview ? 'text-xs' : 'text-[7px]'
           }`}
         >
           {isSmall ? vehicleModel : `Vehicle: ${vehicleModel}`}
