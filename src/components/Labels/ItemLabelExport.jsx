@@ -65,6 +65,7 @@ export function ItemLabelExport({ item }) {
             code={item.qr_id}
             category={item.category}
             vehicleModel={formatVehicleFitments(item)}
+            vehicleFitments={item.vehicle_fitments}
             variant="small54"
             preview
           />

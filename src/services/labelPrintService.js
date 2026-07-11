@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { formatVehicleFitments } from '../lib/vehicleFitments';
+import { formatVehicleFitments, normalizeVehicleFitments } from '../lib/vehicleFitments';
 
 const A4_W = 210;
 const A4_H = 297;
@@ -125,18 +125,22 @@ export async function downloadLabelsPdf(items, maxRows = 4) {
 }
 
 const SMALL_LABEL_MM = 54;
+const SMALL_NAME_FONT = 14;
+const SMALL_MAKE_FONT = 11;
+const SMALL_MODELS_FONT = 10;
 
 function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const code = item.qr_id;
+  const fitments = normalizeVehicleFitments(item);
   const pad = 1.5;
   const innerW = SMALL_LABEL_MM - pad * 2;
-  let cursorY = pad + 2;
+  let cursorY = pad + 2.5;
 
-  doc.setFontSize(7);
+  doc.setFontSize(SMALL_NAME_FONT);
   doc.setFont('helvetica', 'bold');
   const title = truncateText(doc, item.name || code, innerW - 1);
   doc.text(title, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-  cursorY += 3.2;
+  cursorY += 5;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5.5);
@@ -145,13 +149,34 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     doc.text(catLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
     cursorY += 2.4;
   }
-  if (item.vehicle_fitments?.length || item.vehicle_model) {
-    const vehicleLine = truncateText(doc, `Vehicle: ${formatVehicleFitments(item)}`, innerW - 1);
+
+  if (fitments.length) {
+    for (const entry of fitments) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(SMALL_MAKE_FONT);
+      const makeLine = truncateText(doc, entry.make, innerW - 1);
+      doc.text(makeLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
+      cursorY += 3.8;
+
+      if (entry.models.length) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(SMALL_MODELS_FONT);
+        const modelsLine = truncateText(doc, entry.models.join(', '), innerW - 1);
+        doc.text(modelsLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
+        cursorY += 3.6;
+      }
+    }
+  } else if (item.vehicle_model) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(SMALL_MAKE_FONT);
+    const vehicleLine = truncateText(doc, formatVehicleFitments(item), innerW - 1);
     doc.text(vehicleLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 2.4;
+    cursorY += 3.8;
   }
 
-  const qrSize = Math.min(innerW * 0.62, 18);
+  const barH = 8;
+  const remainingH = SMALL_LABEL_MM - cursorY - barH - 1.5;
+  const qrSize = Math.min(innerW * 0.62, Math.max(12, remainingH * 0.9), 16);
   const qrX = (SMALL_LABEL_MM - qrSize) / 2;
   const qrY = cursorY;
   if (qrData) {
@@ -160,7 +185,6 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   cursorY = qrY + qrSize + 1.5;
 
   const barW = innerW * 0.92;
-  const barH = 8;
   const barX = (SMALL_LABEL_MM - barW) / 2;
   if (barcodeData) {
     doc.addImage(barcodeData, 'PNG', barX, cursorY, barW, barH);

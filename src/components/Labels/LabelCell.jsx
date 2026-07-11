@@ -2,10 +2,24 @@ import { useEffect, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import JsBarcode from 'jsbarcode';
 import { getQrCodeUrl } from '../../lib/utils';
+import { normalizeVehicleFitments } from '../../lib/vehicleFitments';
 
-export function LabelCell({ itemId, labelKey, name, code, category, vehicleModel, preview = false, variant = 'standard' }) {
+export function LabelCell({
+  itemId,
+  labelKey,
+  name,
+  code,
+  category,
+  vehicleModel,
+  vehicleFitments,
+  preview = false,
+  variant = 'standard',
+}) {
   const barcodeRef = useRef(null);
   const isSmall = variant === 'small54';
+  const fitments = vehicleFitments !== undefined
+    ? normalizeVehicleFitments({ vehicle_fitments: vehicleFitments })
+    : normalizeVehicleFitments({ vehicle_model: vehicleModel });
   const qrSize = isSmall ? (preview ? 72 : 36) : preview ? 120 : 56;
   const barcodeHeight = isSmall ? (preview ? 28 : 14) : preview ? 48 : 24;
   const barcodeWidth = isSmall ? (preview ? 1.1 : 0.9) : preview ? 1.8 : 1.2;
@@ -45,27 +59,47 @@ export function LabelCell({ itemId, labelKey, name, code, category, vehicleModel
     >
       <p
         className={`font-semibold text-slate-800 leading-tight line-clamp-2 w-full px-0.5 ${
-          isSmall ? (preview ? 'text-[11px]' : 'text-[7px]') : preview ? 'text-sm' : 'text-[9px] sm:text-[10px]'
+          isSmall ? (preview ? 'text-[22px]' : 'text-[14px]') : preview ? 'text-sm' : 'text-[9px] sm:text-[10px]'
         }`}
       >
         {name}
       </p>
-      {category ? (
+      {category && !isSmall ? (
         <p
           className={`text-slate-600 leading-tight line-clamp-1 w-full px-0.5 ${
-            isSmall ? (preview ? 'text-[9px]' : 'text-[5.5px]') : preview ? 'text-xs' : 'text-[7px]'
+            preview ? 'text-xs' : 'text-[7px]'
           }`}
         >
           Category: {category}
         </p>
       ) : null}
-      {vehicleModel ? (
+      {isSmall && category ? (
+        <p className={`text-slate-500 leading-tight line-clamp-1 w-full px-0.5 ${preview ? 'text-[8px]' : 'text-[5.5px]'}`}>
+          {category}
+        </p>
+      ) : null}
+      {isSmall && fitments.length > 0 ? (
+        <div className="w-full px-0.5 space-y-0.5">
+          {fitments.map((entry) => (
+            <div key={entry.make}>
+              <p className={`font-bold text-slate-800 leading-tight line-clamp-1 ${preview ? 'text-[18px]' : 'text-[11px]'}`}>
+                {entry.make}
+              </p>
+              {entry.models.length > 0 ? (
+                <p className={`text-slate-700 leading-tight line-clamp-2 ${preview ? 'text-[16px]' : 'text-[10px]'}`}>
+                  {entry.models.join(', ')}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : vehicleModel ? (
         <p
           className={`text-slate-600 leading-tight line-clamp-1 w-full px-0.5 ${
-            isSmall ? (preview ? 'text-[9px]' : 'text-[5.5px]') : preview ? 'text-xs' : 'text-[7px]'
+            isSmall ? (preview ? 'text-[18px]' : 'text-[11px]') : preview ? 'text-xs' : 'text-[7px]'
           }`}
         >
-          Vehicle: {vehicleModel}
+          {isSmall ? vehicleModel : `Vehicle: ${vehicleModel}`}
         </p>
       ) : null}
       <div className="label-qr shrink-0 mt-0.5">
