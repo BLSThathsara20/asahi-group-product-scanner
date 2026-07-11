@@ -27,7 +27,6 @@ export function LabelSheet({ items, maxRows = 4, pageIndex = 0 }) {
             labelKey={item.labelKey}
             name={item.name}
             code={item.qr_id}
-            category={item.category}
             vehicleModel={formatVehicleFitments(item)}
           />
         ))}

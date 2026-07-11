@@ -46,11 +46,6 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5);
-  if (item.category) {
-    const catLine = truncateText(doc, `Category: ${item.category}`, innerW - 2);
-    doc.text(catLine, innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 2.5;
-  }
   if (item.vehicle_fitments?.length || item.vehicle_model) {
     const vehicleLine = truncateText(doc, `Vehicle: ${formatVehicleFitments(item)}`, innerW - 2);
     doc.text(vehicleLine, innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
@@ -141,14 +136,6 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const title = truncateText(doc, item.name || code, innerW - 1);
   doc.text(title, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
   cursorY += 4;
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(5.5);
-  if (item.category) {
-    const catLine = truncateText(doc, `Category: ${item.category}`, innerW - 1);
-    doc.text(catLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 2.2;
-  }
 
   if (fitments.length) {
     for (const entry of fitments) {

@@ -35,7 +35,7 @@ export function ItemLabelExport({ item }) {
     <div className="flex flex-col items-center gap-6 w-full">
       <div className="flex flex-col items-center gap-4 w-full">
         <p className="text-sm text-slate-500 text-center max-w-md">
-          A4 label — part name, category, vehicle, QR code, and barcode (same as Print labels).
+          A4 label — part name, vehicle, QR code, and barcode (same as Print labels).
         </p>
         <div data-page-index="0" className="flex justify-center">
           <LabelCell
@@ -43,7 +43,6 @@ export function ItemLabelExport({ item }) {
             labelKey={item.id}
             name={item.name}
             code={item.qr_id}
-            category={item.category}
             vehicleModel={formatVehicleFitments(item)}
             preview
           />
@@ -63,7 +62,6 @@ export function ItemLabelExport({ item }) {
             labelKey={`${item.id}-small54`}
             name={item.name}
             code={item.qr_id}
-            category={item.category}
             vehicleModel={formatVehicleFitments(item)}
             vehicleFitments={item.vehicle_fitments}
             variant="small54"

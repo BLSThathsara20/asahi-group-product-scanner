@@ -9,7 +9,6 @@ export function LabelCell({
   labelKey,
   name,
   code,
-  category,
   vehicleModel,
   vehicleFitments,
   preview = false,
@@ -64,20 +63,6 @@ export function LabelCell({
       >
         {name}
       </p>
-      {category && !isSmall ? (
-        <p
-          className={`text-slate-600 leading-tight line-clamp-1 w-full px-0.5 ${
-            preview ? 'text-xs' : 'text-[7px]'
-          }`}
-        >
-          Category: {category}
-        </p>
-      ) : null}
-      {isSmall && category ? (
-        <p className={`text-slate-500 leading-tight line-clamp-1 w-full px-0.5 ${preview ? 'text-[8px]' : 'text-[5.5px]'}`}>
-          {category}
-        </p>
-      ) : null}
       {isSmall && fitments.length > 0 ? (
         <div className="w-full px-0.5 space-y-0.5">
           {fitments.map((entry) => (
