@@ -56,6 +56,11 @@ export function LabelCell({
       data-label-key={labelKey || itemId}
       data-label-variant={variant}
     >
+      {isSmall ? (
+        <div className="label-qr shrink-0 mb-0.5">
+          <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
+        </div>
+      ) : null}
       <p
         className={`font-semibold text-slate-800 leading-tight line-clamp-2 w-full px-0.5 ${
           isSmall ? (preview ? 'text-[15px]' : 'text-[10px]') : preview ? 'text-sm' : 'text-[9px] sm:text-[10px]'
@@ -87,9 +92,11 @@ export function LabelCell({
           {isSmall ? vehicleModel : `Vehicle: ${vehicleModel}`}
         </p>
       ) : null}
-      <div className="label-qr shrink-0 mt-0.5">
-        <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
-      </div>
+      {!isSmall ? (
+        <div className="label-qr shrink-0 mt-0.5">
+          <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
+        </div>
+      ) : null}
       <p
         className={`font-mono text-slate-600 leading-none truncate w-full px-0.5 ${
           isSmall
