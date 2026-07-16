@@ -119,39 +119,49 @@ export async function downloadLabelsPdf(items, maxRows = 4) {
   doc.save(`labels-${slug}.pdf`);
 }
 
-const SMALL_LABEL_W = 54;
-const SMALL_LABEL_H = 50;
-const SMALL_NAME_FONT = 9;
-const SMALL_MAKE_FONT = 7.5;
-const SMALL_MODELS_FONT = 6.5;
+const SMALL_LABEL_MM = 54;
+const SMALL_NAME_FONT = 10;
+const SMALL_MAKE_FONT = 8;
+const SMALL_MODELS_FONT = 7;
 const SMALL_CODE_FONT = 4.5;
-const SMALL_BAR_H = 7;
-const SMALL_QR_CODE_GAP = 2.2;
-const SMALL_CODE_BAR_GAP = 1.2;
+const SMALL_BAR_H = 8;
+const SMALL_CODE_STRIP_W = 4.5;
+
+function drawVerticalCode(doc, code, x, yStart, yEnd) {
+  const label = code || '';
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(SMALL_CODE_FONT);
+  const maxH = Math.max(8, yEnd - yStart);
+  let value = label;
+  while (value.length > 0 && doc.getTextWidth(value) > maxH) {
+    value = value.slice(0, -1);
+  }
+  if (value.length < label.length) value = `${value}…`;
+  doc.text(value, x, yStart + 1, { angle: 90 });
+}
 
 function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const code = item.qr_id;
   const fitments = normalizeVehicleFitments(item);
-  const pad = 1.2;
-  const innerW = SMALL_LABEL_W - pad * 2;
-  const footerH =
-    SMALL_QR_CODE_GAP + SMALL_CODE_FONT * 0.35 + SMALL_CODE_BAR_GAP + SMALL_BAR_H;
-
-  let cursorY = pad + 2;
+  const pad = 1.5;
+  const innerW = SMALL_LABEL_MM - pad * 2;
+  const contentW = innerW - SMALL_CODE_STRIP_W;
+  const centerX = pad + contentW / 2;
+  let cursorY = pad + 2.5;
 
   doc.setFontSize(SMALL_NAME_FONT);
   doc.setFont('helvetica', 'bold');
-  const title = truncateText(doc, item.name || code, innerW - 1);
-  doc.text(title, SMALL_LABEL_W / 2, cursorY, { align: 'center', maxWidth: innerW });
-  cursorY += 3.5;
+  const title = truncateText(doc, item.name || code, contentW - 1);
+  doc.text(title, centerX, cursorY, { align: 'center', maxWidth: contentW });
+  cursorY += 4;
 
   if (fitments.length) {
     for (const entry of fitments) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(SMALL_MAKE_FONT);
-      const makeLine = truncateText(doc, entry.make, innerW - 1);
-      doc.text(makeLine, SMALL_LABEL_W / 2, cursorY, { align: 'center', maxWidth: innerW });
-      cursorY += 2.6;
+      const makeLine = truncateText(doc, entry.make, contentW - 1);
+      doc.text(makeLine, centerX, cursorY, { align: 'center', maxWidth: contentW });
+      cursorY += 3;
 
       if (entry.models.length) {
         doc.setFont('helvetica', 'normal');
@@ -159,46 +169,46 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
         const modelsLine = truncateText(
           doc,
           entry.models.map((model) => model.name).join(', '),
-          innerW - 1
+          contentW - 1
         );
-        doc.text(modelsLine, SMALL_LABEL_W / 2, cursorY, { align: 'center', maxWidth: innerW });
-        cursorY += 2.4;
+        doc.text(modelsLine, centerX, cursorY, { align: 'center', maxWidth: contentW });
+        cursorY += 2.8;
       }
     }
   } else if (item.vehicle_model) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(SMALL_MAKE_FONT);
-    const vehicleLine = truncateText(doc, formatVehicleFitments(item), innerW - 1);
-    doc.text(vehicleLine, SMALL_LABEL_W / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 2.6;
+    const vehicleLine = truncateText(doc, formatVehicleFitments(item), contentW - 1);
+    doc.text(vehicleLine, centerX, cursorY, { align: 'center', maxWidth: contentW });
+    cursorY += 3;
   }
 
-  cursorY += 0.8;
-  const maxQrH = SMALL_LABEL_H - pad - cursorY - footerH;
-  const qrSize = Math.min(Math.max(10, maxQrH), innerW * 0.52, 15);
+  const barH = SMALL_BAR_H;
+  const remainingH = SMALL_LABEL_MM - cursorY - barH - 1.5;
+  const qrSize = Math.min(contentW * 0.72, Math.max(12, remainingH * 0.95), 20);
+  const qrX = pad + (contentW - qrSize) / 2;
   const qrY = cursorY;
-  const qrX = (SMALL_LABEL_W - qrSize) / 2;
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
+  cursorY = qrY + qrSize + 1;
 
-  const codeBaseline = qrY + qrSize + SMALL_QR_CODE_GAP + SMALL_CODE_FONT * 0.35;
-  doc.setFont('courier', 'normal');
-  doc.setFontSize(SMALL_CODE_FONT);
-  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_W / 2, codeBaseline, {
-    align: 'center',
-    maxWidth: innerW,
-  });
-
-  const barY = codeBaseline + SMALL_CODE_BAR_GAP;
-  const barW = innerW * 0.92;
-  const barX = (SMALL_LABEL_W - barW) / 2;
+  const barW = contentW * 0.92;
+  const barX = pad + (contentW - barW) / 2;
   if (barcodeData) {
-    doc.addImage(barcodeData, 'PNG', barX, barY, barW, SMALL_BAR_H);
+    doc.addImage(barcodeData, 'PNG', barX, cursorY, barW, barH);
   }
+
+  drawVerticalCode(
+    doc,
+    code,
+    SMALL_LABEL_MM - pad - 0.4,
+    pad + 1,
+    SMALL_LABEL_MM - barH - 2
+  );
 }
 
-/** Single 54 x 50 mm label PDF for small thermal printers. */
+/** Single 54 x 54 mm label PDF for small thermal printers. */
 export async function downloadSmallLabelPdf(item) {
   if (!item?.qr_id) return;
 
@@ -208,7 +218,7 @@ export async function downloadSmallLabelPdf(item) {
 
   const doc = new jsPDF({
     unit: 'mm',
-    format: [SMALL_LABEL_W, SMALL_LABEL_H],
+    format: [SMALL_LABEL_MM, SMALL_LABEL_MM],
     orientation: 'portrait',
   });
   drawSmallLabelPage(doc, item, qrData, barcodeData);
