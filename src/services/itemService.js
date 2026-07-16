@@ -8,7 +8,7 @@ import {
 	transactionToSanity,
 	deletionLogToSanity,
 } from "../lib/sanityMappers";
-import { LOW_STOCK_THRESHOLD } from "../lib/stockAlerts";
+import { getModelOrderAlerts } from "../lib/stockTree";
 import { formatVehicleFitments } from "../lib/vehicleFitments";
 import { ensureVehicleCatalogEntries } from "./vehicleCatalogService";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
@@ -55,12 +55,15 @@ export async function createItem(item) {
 	return mapItem(doc);
 }
 
+export async function getStockAlerts() {
+	const docs = await sanityClient.fetch(`*[_type == "inventoryItem"] | order(name asc)`);
+	const items = (docs || []).map(mapItem).filter(Boolean);
+	return getModelOrderAlerts(items);
+}
+
+/** @deprecated Use getStockAlerts — kept for compatibility */
 export async function getLowStockItems() {
-	const docs = await sanityClient.fetch(
-		`*[_type == "inventoryItem" && quantity < $threshold] | order(quantity asc)`,
-		{ threshold: LOW_STOCK_THRESHOLD }
-	);
-	return (docs || []).map(mapItem).filter(Boolean);
+	return getStockAlerts();
 }
 
 export async function searchItemNames(query) {

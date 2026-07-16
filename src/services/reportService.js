@@ -3,8 +3,8 @@ import { LOGO_URL } from '../lib/branding';
 import { getItemPageUrl } from '../lib/utils';
 import { formatVehicleFitments } from '../lib/vehicleFitments';
 import { getTodayStockMovements } from './analyticsService';
-import { LOW_STOCK_THRESHOLD, isLowStock } from '../lib/stockAlerts';
-import { buildStockTree, flattenStockTreeRows } from '../lib/stockTree';
+import { buildStockTree, flattenModelOrderAlertRows, flattenStockTreeRows, getOrderAlertDetails } from '../lib/stockTree';
+import { LOW_STOCK_THRESHOLD } from '../lib/stockAlerts';
 
 const statusLabels = { in_stock: 'In Stock', out: 'Out', reserved: 'Reserved' };
 
@@ -447,11 +447,20 @@ function mapMovementRow(tx) {
   };
 }
 
-function mapStockRow(item) {
+function mapStockRow(item, orderDetails = null) {
   const vehicle = formatVehicleFitments(item);
-  const itemLabel = vehicle ? `${item.name || '—'}\n${vehicle}` : (item.name || '—');
+  let itemLabel = vehicle ? `${item.name || '—'}\n${vehicle}` : (item.name || '—');
+  const needsOrder = orderDetails?.itemIds?.has(item.id);
+  const orderInfo = orderDetails?.modelsByItemId?.get(item.id);
+
+  if (needsOrder && orderInfo?.models?.length) {
+    itemLabel += `\nOrder: ${orderInfo.make} ${orderInfo.models.join(', ')}`;
+  } else if (needsOrder && orderInfo && !orderInfo.make) {
+    itemLabel += '\nOrder: unassigned part';
+  }
+
   return {
-    _lowStock: isLowStock(item.quantity),
+    _lowStock: Boolean(needsOrder),
     item: itemLabel,
     qr: item.qr_id || '—',
     qrLink: item.id ? getItemPageUrl(item.id) : '',
@@ -499,10 +508,10 @@ async function drawCompanyHeader(doc, title, subtitleLines = []) {
 
 export async function exportDailyReportPDF(items, exportedBy = '') {
   const stock = items || [];
+  const tree = buildStockTree(stock);
+  const modelOrderAlerts = tree.modelOrderAlerts;
+  const orderDetails = getOrderAlertDetails(tree);
   const { checkIns, checkOuts, dateLabel } = await getTodayStockMovements();
-  const lowStockItems = stock
-    .filter((item) => isLowStock(item.quantity))
-    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const sortedStock = [...stock].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const inQty = sumMovementQty(checkIns);
   const outQty = sumMovementQty(checkOuts);
@@ -529,9 +538,9 @@ export async function exportDailyReportPDF(items, exportedBy = '') {
       color: PDF_THEME.green,
     },
     {
-      label: 'Low stock',
-      value: lowStockItems.length,
-      sub: `< ${LOW_STOCK_THRESHOLD} units`,
+      label: 'Order alerts',
+      value: modelOrderAlerts.length,
+      sub: `models below ${LOW_STOCK_THRESHOLD}`,
       accent: PDF_THEME.red,
       bg: PDF_THEME.redLight,
       color: PDF_THEME.red,
@@ -568,13 +577,21 @@ export async function exportDailyReportPDF(items, exportedBy = '') {
   y = drawSectionHeader(
     doc,
     y,
-    'Low stock alert',
-    `${lowStockItems.length} item${lowStockItems.length === 1 ? '' : 's'} below ${LOW_STOCK_THRESHOLD}`
+    'Models to order',
+    `${modelOrderAlerts.length} make/model${modelOrderAlerts.length === 1 ? '' : 's'} below ${LOW_STOCK_THRESHOLD} units total`
   );
   y = drawDataTable(doc, y, {
-    columns: STOCK_COLUMNS(doc),
-    rows: lowStockItems.map(mapStockRow),
-    emptyMessage: 'All items are above the low stock threshold',
+    columns: (() => {
+      const w = contentWidth(doc);
+      return [
+        { key: 'vehicle', label: 'Make / Model', width: w * 0.38, bold: true },
+        { key: 'total', label: 'Total', width: w * 0.12, align: 'center' },
+        { key: 'parts', label: 'Parts checked', width: w * 0.22, align: 'center' },
+        { key: 'action', label: 'Action', width: w * 0.28, align: 'center' },
+      ];
+    })(),
+    rows: flattenModelOrderAlertRows(modelOrderAlerts),
+    emptyMessage: 'All models have enough stock across compatible parts',
     highlightLowStock: true,
   });
 
@@ -583,14 +600,14 @@ export async function exportDailyReportPDF(items, exportedBy = '') {
   doc.setTextColor(...PDF_THEME.slate500);
   y = ensurePageSpace(doc, y, 8);
   doc.text(
-    `Rows highlighted in red = quantity below ${LOW_STOCK_THRESHOLD} units`,
+    `Rows highlighted in red = part linked to a make/model with less than ${LOW_STOCK_THRESHOLD} units total across all compatible parts`,
     PDF_THEME.margin,
     y
   );
   y += 5;
   y = drawDataTable(doc, y, {
     columns: STOCK_COLUMNS(doc),
-    rows: sortedStock.map(mapStockRow),
+    rows: sortedStock.map((item) => mapStockRow(item, orderDetails)),
     emptyMessage: 'No spare parts in inventory',
     highlightLowStock: true,
   });

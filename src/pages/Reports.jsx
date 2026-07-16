@@ -6,7 +6,8 @@ import { exportInventoryPDF, exportInventoryCSV, exportDailyReportPDF } from '..
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useNotification } from '../context/NotificationContext';
-import { isLowStock } from '../lib/stockAlerts';
+import { LOW_STOCK_THRESHOLD } from '../lib/stockAlerts';
+import { getModelOrderAlerts } from '../lib/stockTree';
 import { StockTreeView } from '../components/Stock/StockTreeView';
 import {
   PageContainer,
@@ -77,8 +78,8 @@ export function Reports() {
     }
   };
 
-  const lowStockCount = useMemo(
-    () => (items || []).filter((item) => isLowStock(item.quantity)).length,
+  const orderAlertCount = useMemo(
+    () => getModelOrderAlerts(items || []).length,
     [items]
   );
 
@@ -98,13 +99,13 @@ export function Reports() {
           <div>
             <h2 className="text-base font-semibold text-slate-800">Daily report</h2>
             <p className="text-sm text-slate-500 mt-1">
-              PDF with today&apos;s check-ins and check-outs, current stock, and low-stock items
-              (quantity below 2 highlighted in red).
+              PDF with today&apos;s check-ins and check-outs, models to order (below {LOW_STOCK_THRESHOLD} total per model),
+              current stock, and stock-by-vehicle tree.
             </p>
           </div>
           <p className="text-sm text-slate-500">
-            <strong className="text-slate-700">{lowStockCount}</strong> low stock item
-            {lowStockCount === 1 ? '' : 's'} right now.
+            <strong className="text-slate-700">{orderAlertCount}</strong> model
+            {orderAlertCount === 1 ? '' : 's'} need ordering right now.
           </p>
           <Button onClick={handleDailyPDF} disabled={exporting || (items || []).length === 0}>
             {exporting === 'daily' ? 'Generating…' : 'Download daily report PDF'}

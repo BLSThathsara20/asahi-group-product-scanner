@@ -15,21 +15,22 @@ function LowStockBadge({ count }) {
   );
 }
 
-function PartRow({ part }) {
+function PartRow({ part, modelsNeedingOrder = [] }) {
+  const orderSet = new Set(modelsNeedingOrder.map((row) => row.model));
   return (
     <Link
       to={`/inventory/${part.id}`}
       className={`block rounded-lg border px-3 py-2.5 transition-colors ${
-        part.lowStock
+        part.needsOrder
           ? 'bg-red-50 border-red-100 hover:bg-red-100/70'
           : 'bg-white border-slate-100 hover:bg-slate-50'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className={`font-medium ${part.lowStock ? 'text-red-900' : 'text-slate-800'}`}>
+        <span className={`font-medium ${part.needsOrder ? 'text-red-900' : 'text-slate-800'}`}>
           {part.name}
         </span>
-        <span className={`tabular-nums text-sm font-semibold ${part.lowStock ? 'text-red-700' : 'text-slate-700'}`}>
+        <span className={`tabular-nums text-sm font-semibold ${part.needsOrder ? 'text-red-700' : 'text-slate-700'}`}>
           ×{part.quantity}
         </span>
       </div>
@@ -38,7 +39,11 @@ function PartRow({ part }) {
           {part.compatibleModels.map((model) => (
             <span
               key={model}
-              className="inline-block px-2 py-0.5 rounded-full bg-asahi/10 text-asahi text-xs font-medium"
+              className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                orderSet.has(model)
+                  ? 'bg-red-100 text-red-800'
+                  : 'bg-asahi/10 text-asahi'
+              }`}
             >
               {model}
             </span>
@@ -78,9 +83,21 @@ function MakeSection({ make, defaultOpen = false }) {
       </button>
 
       {open && (
-        <div className="px-4 py-3 space-y-2 border-t border-slate-100">
+        <div className="px-4 py-3 space-y-3 border-t border-slate-100">
+          {make.modelsNeedingOrder?.length > 0 && (
+            <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-sm text-red-800">
+              <span className="font-semibold">Order models: </span>
+              {make.modelsNeedingOrder
+                .map((row) => `${row.model} (${row.totalQuantity} total)`)
+                .join(', ')}
+            </div>
+          )}
           {make.parts.map((part) => (
-            <PartRow key={part.id} part={part} />
+            <PartRow
+              key={part.id}
+              part={part}
+              modelsNeedingOrder={make.modelsNeedingOrder}
+            />
           ))}
         </div>
       )}
@@ -116,7 +133,7 @@ export function StockTreeView({ items, compact = false, className = '' }) {
             <p className="text-2xl font-semibold text-slate-800">{tree.summary.partCount}</p>
           </div>
           <div className="rounded-lg bg-red-50 border border-red-100 p-3">
-            <p className="text-xs text-red-600 uppercase tracking-wide">Low stock</p>
+            <p className="text-xs text-red-600 uppercase tracking-wide">Models to order</p>
             <p className="text-2xl font-semibold text-red-700">{tree.summary.lowStockCount}</p>
             <p className="text-xs text-red-500 mt-0.5">below {LOW_STOCK_THRESHOLD} units</p>
           </div>
@@ -124,7 +141,7 @@ export function StockTreeView({ items, compact = false, className = '' }) {
       )}
 
       <p className="text-sm text-slate-500 mb-3">
-        Each part is listed once. Compatible models (e.g. A1, A4, Q5) share the same physical stock.
+        Each part is listed once. Alerts when total stock for a model (across all compatible parts) is below {LOW_STOCK_THRESHOLD}.
       </p>
 
       <div className="space-y-3">
