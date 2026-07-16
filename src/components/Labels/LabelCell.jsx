@@ -90,15 +90,19 @@ export function LabelCell({
       <div className="label-qr shrink-0 mt-0.5">
         <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
       </div>
-      {!isSmall ? (
-        <p
-          className={`font-mono text-slate-600 leading-none truncate w-full px-0.5 ${
-            preview ? 'text-xs' : 'text-[6px]'
-          }`}
-        >
-          {code}
-        </p>
-      ) : null}
+      <p
+        className={`font-mono text-slate-600 leading-none truncate w-full px-0.5 ${
+          isSmall
+            ? preview
+              ? 'text-[10px]'
+              : 'text-[6px]'
+            : preview
+              ? 'text-xs'
+              : 'text-[6px]'
+        }`}
+      >
+        {code}
+      </p>
       <canvas
         ref={barcodeRef}
         className={`label-barcode max-w-full ${isSmall ? (preview ? 'h-7' : 'h-3.5') : preview ? 'h-12' : 'h-6'}`}

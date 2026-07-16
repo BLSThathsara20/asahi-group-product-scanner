@@ -123,6 +123,9 @@ const SMALL_LABEL_MM = 54;
 const SMALL_NAME_FONT = 10;
 const SMALL_MAKE_FONT = 8;
 const SMALL_MODELS_FONT = 7;
+const SMALL_CODE_FONT = 5;
+const SMALL_BAR_H = 8;
+const SMALL_CODE_H = 2.5;
 
 function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const code = item.qr_id;
@@ -165,15 +168,23 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     cursorY += 3;
   }
 
-  const barH = 8;
-  const remainingH = SMALL_LABEL_MM - cursorY - barH - 1.5;
+  const barH = SMALL_BAR_H;
+  const remainingH = SMALL_LABEL_MM - cursorY - barH - SMALL_CODE_H - 1.5;
   const qrSize = Math.min(innerW * 0.62, Math.max(12, remainingH * 0.9), 18);
   const qrX = (SMALL_LABEL_MM - qrSize) / 2;
   const qrY = cursorY;
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
-  cursorY = qrY + qrSize + 1.5;
+  cursorY = qrY + qrSize + 1;
+
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(SMALL_CODE_FONT);
+  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_MM / 2, cursorY, {
+    align: 'center',
+    maxWidth: innerW,
+  });
+  cursorY += SMALL_CODE_H;
 
   const barW = innerW * 0.92;
   const barX = (SMALL_LABEL_MM - barW) / 2;
