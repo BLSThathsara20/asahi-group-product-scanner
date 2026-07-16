@@ -38,6 +38,11 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
   doc.setDrawColor(180);
   doc.rect(x, y, w, h);
 
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(5);
+  doc.text(truncateText(doc, code, innerW - 2), innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
+  cursorY += 2.5;
+
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   const title = truncateText(doc, item.name || code, innerW - 2);
@@ -59,11 +64,6 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
   cursorY = qrY + qrSize + 2;
-
-  doc.setFont('courier', 'normal');
-  doc.setFontSize(5);
-  doc.text(truncateText(doc, code, innerW - 2), innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
-  cursorY += 3;
 
   const barW = innerW * 0.88;
   const barH = Math.min(h * 0.12, 8);
@@ -132,16 +132,15 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const fitments = normalizeVehicleFitments(item);
   const pad = 1.5;
   const innerW = SMALL_LABEL_MM - pad * 2;
-  const barH = SMALL_BAR_H;
-  const barY = SMALL_LABEL_MM - pad - barH;
+  let cursorY = pad + 1.5;
 
-  const qrSize = Math.min(innerW * 0.55, 16);
-  const qrX = (SMALL_LABEL_MM - qrSize) / 2;
-  const qrY = pad;
-  if (qrData) {
-    doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
-  }
-  let cursorY = qrY + qrSize + 1.5;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(SMALL_CODE_FONT);
+  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_MM / 2, cursorY, {
+    align: 'center',
+    maxWidth: innerW,
+  });
+  cursorY += SMALL_CODE_H + 0.5;
 
   doc.setFontSize(SMALL_NAME_FONT);
   doc.setFont('helvetica', 'bold');
@@ -177,18 +176,20 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     cursorY += 3;
   }
 
-  const codeY = barY - SMALL_CODE_H - 0.5;
-  doc.setFont('courier', 'normal');
-  doc.setFontSize(SMALL_CODE_FONT);
-  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_MM / 2, codeY, {
-    align: 'center',
-    maxWidth: innerW,
-  });
+  const barH = SMALL_BAR_H;
+  const remainingH = SMALL_LABEL_MM - cursorY - barH - 1.5;
+  const qrSize = Math.min(innerW * 0.62, Math.max(12, remainingH * 0.9), 18);
+  const qrX = (SMALL_LABEL_MM - qrSize) / 2;
+  const qrY = cursorY;
+  if (qrData) {
+    doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
+  }
+  cursorY = qrY + qrSize + 1;
 
   const barW = innerW * 0.92;
   const barX = (SMALL_LABEL_MM - barW) / 2;
   if (barcodeData) {
-    doc.addImage(barcodeData, 'PNG', barX, barY, barW, barH);
+    doc.addImage(barcodeData, 'PNG', barX, cursorY, barW, barH);
   }
 }
 
