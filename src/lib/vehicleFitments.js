@@ -200,7 +200,14 @@ export function vehicleFitmentsChanged(before, next) {
 	return fitmentsKey(beforeSource) !== fitmentsKey(nextSource);
 }
 
-export function hasRequiredVehicleFitments(fitments) {
+const CATEGORIES_WITHOUT_VEHICLE_MAKE = new Set(["tv unit"]);
+
+export function isVehicleMakeRequired(category) {
+	return !CATEGORIES_WITHOUT_VEHICLE_MAKE.has(String(category || "").trim().toLowerCase());
+}
+
+export function hasRequiredVehicleFitments(fitments, category) {
+	if (!isVehicleMakeRequired(category)) return true;
 	return normalizeVehicleFitments({ vehicle_fitments: fitments }).some((entry) => entry.make);
 }
 

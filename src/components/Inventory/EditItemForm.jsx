@@ -6,7 +6,7 @@ import { FormField } from '../ui/FormField';
 import { formInputClass, formTextareaClass } from '../../lib/formFieldStyles';
 import { ProductImage } from '../ui/ProductImage';
 import { VehicleFitmentEditor } from '../VehicleFitmentEditor';
-import { normalizeVehicleFitments, finalizeVehicleFitments } from '../../lib/vehicleFitments';
+import { normalizeVehicleFitments, finalizeVehicleFitments, isVehicleMakeRequired } from '../../lib/vehicleFitments';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
 import { NavIcon } from '../icons/NavIcons';
@@ -154,6 +154,11 @@ export function EditItemForm({ item, onSave, onCancel }) {
     });
   };
 
+  const vehicleMakeRequired = useMemo(
+    () => isVehicleMakeRequired(form.category),
+    [form.category]
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -225,11 +230,17 @@ export function EditItemForm({ item, onSave, onCancel }) {
       <FormField variant="location" label="Store Location">
         <StoreLocationSelect name="store_location" value={form.store_location} onChange={handleChange} placeholder="Select location" showLabel={false} />
       </FormField>
-      <FormField variant="vehicle" label="Vehicle compatibility">
+      <FormField
+        variant="vehicle"
+        label="Vehicle compatibility"
+        required={vehicleMakeRequired}
+        hint={vehicleMakeRequired ? undefined : 'Not required for TV Unit parts.'}
+      >
         <VehicleFitmentEditor
           key={item.id}
           value={form.vehicle_fitments}
           onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
+          required={vehicleMakeRequired}
         />
       </FormField>
       <FormField variant="quantity" label="Quantity" hint="Low-stock alert when below 2 units.">

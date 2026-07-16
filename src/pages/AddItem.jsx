@@ -13,7 +13,7 @@ import { Input } from '../components/ui/Input';
 import { ProductImage, ImageUploadOverlay } from '../components/ui/ProductImage';
 import { Modal } from '../components/ui/Modal';
 import { VehicleFitmentEditor } from '../components/VehicleFitmentEditor';
-import { hasRequiredVehicleFitments, finalizeVehicleFitments } from '../lib/vehicleFitments';
+import { hasRequiredVehicleFitments, finalizeVehicleFitments, isVehicleMakeRequired } from '../lib/vehicleFitments';
 import { StoreLocationSelect } from '../components/StoreLocationSelect';
 import { CategorySelect } from '../components/CategorySelect';
 import { NavIcon } from '../components/icons/NavIcons';
@@ -300,6 +300,11 @@ export function AddItem() {
   };
 
 
+  const vehicleMakeRequired = useMemo(
+    () => isVehicleMakeRequired(form.category),
+    [form.category]
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -315,7 +320,7 @@ export function AddItem() {
       setError('AGL number is required');
       return;
     }
-    if (!hasRequiredVehicleFitments(form.vehicle_fitments)) {
+    if (!hasRequiredVehicleFitments(form.vehicle_fitments, form.category)) {
       setError('Select at least one vehicle make');
       return;
     }
@@ -719,11 +724,16 @@ export function AddItem() {
           </FormField>
           </div>
 
-          <FormField variant="vehicle" label="Vehicle compatibility" required>
+          <FormField
+            variant="vehicle"
+            label="Vehicle compatibility"
+            required={vehicleMakeRequired}
+            hint={vehicleMakeRequired ? undefined : 'Not required for TV Unit parts.'}
+          >
           <VehicleFitmentEditor
             value={form.vehicle_fitments}
             onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
-            required
+            required={vehicleMakeRequired}
           />
           </FormField>
 
