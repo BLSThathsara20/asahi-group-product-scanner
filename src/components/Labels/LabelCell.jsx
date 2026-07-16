@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import JsBarcode from 'jsbarcode';
 import { getQrCodeUrl } from '../../lib/utils';
-import { normalizeVehicleFitments } from '../../lib/vehicleFitments';
+import {
+  formatSmallLabelMakeQrLine,
+  getSmallLabelModelsLine,
+} from '../../lib/smallLabelFormat';
 
 export function LabelCell({
   itemId,
@@ -16,9 +19,13 @@ export function LabelCell({
 }) {
   const barcodeRef = useRef(null);
   const isSmall = variant === 'small54';
-  const fitments = vehicleFitments !== undefined
-    ? normalizeVehicleFitments({ vehicle_fitments: vehicleFitments })
-    : normalizeVehicleFitments({ vehicle_model: vehicleModel });
+  const smallLabelSource = {
+    vehicle_fitments: vehicleFitments,
+    vehicle_model: vehicleModel,
+    qr_id: code,
+  };
+  const smallModelsLine = isSmall ? getSmallLabelModelsLine(smallLabelSource) : '';
+  const makeQrLine = isSmall ? formatSmallLabelMakeQrLine(smallLabelSource) : '';
   const qrSize = isSmall ? (preview ? 72 : 36) : preview ? 120 : 56;
   const barcodeHeight = isSmall ? (preview ? 28 : 14) : preview ? 48 : 24;
   const barcodeWidth = isSmall ? (preview ? 1.1 : 0.9) : preview ? 1.8 : 1.2;
@@ -63,33 +70,31 @@ export function LabelCell({
       >
         {name}
       </p>
-      {isSmall && fitments.length > 0 ? (
-        <div className="w-full px-0.5 space-y-0.5">
-          {fitments.map((entry) => (
-            <div key={entry.make}>
-              <p className={`font-bold text-slate-800 leading-tight line-clamp-1 ${preview ? 'text-[12px]' : 'text-[8px]'}`}>
-                {entry.make}
-              </p>
-              {entry.models.length > 0 ? (
-                <p className={`text-slate-700 leading-tight line-clamp-2 ${preview ? 'text-[11px]' : 'text-[7px]'}`}>
-                  {entry.models.map((model) => model.name).join(', ')}
-                </p>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ) : vehicleModel ? (
+      {isSmall && smallModelsLine ? (
+        <p className={`text-slate-700 leading-tight line-clamp-2 w-full px-0.5 ${preview ? 'text-[11px]' : 'text-[7px]'}`}>
+          {smallModelsLine}
+        </p>
+      ) : !isSmall && vehicleModel ? (
         <p
           className={`text-slate-600 leading-tight line-clamp-1 w-full px-0.5 ${
-            isSmall ? (preview ? 'text-[12px]' : 'text-[8px]') : preview ? 'text-xs' : 'text-[7px]'
+            preview ? 'text-xs' : 'text-[7px]'
           }`}
         >
-          {isSmall ? vehicleModel : `Vehicle: ${vehicleModel}`}
+          {`Vehicle: ${vehicleModel}`}
         </p>
       ) : null}
       <div className="label-qr shrink-0 mt-0.5">
         <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
       </div>
+      {isSmall ? (
+        <p
+          className={`font-mono text-slate-600 leading-none truncate w-full px-0.5 ${
+            preview ? 'text-[9px]' : 'text-[5px]'
+          }`}
+        >
+          {makeQrLine}
+        </p>
+      ) : null}
       <canvas
         ref={barcodeRef}
         className={`label-barcode max-w-full ${isSmall ? (preview ? 'h-7' : 'h-3.5') : preview ? 'h-12' : 'h-6'}`}

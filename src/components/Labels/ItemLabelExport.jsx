@@ -54,7 +54,7 @@ export function ItemLabelExport({ item }) {
 
       <div className="flex flex-col items-center gap-4 w-full pt-4 border-t border-slate-200">
         <p className="text-sm text-slate-500 text-center max-w-md">
-          54 × 54 mm label for small thermal printers — part name, vehicle models, QR code, and barcode.
+          54 × 54 mm label — part name, models, QR code, make | QR ID, and barcode.
         </p>
         <div className="flex justify-center">
           <LabelCell
