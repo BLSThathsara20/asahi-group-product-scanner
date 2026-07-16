@@ -52,7 +52,7 @@ export function mapItem(doc) {
 		sku_code: doc.skuCode || null,
 		agl_number: doc.aglNumber || null,
 		unit_price: doc.unitPrice ?? null,
-		reminder_count: doc.reminderCount ?? 1,
+		reminder_count: doc.reminderCount ?? null,
 		added_by: refId(doc.addedBy),
 		last_used_by: refId(doc.lastUsedBy),
 		created_at: doc._createdAt,

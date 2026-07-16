@@ -120,7 +120,10 @@ export function SharedItemView() {
 												<div key={entry.make}>
 													<span className="font-medium">{entry.make}</span>
 													{entry.models.length > 0 ? (
-														<span className="text-slate-600"> — {entry.models.join(", ")}</span>
+														<span className="text-slate-600">
+															{' '}
+															— {entry.models.map((model) => model.name).join(', ')}
+														</span>
 													) : null}
 												</div>
 											))}

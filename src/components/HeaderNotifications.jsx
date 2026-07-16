@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useLowStockNotifications } from '../hooks/useLowStockNotifications';
 import { NavIcon } from './icons/NavIcons';
+import { formatVehicleFitments } from '../lib/vehicleFitments';
+import { LOW_STOCK_THRESHOLD } from '../lib/stockAlerts';
 
 export function HeaderNotifications() {
   const { items, count, refresh } = useLowStockNotifications();
@@ -60,28 +62,38 @@ export function HeaderNotifications() {
                 <NavIcon name="close" className="w-4 h-4" />
               </button>
             </div>
+            <p className="px-4 py-2 text-xs text-slate-500 border-b border-slate-50">
+              Alerts when quantity is below {LOW_STOCK_THRESHOLD} (checks shared stock for all compatible models).
+            </p>
             <div className="max-h-64 overflow-y-auto">
               {items.length === 0 ? (
                 <div className="p-6 text-center text-slate-500 text-sm">
                   No low stock items
                 </div>
               ) : (
-                items.map((item) => (
-                  <Link
-                    key={item.id}
-                    to={`/inventory/${item.id}`}
-                    onClick={close}
-                    className="block px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0"
-                  >
-                    <p className="font-medium text-slate-800 truncate">{item.name}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Qty: {item.quantity ?? 0}
-                      {item.reminder_count != null && ` (alert at ≤${item.reminder_count})`}
-                      {item.category && ` • ${item.category}`}
-                    </p>
-                    <p className="text-xs text-amber-600 mt-0.5">Restock needed</p>
-                  </Link>
-                ))
+                items.map((item) => {
+                  const fitments = formatVehicleFitments(item);
+                  return (
+                    <Link
+                      key={item.id}
+                      to={`/inventory/${item.id}`}
+                      onClick={close}
+                      className="block px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0"
+                    >
+                      <p className="font-medium text-slate-800 truncate">{item.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Qty: {item.quantity ?? 0}
+                        {item.category && ` • ${item.category}`}
+                      </p>
+                      {fitments ? (
+                        <p className="text-xs text-slate-600 mt-0.5 truncate" title={fitments}>
+                          Models: {fitments}
+                        </p>
+                      ) : null}
+                      <p className="text-xs text-amber-600 mt-0.5">Restock needed</p>
+                    </Link>
+                  );
+                })
               )}
             </div>
           </div>

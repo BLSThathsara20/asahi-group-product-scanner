@@ -16,6 +16,7 @@ const moreNavItems = [
   { loginQr: true, label: 'App login QR', icon: 'share' },
   { scan: true, label: 'Scan QR', icon: 'scan' },
   { to: '/reports', label: 'Reports', icon: 'reports' },
+  { to: '/stock-tree', label: 'Stock by vehicle', icon: 'listTree' },
   { to: '/labels', label: 'Print Labels', icon: 'printer' },
   { to: '/analytics', label: 'Analytics', icon: 'analytics' },
   { to: '/categories', label: 'Categories', icon: 'folder', adminOnly: true },

@@ -3,9 +3,10 @@ import { LOGO_URL } from '../lib/branding';
 import { getItemPageUrl } from '../lib/utils';
 import { formatVehicleFitments } from '../lib/vehicleFitments';
 import { getTodayStockMovements } from './analyticsService';
+import { LOW_STOCK_THRESHOLD, isLowStock } from '../lib/stockAlerts';
+import { buildStockTree, flattenStockTreeRows } from '../lib/stockTree';
 
 const statusLabels = { in_stock: 'In Stock', out: 'Out', reserved: 'Reserved' };
-const LOW_STOCK_QTY_THRESHOLD = 2;
 
 const PDF_THEME = {
   margin: 12,
@@ -377,6 +378,37 @@ function drawDataTable(doc, y, { columns, rows, emptyMessage, highlightLowStock 
   return y + 6;
 }
 
+function drawStockTreeSection(doc, y, items) {
+  const tree = buildStockTree(items);
+  const rows = flattenStockTreeRows(tree).map((row) => ({
+    part: row.label,
+    units: String(row.units),
+    fits: row.fits,
+    low: row.low,
+    _lowStock: row.isLowStock,
+  }));
+
+  y = drawSectionHeader(
+    doc,
+    y,
+    'Stock by vehicle',
+    `${tree.summary.makeCount} makes · each part listed once`
+  );
+
+  const w = contentWidth(doc);
+  return drawDataTable(doc, y, {
+    columns: [
+      { key: 'part', label: 'Make / Part', width: w * 0.34, bold: true },
+      { key: 'units', label: 'Units', width: w * 0.12, align: 'center' },
+      { key: 'fits', label: 'Fits models', width: w * 0.38 },
+      { key: 'low', label: 'Low', width: w * 0.16, align: 'center' },
+    ],
+    rows,
+    emptyMessage: 'No vehicle fitments in inventory',
+    highlightLowStock: true,
+  });
+}
+
 const MOVEMENT_COLUMNS = (doc) => {
   const w = contentWidth(doc);
   return [
@@ -419,7 +451,7 @@ function mapStockRow(item) {
   const vehicle = formatVehicleFitments(item);
   const itemLabel = vehicle ? `${item.name || '—'}\n${vehicle}` : (item.name || '—');
   return {
-    _lowStock: (item.quantity ?? 0) < LOW_STOCK_QTY_THRESHOLD,
+    _lowStock: isLowStock(item.quantity),
     item: itemLabel,
     qr: item.qr_id || '—',
     qrLink: item.id ? getItemPageUrl(item.id) : '',
@@ -469,7 +501,7 @@ export async function exportDailyReportPDF(items, exportedBy = '') {
   const stock = items || [];
   const { checkIns, checkOuts, dateLabel } = await getTodayStockMovements();
   const lowStockItems = stock
-    .filter((item) => (item.quantity ?? 0) < LOW_STOCK_QTY_THRESHOLD)
+    .filter((item) => isLowStock(item.quantity))
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const sortedStock = [...stock].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const inQty = sumMovementQty(checkIns);
@@ -499,7 +531,7 @@ export async function exportDailyReportPDF(items, exportedBy = '') {
     {
       label: 'Low stock',
       value: lowStockItems.length,
-      sub: `< ${LOW_STOCK_QTY_THRESHOLD} units`,
+      sub: `< ${LOW_STOCK_THRESHOLD} units`,
       accent: PDF_THEME.red,
       bg: PDF_THEME.redLight,
       color: PDF_THEME.red,
@@ -537,7 +569,7 @@ export async function exportDailyReportPDF(items, exportedBy = '') {
     doc,
     y,
     'Low stock alert',
-    `${lowStockItems.length} item${lowStockItems.length === 1 ? '' : 's'} below ${LOW_STOCK_QTY_THRESHOLD}`
+    `${lowStockItems.length} item${lowStockItems.length === 1 ? '' : 's'} below ${LOW_STOCK_THRESHOLD}`
   );
   y = drawDataTable(doc, y, {
     columns: STOCK_COLUMNS(doc),
@@ -551,17 +583,19 @@ export async function exportDailyReportPDF(items, exportedBy = '') {
   doc.setTextColor(...PDF_THEME.slate500);
   y = ensurePageSpace(doc, y, 8);
   doc.text(
-    `Rows highlighted in red = quantity below ${LOW_STOCK_QTY_THRESHOLD} units`,
+    `Rows highlighted in red = quantity below ${LOW_STOCK_THRESHOLD} units`,
     PDF_THEME.margin,
     y
   );
   y += 5;
-  drawDataTable(doc, y, {
+  y = drawDataTable(doc, y, {
     columns: STOCK_COLUMNS(doc),
     rows: sortedStock.map(mapStockRow),
     emptyMessage: 'No spare parts in inventory',
     highlightLowStock: true,
   });
+
+  y = drawStockTreeSection(doc, y, stock);
 
   addPageFooters(doc, exportedBy);
   doc.save(`daily-report-${new Date().toISOString().slice(0, 10)}.pdf`);

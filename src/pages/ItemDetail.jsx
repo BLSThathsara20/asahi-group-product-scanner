@@ -21,6 +21,10 @@ import {
 } from "../lib/itemActions";
 import { displayPerformer } from "../lib/performer";
 import { formatGbp } from "../lib/utils";
+import {
+	parseFitmentSelectionKey,
+	modelLabel,
+} from "../lib/vehicleFitments";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
 import { Card } from "../components/ui/Card";
 import { Pagination } from "../components/ui/Pagination";
@@ -156,7 +160,17 @@ export function ItemDetail() {
 
 	const handleCheckOut = async (data) => {
 		const qty = data.quantity ?? 1;
-		const newQty = Math.max(0, (item?.quantity ?? 0) - qty);
+		const { make, model } = parseFitmentSelectionKey(
+			data.vehicleFitmentKey || data.vehicleModel
+		);
+		const available = item?.quantity ?? 0;
+
+		if (qty > available) {
+			notifyError(`Only ${available} available${make ? ` for ${modelLabel(make, model)}` : ""}`);
+			throw new Error("Insufficient stock");
+		}
+
+		const newQty = Math.max(0, available - qty);
 		const recordedAt = new Date().toISOString();
 		try {
 			await createTransaction({
@@ -166,7 +180,7 @@ export function ItemDetail() {
 				recipient_name: data.recipientName,
 				purpose: data.purpose,
 				responsible_person: data.responsiblePerson,
-				vehicle_model: data.vehicleModel || null,
+				vehicle_model: data.vehicleModel || (make ? modelLabel(make, model) : null),
 				notes: data.notes,
 				performed_by: user?.id,
 				created_at: recordedAt,
@@ -213,6 +227,9 @@ export function ItemDetail() {
 
 	const handleCheckIn = async (data) => {
 		const qty = data.quantity ?? 1;
+		const { make, model } = parseFitmentSelectionKey(
+			data.vehicleFitmentKey || data.vehicleModel
+		);
 		const newQty = (item?.quantity ?? 0) + qty;
 		const recordedAt = new Date().toISOString();
 		try {
@@ -220,6 +237,7 @@ export function ItemDetail() {
 				item_id: id,
 				type: "in",
 				quantity: qty,
+				vehicle_model: data.vehicleModel || (make ? modelLabel(make, model) : null),
 				notes: data.notes || "Item returned to spare parts",
 				performed_by: user?.id,
 				created_at: recordedAt,
@@ -422,10 +440,11 @@ export function ItemDetail() {
 																<div className="mt-1 flex flex-wrap gap-1.5">
 																	{entry.models.map((model) => (
 																		<span
-																			key={`${entry.make}-${model}`}
-																			className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-sm"
+																			key={`${entry.make}-${model.name}`}
+																			className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-sm"
 																		>
-																			{model}
+																			<span>{model.name}</span>
+																			<span className="text-slate-500">×{item.quantity ?? 0}</span>
 																		</span>
 																	))}
 																</div>

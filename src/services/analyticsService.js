@@ -112,3 +112,39 @@ export async function getTransactionsWithItems() {
 	);
 	return txs.map((t) => ({ ...t, item: itemMap[t.item_id] || null }));
 }
+
+/** Check-in/out transactions for today (local calendar day) with item details. */
+export async function getTodayStockMovements() {
+	const todayStart = new Date();
+	todayStart.setHours(0, 0, 0, 0);
+
+	const docs = await sanityClient.fetch(
+		`*[_type == "inventoryTransaction" && (type == "in" || type == "out") && coalesce(createdAt, _createdAt) >= $todayStart]
+			| order(coalesce(createdAt, _createdAt) asc)`,
+		{ todayStart: todayStart.toISOString() }
+	);
+
+	const txs = (docs || []).map(mapTransaction);
+	const itemIds = [...new Set(txs.map((t) => t.item_id).filter(Boolean))];
+	if (itemIds.length === 0) {
+		return { checkIns: [], checkOuts: [], dateLabel: todayStart.toLocaleDateString() };
+	}
+
+	const itemDocs = await sanityClient.fetch(
+		`*[_type == "inventoryItem" && _id in $ids]{ _id, name, category, qrId }`,
+		{ ids: itemIds }
+	);
+	const itemMap = Object.fromEntries(
+		(itemDocs || []).map((i) => [
+			i._id,
+			{ id: i._id, name: i.name, category: i.category, qr_id: i.qrId },
+		])
+	);
+
+	const enriched = txs.map((t) => ({ ...t, item: itemMap[t.item_id] || null }));
+	return {
+		checkIns: enriched.filter((t) => t.type === "in"),
+		checkOuts: enriched.filter((t) => t.type === "out"),
+		dateLabel: todayStart.toLocaleDateString(undefined, { dateStyle: "full" }),
+	};
+}

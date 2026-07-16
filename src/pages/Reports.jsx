@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useItems } from '../hooks/useItems';
 import { useAuth } from '../context/AuthContext';
 import { exportInventoryPDF, exportInventoryCSV, exportDailyReportPDF } from '../services/reportService';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useNotification } from '../context/NotificationContext';
+import { isLowStock } from '../lib/stockAlerts';
+import { StockTreeView } from '../components/Stock/StockTreeView';
 import {
   PageContainer,
   PageHeader,
@@ -75,7 +78,7 @@ export function Reports() {
   };
 
   const lowStockCount = useMemo(
-    () => (items || []).filter((item) => (item.quantity ?? 0) < 2).length,
+    () => (items || []).filter((item) => isLowStock(item.quantity)).length,
     [items]
   );
 
@@ -106,7 +109,28 @@ export function Reports() {
           <Button onClick={handleDailyPDF} disabled={exporting || (items || []).length === 0}>
             {exporting === 'daily' ? 'Generating…' : 'Download daily report PDF'}
           </Button>
+          <p className="text-xs text-slate-500">
+            Daily PDF includes the vehicle stock tree at the bottom.
+          </p>
         </div>
+      </Card>
+
+      <Card className="p-5 sm:p-6 mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">Stock by vehicle</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Tree view: make → model totals, parts, and low-stock items.
+            </p>
+          </div>
+          <Link
+            to="/stock-tree"
+            className="text-sm font-medium text-asahi hover:underline shrink-0"
+          >
+            Open full page →
+          </Link>
+        </div>
+        <StockTreeView items={items} compact />
       </Card>
 
       <Card className="p-5 sm:p-6">

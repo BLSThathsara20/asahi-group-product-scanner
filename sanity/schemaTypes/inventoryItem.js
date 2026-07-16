@@ -32,7 +32,15 @@ export default {
 							name: "models",
 							title: "Vehicle Models",
 							type: "array",
-							of: [{ type: "string" }],
+							of: [
+								{
+									type: "object",
+									fields: [
+										{ name: "name", title: "Model Name", type: "string" },
+										{ name: "quantity", title: "Stock Quantity", type: "number", initialValue: 0 },
+									],
+								},
+							],
 						},
 					],
 				},
@@ -56,7 +64,7 @@ export default {
 		{ name: "skuCode", title: "SKU Code", type: "string" },
 		{ name: "aglNumber", title: "AGL Number", type: "string" },
 		{ name: "unitPrice", title: "Unit Price", type: "number" },
-		{ name: "reminderCount", title: "Low Stock Alert At", type: "number", initialValue: 1 },
+		{ name: "reminderCount", title: "Low Stock Alert At (legacy)", type: "number", hidden: true },
 		{ name: "addedBy", title: "Added By", type: "reference", to: [{ type: "appUser" }] },
 		{ name: "lastUsedBy", title: "Last Used By", type: "reference", to: [{ type: "appUser" }] },
 	],

@@ -148,7 +148,11 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
       if (entry.models.length) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(SMALL_MODELS_FONT);
-        const modelsLine = truncateText(doc, entry.models.join(', '), innerW - 1);
+        const modelsLine = truncateText(
+          doc,
+          entry.models.map((model) => model.name).join(', '),
+          innerW - 1
+        );
         doc.text(modelsLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
         cursorY += 2.8;
       }

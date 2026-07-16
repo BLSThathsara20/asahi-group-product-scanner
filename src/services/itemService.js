@@ -8,6 +8,7 @@ import {
 	transactionToSanity,
 	deletionLogToSanity,
 } from "../lib/sanityMappers";
+import { LOW_STOCK_THRESHOLD } from "../lib/stockAlerts";
 import { formatVehicleFitments } from "../lib/vehicleFitments";
 import { ensureVehicleCatalogEntries } from "./vehicleCatalogService";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
@@ -56,17 +57,10 @@ export async function createItem(item) {
 
 export async function getLowStockItems() {
 	const docs = await sanityClient.fetch(
-		`*[_type == "inventoryItem" && quantity <= coalesce(reminderCount, 1)]{
-			_id, name, quantity, reminderCount, category
-		}`
+		`*[_type == "inventoryItem" && quantity < $threshold] | order(quantity asc)`,
+		{ threshold: LOW_STOCK_THRESHOLD }
 	);
-	return (docs || []).map((d) => ({
-		id: d._id,
-		name: d.name,
-		quantity: d.quantity ?? 0,
-		reminder_count: d.reminderCount ?? 1,
-		category: d.category,
-	}));
+	return (docs || []).map(mapItem).filter(Boolean);
 }
 
 export async function searchItemNames(query) {

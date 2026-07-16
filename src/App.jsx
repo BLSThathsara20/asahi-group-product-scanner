@@ -17,6 +17,7 @@ import { ItemDetail } from './pages/ItemDetail';
 import { SharedItemView } from './pages/SharedItemView';
 import { ScanQR } from './pages/ScanQR';
 import { Reports } from './pages/Reports';
+import { StockTree } from './pages/StockTree';
 import { Analytics } from './pages/Analytics';
 import { HealthCheck } from './pages/HealthCheck';
 import { UserManagement } from './pages/UserManagement';
@@ -51,6 +52,7 @@ function App() {
               <Route path="inventory/:id" element={<ItemDetail />} />
               <Route path="scan" element={<ScanQR />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="stock-tree" element={<StockTree />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="health" element={<AdminRedirect><HealthCheck /></AdminRedirect>} />
               <Route path="categories" element={<AdminRedirect><CategoryManager /></AdminRedirect>} />

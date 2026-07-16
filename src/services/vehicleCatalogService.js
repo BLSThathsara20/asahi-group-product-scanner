@@ -5,7 +5,8 @@ function normalizeMake(make) {
 }
 
 function normalizeModel(model) {
-	return String(model || "").trim();
+	if (typeof model === "string") return String(model || "").trim();
+	return String(model?.name || model?.model || "").trim();
 }
 
 /** Saved model names for a vehicle make (for select suggestions). */

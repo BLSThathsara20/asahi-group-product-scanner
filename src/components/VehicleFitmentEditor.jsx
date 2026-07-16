@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { VEHICLE_BRANDS } from './VehicleModelSelect';
 import { getVehicleModelsForMake } from '../services/vehicleCatalogService';
-import { normalizeVehicleFitments } from '../lib/vehicleFitments';
+import { NOT_SPECIFIED_MODEL, normalizeVehicleFitments } from '../lib/vehicleFitments';
 import { formInputClass, formSelectClass } from '../lib/formFieldStyles';
 
 function applyMakeToState(make, setSelectedMake, setCustomMake) {
@@ -34,7 +34,7 @@ export function VehicleFitmentEditor({
 }) {
   const fitments = useMemo(() => normalizeVehicleFitments({ vehicle_fitments: value }), [value]);
   const fitmentsKey = useMemo(
-    () => fitments.map((entry) => `${entry.make}:${entry.models.join(',')}`).join('|'),
+    () => fitments.map((entry) => `${entry.make}:${entry.models.map((m) => m.name).join(',')}`).join('|'),
     [fitments]
   );
 
@@ -89,29 +89,33 @@ export function VehicleFitmentEditor({
     onChange(normalizeVehicleFitments({ vehicle_fitments: next }));
   };
 
-  const addModel = () => {
+  const addModel = (useNotSpecified = false) => {
     const make = effectiveMake;
-    const model = modelDraft.trim();
-    if (!make || !model) return;
+    if (!make) return;
 
-    const next = [...fitments];
+    const modelName = useNotSpecified ? NOT_SPECIFIED_MODEL : modelDraft.trim() || NOT_SPECIFIED_MODEL;
+
+    const next = fitments.map((entry) => ({
+      ...entry,
+      models: [...entry.models],
+    }));
     const idx = next.findIndex((entry) => entry.make.toLowerCase() === make.toLowerCase());
     if (idx >= 0) {
-      if (!next[idx].models.some((m) => m.toLowerCase() === model.toLowerCase())) {
-        next[idx] = { ...next[idx], models: [...next[idx].models, model] };
+      if (!next[idx].models.some((model) => model.name.toLowerCase() === modelName.toLowerCase())) {
+        next[idx].models.push({ name: modelName });
       }
     } else {
-      next.push({ make, models: [model] });
+      next.push({ make, models: [{ name: modelName }] });
     }
     updateFitments(next);
     setModelDraft('');
   };
 
-  const removeModel = (make, model) => {
+  const removeModel = (make, modelName) => {
     const next = fitments
       .map((entry) => {
         if (entry.make !== make) return entry;
-        return { ...entry, models: entry.models.filter((m) => m !== model) };
+        return { ...entry, models: entry.models.filter((model) => model.name !== modelName) };
       })
       .filter((entry) => entry.models.length > 0);
     updateFitments(next);
@@ -120,6 +124,8 @@ export function VehicleFitmentEditor({
   const filteredSuggestions = catalogModels.filter(
     (model) => !modelDraft || model.toLowerCase().includes(modelDraft.toLowerCase())
   );
+
+  const modelCount = fitments.reduce((count, entry) => count + entry.models.length, 0);
 
   return (
     <div className="space-y-3">
@@ -160,8 +166,8 @@ export function VehicleFitmentEditor({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle model</label>
-        <div className="flex gap-2">
+        <label className="block text-sm font-medium text-slate-700 mb-1">Supported models</label>
+        <div className="flex flex-wrap gap-2">
           <input
             type="text"
             value={modelDraft}
@@ -169,21 +175,29 @@ export function VehicleFitmentEditor({
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                addModel();
+                addModel(false);
               }
             }}
             list="vehicle-model-suggestions"
-            placeholder={effectiveMake ? 'Type or select model' : 'Select make first'}
+            placeholder={effectiveMake ? 'Type or select model (optional)' : 'Select make first'}
             disabled={!effectiveMake}
-            className={`flex-1 ${formInputClass('vehicle')}`}
+            className={`flex-1 min-w-[140px] ${formInputClass('vehicle')}`}
           />
           <button
             type="button"
-            onClick={addModel}
-            disabled={!effectiveMake || !modelDraft.trim()}
+            onClick={() => addModel(false)}
+            disabled={!effectiveMake}
             className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm font-medium disabled:opacity-50"
           >
-            Add
+            Add model
+          </button>
+          <button
+            type="button"
+            onClick={() => addModel(true)}
+            disabled={!effectiveMake}
+            className="px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm disabled:opacity-50"
+          >
+            Not specified
           </button>
         </div>
         <datalist id="vehicle-model-suggestions">
@@ -195,9 +209,7 @@ export function VehicleFitmentEditor({
           <p className="mt-1 text-xs text-slate-500">
             {loadingModels
               ? 'Loading saved models…'
-              : catalogModels.length
-                ? 'Pick a saved model or type a new one — new models are saved for next time.'
-                : 'No saved models yet for this make — type one to add it.'}
+              : 'Add every model this part fits (e.g. A1, A3, Q5). Stock quantity is shared — set it in the Quantity field above.'}
           </p>
         )}
       </div>
@@ -220,15 +232,15 @@ export function VehicleFitmentEditor({
               <div className="mt-1 flex flex-wrap gap-2">
                 {entry.models.map((model) => (
                   <span
-                    key={`${entry.make}-${model}`}
+                    key={`${entry.make}-${model.name}`}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-asahi/10 text-asahi text-sm font-medium"
                   >
-                    {model}
+                    {model.name}
                     <button
                       type="button"
-                      onClick={() => removeModel(entry.make, model)}
+                      onClick={() => removeModel(entry.make, model.name)}
                       className="rounded-full hover:bg-asahi/20 p-0.5"
-                      aria-label={`Remove ${entry.make} ${model}`}
+                      aria-label={`Remove ${entry.make} ${model.name}`}
                     >
                       <span className="text-xs leading-none">×</span>
                     </button>
@@ -237,11 +249,16 @@ export function VehicleFitmentEditor({
               </div>
             </div>
           ))}
+          {modelCount > 1 && (
+            <p className="text-xs text-emerald-800 pt-1 border-t border-emerald-200">
+              {modelCount} compatible models — all share the same stock quantity.
+            </p>
+          )}
         </div>
       )}
 
-      {required && !fitments.some((entry) => entry.make && entry.models.length > 0) && (
-        <p className="text-xs text-slate-500">Add at least one vehicle make and model.</p>
+      {required && !fitments.some((entry) => entry.make) && (
+        <p className="text-xs text-slate-500">Select at least one vehicle make.</p>
       )}
     </div>
   );

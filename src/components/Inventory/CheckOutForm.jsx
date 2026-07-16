@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
-import { VehicleModelSelect } from '../VehicleModelSelect';
-import { flattenVehicleFitmentLabels } from '../../lib/vehicleFitments';
+import { listFitmentStockOptions } from '../../lib/vehicleFitments';
 import { getProfiles } from '../../services/userService';
 
 export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentUserDisplay }) {
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const stockOptions = useMemo(() => listFitmentStockOptions(item), [item]);
   const [form, setForm] = useState({
     quantity: 1,
     recipientName: currentUserDisplay || '',
@@ -17,19 +17,27 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
     purpose: '',
     responsiblePerson: currentUserDisplay || '',
     responsiblePersonId: '',
-    vehicleModel: '',
+    vehicleFitmentKey: '',
     notes: '',
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  const selectedOption = useMemo(
+    () => stockOptions.find((option) => option.key === form.vehicleFitmentKey) || null,
+    [stockOptions, form.vehicleFitmentKey]
+  );
+
+  const availableQty = selectedOption?.quantity ?? item?.quantity ?? 0;
+
   useEffect(() => {
     if (item) {
-      const options = flattenVehicleFitmentLabels(item);
+      const options = listFitmentStockOptions(item);
+      const firstInStock = options.find((option) => option.quantity > 0) || options[0];
       setForm((prev) => ({
         ...prev,
         quantity: 1,
-        vehicleModel: options[0] || '',
+        vehicleFitmentKey: firstInStock?.key || '',
       }));
       setErrors((prev) => ({ ...prev, quantity: '' }));
     }
@@ -82,19 +90,21 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
 
   const validate = () => {
     const next = {};
-    const available = item?.quantity ?? 0;
     const qty = form.quantity;
 
     if (!qty || qty < 1) {
       next.quantity = 'Quantity must be at least 1';
-    } else if (qty > available) {
-      next.quantity = `Cannot exceed available quantity (${available})`;
+    } else if (qty > availableQty) {
+      next.quantity = `Cannot exceed available quantity (${availableQty})`;
     }
     if (!form.recipientName?.trim()) {
       next.recipient = 'Recipient is required';
     }
     if (!form.purpose?.trim()) {
       next.purpose = 'Purpose is required';
+    }
+    if (stockOptions.length > 0 && !form.vehicleFitmentKey) {
+      next.vehicle = 'Select a vehicle model';
     }
 
     setErrors(next);
@@ -111,7 +121,8 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
         recipientName: form.recipientName,
         purpose: form.purpose,
         responsiblePerson: form.responsiblePerson,
-        vehicleModel: form.vehicleModel,
+        vehicleFitmentKey: form.vehicleFitmentKey,
+        vehicleModel: selectedOption?.label || '',
         notes: form.notes,
       });
     } finally {
@@ -142,7 +153,7 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
               <p className="text-sm text-slate-500">{item.category}</p>
             )}
             <p className="text-sm text-slate-600 mt-1">
-              Available: <span className="font-medium">{item.quantity ?? 0}</span>
+              Total available: <span className="font-medium">{item.quantity ?? 0}</span>
             </p>
             {item.qr_id && (
               <p className="text-xs text-slate-400 font-mono mt-1">Code: {item.qr_id}</p>
@@ -150,6 +161,32 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {stockOptions.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Vehicle model *
+              </label>
+              <select
+                name="vehicleFitmentKey"
+                value={form.vehicleFitmentKey}
+                onChange={handleChange}
+                required
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-asahi/30 focus:border-asahi outline-none ${
+                  errors.vehicle ? 'border-red-500' : 'border-slate-300'
+                }`}
+              >
+                <option value="">Select model</option>
+                {stockOptions.map((option) => (
+                  <option key={option.key} value={option.key}>
+                    {option.label} ({option.quantity} in stock)
+                  </option>
+                ))}
+              </select>
+              {errors.vehicle && (
+                <p className="mt-1 text-sm text-red-600">{errors.vehicle}</p>
+              )}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Quantity to check out *
@@ -158,13 +195,18 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
               type="number"
               name="quantity"
               min={1}
-              max={item?.quantity ?? 999}
+              max={availableQty || item?.quantity || 999}
               value={form.quantity}
               onChange={handleChange}
               className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none ${
                 errors.quantity ? 'border-red-500' : 'border-slate-300'
               }`}
             />
+            {selectedOption && (
+              <p className="mt-1 text-xs text-slate-500">
+                Available for {selectedOption.label}: {availableQty}
+              </p>
+            )}
             {errors.quantity && (
               <p className="mt-1 text-sm text-red-600">{errors.quantity}</p>
             )}
@@ -222,14 +264,6 @@ export function CheckOutForm({ onSubmit, onCancel, item, currentUserId, currentU
             </datalist>
             {errors.purpose && <p className="mt-1 text-sm text-red-600">{errors.purpose}</p>}
           </div>
-          <VehicleModelSelect
-            label="Vehicle"
-            name="vehicleModel"
-            value={form.vehicleModel}
-            onChange={handleChange}
-            placeholder="Select vehicle"
-            allowedModels={item ? flattenVehicleFitmentLabels(item) : null}
-          />
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Responsible Person

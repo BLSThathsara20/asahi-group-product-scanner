@@ -6,7 +6,7 @@ import { FormField } from '../ui/FormField';
 import { formInputClass, formTextareaClass } from '../../lib/formFieldStyles';
 import { ProductImage } from '../ui/ProductImage';
 import { VehicleFitmentEditor } from '../VehicleFitmentEditor';
-import { normalizeVehicleFitments } from '../../lib/vehicleFitments';
+import { normalizeVehicleFitments, finalizeVehicleFitments } from '../../lib/vehicleFitments';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
 import { NavIcon } from '../icons/NavIcons';
@@ -26,7 +26,6 @@ export function EditItemForm({ item, onSave, onCancel }) {
     agl_number: item.agl_number || '',
     unit_price: item.unit_price ?? '',
     quantity: item.quantity ?? 1,
-    reminder_count: item.reminder_count ?? 1,
     photo: null,
     barcodes: [],
   });
@@ -170,16 +169,16 @@ export function EditItemForm({ item, onSave, onCancel }) {
         const parsed = Number(form.unit_price);
         if (Number.isFinite(parsed) && parsed >= 0) unitPrice = parsed;
       }
+      const vehicle_fitments = finalizeVehicleFitments(form.vehicle_fitments);
       await onSave({
         name: form.name.trim(),
         description: form.description?.trim() || null,
         category: form.category?.trim() || null,
         store_location: form.store_location?.trim() || null,
-        vehicle_fitments: form.vehicle_fitments,
+        vehicle_fitments,
         agl_number: form.agl_number?.trim() || null,
         unit_price: unitPrice,
         quantity: form.quantity || 1,
-        reminder_count: form.reminder_count ?? 1,
         photo_url: photoUrl,
         barcodes: altBarcodes,
       });
@@ -233,14 +232,9 @@ export function EditItemForm({ item, onSave, onCancel }) {
           onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
         />
       </FormField>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <FormField variant="quantity" label="Quantity">
-        <Input name="quantity" type="number" min={1} variant="quantity" value={form.quantity} onChange={handleChange} />
+      <FormField variant="quantity" label="Quantity" hint="Low-stock alert when below 2 units.">
+        <Input name="quantity" type="number" min={0} variant="quantity" value={form.quantity} onChange={handleChange} />
       </FormField>
-      <FormField variant="quantity" label="Low stock alert at">
-        <Input name="reminder_count" type="number" min={0} variant="quantity" value={form.reminder_count} onChange={handleChange} />
-      </FormField>
-      </div>
 
       <FormField variant="barcode" label="Barcodes" hint="Primary (QR ID) is fixed. Add extra barcodes for the same product.">
         <div className="rounded-lg border border-slate-200 p-3 space-y-2 bg-slate-50/50">

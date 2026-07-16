@@ -72,7 +72,7 @@ export function LabelCell({
               </p>
               {entry.models.length > 0 ? (
                 <p className={`text-slate-700 leading-tight line-clamp-2 ${preview ? 'text-[11px]' : 'text-[7px]'}`}>
-                  {entry.models.join(', ')}
+                  {entry.models.map((model) => model.name).join(', ')}
                 </p>
               ) : null}
             </div>

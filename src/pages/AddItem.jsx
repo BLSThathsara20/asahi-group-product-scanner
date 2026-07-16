@@ -13,7 +13,7 @@ import { Input } from '../components/ui/Input';
 import { ProductImage, ImageUploadOverlay } from '../components/ui/ProductImage';
 import { Modal } from '../components/ui/Modal';
 import { VehicleFitmentEditor } from '../components/VehicleFitmentEditor';
-import { hasRequiredVehicleFitments } from '../lib/vehicleFitments';
+import { hasRequiredVehicleFitments, finalizeVehicleFitments } from '../lib/vehicleFitments';
 import { StoreLocationSelect } from '../components/StoreLocationSelect';
 import { CategorySelect } from '../components/CategorySelect';
 import { NavIcon } from '../components/icons/NavIcons';
@@ -40,7 +40,6 @@ export function AddItem() {
     description: '',
     category: '',
     quantity: 1,
-    reminder_count: 1,
     store_location: '',
     vehicle_fitments: [],
     agl_number: 'AGL000',
@@ -317,7 +316,7 @@ export function AddItem() {
       return;
     }
     if (!hasRequiredVehicleFitments(form.vehicle_fitments)) {
-      setError('Add at least one vehicle make and model');
+      setError('Select at least one vehicle make');
       return;
     }
     let unitPrice = null;
@@ -369,15 +368,16 @@ export function AddItem() {
         photoUrl = await compressAndUploadImage(form.photo);
       }
 
+      const vehicle_fitments = finalizeVehicleFitments(form.vehicle_fitments);
+
       const item = await createItem({
         qr_id: qrId,
         name: form.name.trim(),
         description: form.description.trim() || null,
         category: form.category.trim(),
         quantity: form.quantity || 1,
-        reminder_count: form.reminder_count ?? 1,
         store_location: form.store_location.trim() || null,
-        vehicle_fitments: form.vehicle_fitments,
+        vehicle_fitments,
         agl_number: form.agl_number.trim(),
         unit_price: unitPrice,
         added_date: form.added_date
@@ -706,26 +706,8 @@ export function AddItem() {
           />
           </FormField>
 
-          <FormField variant="vehicle" label="Vehicle compatibility" required>
-          <VehicleFitmentEditor
-            value={form.vehicle_fitments}
-            onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
-            required
-          />
-          </FormField>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FormField variant="date" label="Added Date">
-          <Input
-            name="added_date"
-            type="date"
-            variant="date"
-            value={form.added_date}
-            onChange={handleDateChange}
-          />
-          </FormField>
-
-          <FormField variant="quantity" label="Quantity">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField variant="quantity" label="Quantity" hint="Total stock — low-stock alert when below 2 units.">
           <Input
             name="quantity"
             type="number"
@@ -735,18 +717,25 @@ export function AddItem() {
             onChange={handleChange}
           />
           </FormField>
-
-          <FormField variant="quantity" label="Low stock alert at" hint="Notify when quantity falls to this or below.">
-            <input
-              type="number"
-              name="reminder_count"
-              min={0}
-              value={form.reminder_count}
-              onChange={handleChange}
-              className={formInputClass('quantity')}
-            />
-          </FormField>
           </div>
+
+          <FormField variant="vehicle" label="Vehicle compatibility" required>
+          <VehicleFitmentEditor
+            value={form.vehicle_fitments}
+            onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
+            required
+          />
+          </FormField>
+
+          <FormField variant="date" label="Added Date">
+          <Input
+            name="added_date"
+            type="date"
+            variant="date"
+            value={form.added_date}
+            onChange={handleDateChange}
+          />
+          </FormField>
 
           <FormField variant="photo" label="Product Image" hint="Capture a photo with camera or choose from your device. Helps identify the spare part.">
             <div className="flex flex-wrap gap-2">
