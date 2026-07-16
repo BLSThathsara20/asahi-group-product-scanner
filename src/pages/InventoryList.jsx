@@ -7,6 +7,7 @@ import { STORE_LOCATIONS } from '../components/StoreLocationSelect';
 import { exportInventoryPDF, exportInventoryExcel } from '../services/reportService';
 import { updateItem, createTransaction, logItemAction, getItemBarcodes, syncItemBarcodes } from '../services/itemService';
 import { buildItemEditSummary } from '../lib/itemActions';
+import { recordQuantityEditMovement } from '../lib/stockMovements';
 import { matchesItemSearch } from '../lib/itemSearch';
 import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
@@ -204,6 +205,14 @@ export function InventoryList() {
         { ...itemUpdates, barcodes },
         { beforeBarcodes }
       );
+      if (typeof itemUpdates.quantity !== 'undefined') {
+        await recordQuantityEditMovement(
+          editingItem.id,
+          editingItem.quantity,
+          itemUpdates.quantity,
+          user?.id
+        );
+      }
       await updateItem(editingItem.id, itemUpdates);
       if (Array.isArray(barcodes)) {
         await syncItemBarcodes(editingItem.id, barcodes);

@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useItems } from '../hooks/useItems';
 import { useAuth } from '../context/AuthContext';
 import { exportInventoryPDF, exportInventoryCSV, exportDailyReportPDF } from '../services/reportService';
+import { getTodayStockMovements } from '../services/analyticsService';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useNotification } from '../context/NotificationContext';
@@ -22,8 +23,23 @@ export function Reports() {
   const { success, error } = useNotification();
   const [exporting, setExporting] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [todayMovements, setTodayMovements] = useState(null);
 
   const exportedBy = profile?.full_name?.trim() || user?.email || 'Unknown user';
+
+  useEffect(() => {
+    let cancelled = false;
+    getTodayStockMovements()
+      .then((data) => {
+        if (!cancelled) setTodayMovements(data);
+      })
+      .catch(() => {
+        if (!cancelled) setTodayMovements({ checkIns: [], checkOuts: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const categoriesWithCount = useMemo(() => {
     const counts = {};
@@ -107,11 +123,25 @@ export function Reports() {
             <strong className="text-slate-700">{orderAlertCount}</strong> model
             {orderAlertCount === 1 ? '' : 's'} need ordering right now.
           </p>
+          <p className="text-sm text-slate-500">
+            Today&apos;s activity:{' '}
+            {todayMovements == null ? (
+              'loading…'
+            ) : (
+              <>
+                <strong className="text-slate-700">{todayMovements.checkOuts.length}</strong> check-out
+                {todayMovements.checkOuts.length === 1 ? '' : 's'},{' '}
+                <strong className="text-slate-700">{todayMovements.checkIns.length}</strong> check-in
+                {todayMovements.checkIns.length === 1 ? '' : 's'}
+              </>
+            )}
+          </p>
           <Button onClick={handleDailyPDF} disabled={exporting || (items || []).length === 0}>
             {exporting === 'daily' ? 'Generating…' : 'Download daily report PDF'}
           </Button>
           <p className="text-xs text-slate-500">
-            Daily PDF includes the vehicle stock tree at the bottom.
+            Daily PDF includes the vehicle stock tree at the bottom. Only check-in/out actions from today appear
+            in the activity section — editing quantity directly does not count.
           </p>
         </div>
       </Card>

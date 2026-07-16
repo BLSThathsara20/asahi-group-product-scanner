@@ -19,6 +19,7 @@ import {
 	ACTION_TYPE_STYLES,
 	formatActionSummary,
 } from "../lib/itemActions";
+import { recordQuantityEditMovement } from "../lib/stockMovements";
 import { displayPerformer } from "../lib/performer";
 import { formatGbp } from "../lib/utils";
 import {
@@ -211,6 +212,14 @@ export function ItemDetail() {
 				{ ...itemUpdates, barcodes },
 				{ beforeBarcodes: itemBarcodes },
 			);
+			if (typeof itemUpdates.quantity !== "undefined") {
+				await recordQuantityEditMovement(
+					id,
+					item.quantity,
+					itemUpdates.quantity,
+					user?.id,
+				);
+			}
 			await updateItem(id, itemUpdates);
 			if (Array.isArray(barcodes)) {
 				await syncItemBarcodes(id, barcodes);
@@ -315,6 +324,14 @@ export function ItemDetail() {
 						<NavIcon name="pencil" className="w-4 h-4" />
 					</Button>
 					<Button onClick={() => setShowCheckOut(true)}>Check out</Button>
+					<Button
+						variant="outline"
+						onClick={() => setShowCheckIn(true)}
+						title="Add stock"
+					>
+						<NavIcon name="packagePlus" className="w-4 h-4" />
+						Add stock
+					</Button>
 				</>
 			)}
 			{item.status === "out" && (

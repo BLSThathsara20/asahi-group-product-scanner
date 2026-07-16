@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useItems } from '../hooks/useItems';
 import { getTransactionsWithItems } from '../services/analyticsService';
+import { ACTION_TYPE_LABELS, ACTION_TYPE_STYLES } from '../lib/itemActions';
+import { isCheckInTransaction, isCheckOutTransaction } from '../lib/transactionTypes';
 import { Card } from '../components/ui/Card';
 import { Pagination } from '../components/ui/Pagination';
 import {
@@ -66,8 +68,8 @@ export function Analytics() {
       end.setHours(23, 59, 59, 999);
       list = list.filter((t) => new Date(t.created_at) <= end);
     }
-    if (typeFilter === 'out') list = list.filter((t) => t.type === 'out');
-    if (typeFilter === 'in') list = list.filter((t) => t.type === 'in');
+    if (typeFilter === 'out') list = list.filter(isCheckOutTransaction);
+    if (typeFilter === 'in') list = list.filter(isCheckInTransaction);
     if (categoryFilter) {
       list = list.filter((t) => t.item?.category === categoryFilter);
     }
@@ -88,7 +90,7 @@ export function Analytics() {
   const checkoutByDay = useMemo(() => {
     const byDay = {};
     filtered
-      .filter((t) => t.type === 'out')
+      .filter(isCheckOutTransaction)
       .forEach((t) => {
         const d = new Date(t.created_at).toDateString();
         if (!byDay[d]) byDay[d] = [];
@@ -115,8 +117,8 @@ export function Analytics() {
   }, [dateFrom, dateTo, typeFilter, categoryFilter, search]);
 
   const stats = useMemo(() => {
-    const outs = filtered.filter((t) => t.type === 'out');
-    const ins = filtered.filter((t) => t.type === 'in');
+    const outs = filtered.filter(isCheckOutTransaction);
+    const ins = filtered.filter(isCheckInTransaction);
     const totalOutQty = outs.reduce((s, t) => s + (t.quantity ?? 1), 0);
     const totalInQty = ins.reduce((s, t) => s + (t.quantity ?? 1), 0);
     return {
@@ -265,18 +267,17 @@ export function Analytics() {
               </tr>
             </thead>
             <tbody>
-              {paginatedTx.map((t) => (
+              {paginatedTx.map((t) => {
+                const typeLabel = ACTION_TYPE_LABELS[t.type] || t.type || 'Activity';
+                const typeStyle = ACTION_TYPE_STYLES[t.type] || 'bg-slate-100 text-slate-800';
+                return (
                 <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="py-2 px-3 text-slate-600">{formatDateTime(t.created_at)}</td>
                   <td className="py-2 px-3">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                        t.type === 'out'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
+                      className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${typeStyle}`}
                     >
-                      {t.type === 'out' ? 'Checkout' : 'Check-in'}
+                      {typeLabel}
                     </span>
                   </td>
                   <td className="py-2 px-3">
@@ -297,7 +298,7 @@ export function Analytics() {
                   </td>
                   <td className="py-2 px-3 text-slate-600">{t.recipient_name || '—'}</td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>

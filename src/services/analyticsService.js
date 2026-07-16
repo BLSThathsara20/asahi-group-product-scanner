@@ -1,44 +1,85 @@
 import { sanityClient } from "../lib/sanity";
 import { mapTransaction, mapItem } from "../lib/sanityMappers";
+import {
+	isCheckInTransaction,
+	isCheckOutTransaction,
+	isStockMovementTransaction,
+} from "../lib/transactionTypes";
 import { getProfilesByIds } from "./userService";
+
+/** Local calendar day bounds (midnight to midnight in the browser timezone). */
+export function getLocalDayBounds(reference = new Date()) {
+	const start = new Date(
+		reference.getFullYear(),
+		reference.getMonth(),
+		reference.getDate()
+	);
+	const end = new Date(start);
+	end.setDate(end.getDate() + 1);
+	return { start, end };
+}
+
+export function isOnLocalDay(isoValue, bounds) {
+	if (!isoValue) return false;
+	const when = new Date(isoValue);
+	if (Number.isNaN(when.getTime())) return false;
+	return when >= bounds.start && when < bounds.end;
+}
+
+/** Prefer explicit createdAt; fall back to _createdAt when missing or invalid. */
+export function resolveTransactionCreatedAt(doc) {
+	const candidates = [doc?.createdAt, doc?._createdAt].filter(Boolean);
+	for (const raw of candidates) {
+		const parsed = new Date(raw);
+		if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+	}
+	return null;
+}
+
+async function fetchStockMovementTransactions() {
+	const docs = await sanityClient.fetch(
+		`*[_type == "inventoryTransaction"]{
+			type, createdAt, _createdAt, quantity, item
+		}`
+	);
+
+	return (docs || [])
+		.map(mapTransaction)
+		.filter((t) => t?.created_at && isStockMovementTransaction(t));
+}
 
 export async function getDashboardActivityStats() {
 	const now = new Date();
-	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const todayBounds = getLocalDayBounds(now);
 	const weekAgo = new Date(now);
 	weekAgo.setDate(now.getDate() - 7);
+	weekAgo.setHours(0, 0, 0, 0);
 	const monthAgo = new Date(now);
 	monthAgo.setDate(now.getDate() - 30);
+	monthAgo.setHours(0, 0, 0, 0);
 
-	const docs = await sanityClient.fetch(
-		`*[_type == "inventoryTransaction" && coalesce(createdAt, _createdAt) >= $monthAgo]{
-			type, createdAt, _createdAt, quantity
-		}`,
-		{ monthAgo: monthAgo.toISOString() }
-	);
-
-	const txs = (docs || []).map((d) => ({
-		type: d.type,
-		created_at: d.createdAt || d._createdAt,
-		quantity: d.quantity ?? 1,
-	}));
+	const txs = await fetchStockMovementTransactions();
 
 	const sumQty = (arr) => arr.reduce((s, t) => s + (t.quantity ?? 1), 0);
 
 	const inToday = txs.filter(
-		(t) => new Date(t.created_at) >= todayStart && t.type === "in"
+		(t) => isOnLocalDay(t.created_at, todayBounds) && isCheckInTransaction(t)
 	);
 	const outToday = txs.filter(
-		(t) => new Date(t.created_at) >= todayStart && t.type === "out"
+		(t) => isOnLocalDay(t.created_at, todayBounds) && isCheckOutTransaction(t)
 	);
 	const inWeek = txs.filter(
-		(t) => new Date(t.created_at) >= weekAgo && t.type === "in"
+		(t) => new Date(t.created_at) >= weekAgo && isCheckInTransaction(t)
 	);
 	const outWeek = txs.filter(
-		(t) => new Date(t.created_at) >= weekAgo && t.type === "out"
+		(t) => new Date(t.created_at) >= weekAgo && isCheckOutTransaction(t)
 	);
-	const inMonth = txs.filter((t) => t.type === "in");
-	const outMonth = txs.filter((t) => t.type === "out");
+	const inMonth = txs.filter(
+		(t) => new Date(t.created_at) >= monthAgo && isCheckInTransaction(t)
+	);
+	const outMonth = txs.filter(
+		(t) => new Date(t.created_at) >= monthAgo && isCheckOutTransaction(t)
+	);
 
 	return {
 		outToday: sumQty(outToday),
@@ -115,36 +156,40 @@ export async function getTransactionsWithItems() {
 
 /** Check-in/out transactions for today (local calendar day) with item details. */
 export async function getTodayStockMovements() {
-	const todayStart = new Date();
-	todayStart.setHours(0, 0, 0, 0);
+	const todayBounds = getLocalDayBounds();
+	const txs = (await fetchStockMovementTransactions())
+		.filter((t) => isOnLocalDay(t.created_at, todayBounds))
+		.sort(
+			(a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+		);
 
-	const docs = await sanityClient.fetch(
-		`*[_type == "inventoryTransaction" && (type == "in" || type == "out") && coalesce(createdAt, _createdAt) >= $todayStart]
-			| order(coalesce(createdAt, _createdAt) asc)`,
-		{ todayStart: todayStart.toISOString() }
-	);
-
-	const txs = (docs || []).map(mapTransaction);
-	const itemIds = [...new Set(txs.map((t) => t.item_id).filter(Boolean))];
-	if (itemIds.length === 0) {
-		return { checkIns: [], checkOuts: [], dateLabel: todayStart.toLocaleDateString() };
+	if (txs.length === 0) {
+		return {
+			checkIns: [],
+			checkOuts: [],
+			dateLabel: todayBounds.start.toLocaleDateString(undefined, { dateStyle: "full" }),
+		};
 	}
 
-	const itemDocs = await sanityClient.fetch(
-		`*[_type == "inventoryItem" && _id in $ids]{ _id, name, category, qrId }`,
-		{ ids: itemIds }
-	);
-	const itemMap = Object.fromEntries(
-		(itemDocs || []).map((i) => [
-			i._id,
-			{ id: i._id, name: i.name, category: i.category, qr_id: i.qrId },
-		])
-	);
+	const itemIds = [...new Set(txs.map((t) => t.item_id).filter(Boolean))];
+	let itemMap = {};
+	if (itemIds.length > 0) {
+		const itemDocs = await sanityClient.fetch(
+			`*[_type == "inventoryItem" && _id in $ids]{ _id, name, category, qrId }`,
+			{ ids: itemIds }
+		);
+		itemMap = Object.fromEntries(
+			(itemDocs || []).map((i) => [
+				i._id,
+				{ id: i._id, name: i.name, category: i.category, qr_id: i.qrId },
+			])
+		);
+	}
 
 	const enriched = txs.map((t) => ({ ...t, item: itemMap[t.item_id] || null }));
 	return {
-		checkIns: enriched.filter((t) => t.type === "in"),
-		checkOuts: enriched.filter((t) => t.type === "out"),
-		dateLabel: todayStart.toLocaleDateString(undefined, { dateStyle: "full" }),
+		checkIns: enriched.filter(isCheckInTransaction),
+		checkOuts: enriched.filter(isCheckOutTransaction),
+		dateLabel: todayBounds.start.toLocaleDateString(undefined, { dateStyle: "full" }),
 	};
 }

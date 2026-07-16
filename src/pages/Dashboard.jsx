@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useItems } from "../hooks/useItems";
 import { useAuth } from "../context/AuthContext";
 import { getDashboardActivityStats, getRecentActivity } from "../services/analyticsService";
+import { ACTION_TYPE_LABELS } from "../lib/itemActions";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { NavIcon } from "../components/icons/NavIcons";
@@ -214,6 +215,10 @@ export function Dashboard() {
 					<ul className="divide-y divide-slate-100">
 						{recentActivity.map((t) => {
 							const isOut = t.type === "out";
+							const isIn = t.type === "in";
+							const actionLabel =
+								ACTION_TYPE_LABELS[t.type] ||
+								(t.type ? t.type.replace(/_/g, " ") : "Activity");
 							const meta = [
 								t.performedByDisplay && `by ${t.performedByDisplay}`,
 								t.purpose,
@@ -246,8 +251,10 @@ export function Dashboard() {
 												)}
 												<span className="text-slate-500">
 													{" "}
-													· {isOut ? "Checked out" : "Checked in"}
-													{(t.quantity ?? 1) > 1 ? ` ×${t.quantity}` : ""}
+													· {actionLabel}
+													{(isIn || isOut) && (t.quantity ?? 1) > 1
+														? ` ×${t.quantity}`
+														: ""}
 												</span>
 											</p>
 											{meta && (

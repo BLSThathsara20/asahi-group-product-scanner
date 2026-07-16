@@ -3,6 +3,7 @@ import {
 	formatVehicleFitments,
 	fitmentsToSanity,
 } from "./vehicleFitments";
+import { normalizeTransactionType } from "./transactionTypes";
 
 function refId(ref) {
 	if (!ref) return null;
@@ -60,12 +61,21 @@ export function mapItem(doc) {
 	};
 }
 
+function resolveCreatedAt(doc) {
+	const candidates = [doc?.createdAt, doc?._createdAt].filter(Boolean);
+	for (const raw of candidates) {
+		const parsed = new Date(raw);
+		if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+	}
+	return null;
+}
+
 export function mapTransaction(doc) {
 	if (!doc) return null;
 	return {
 		id: doc._id,
 		item_id: refId(doc.item),
-		type: doc.type,
+		type: normalizeTransactionType(doc.type),
 		quantity: doc.quantity ?? 1,
 		recipient_name: doc.recipientName || null,
 		purpose: doc.purpose || null,
@@ -73,7 +83,7 @@ export function mapTransaction(doc) {
 		vehicle_model: doc.vehicleModel || null,
 		notes: doc.notes || null,
 		performed_by: refId(doc.performedBy),
-		created_at: doc.createdAt || doc._createdAt,
+		created_at: resolveCreatedAt(doc),
 	};
 }
 
