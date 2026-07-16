@@ -140,6 +140,19 @@ function drawVerticalCode(doc, code, x, yStart, yEnd) {
   doc.text(value, x, yStart + 1, { angle: 90 });
 }
 
+function getSmallLabelHeaderHeight(item, fitments) {
+  let height = 4;
+  if (fitments.length) {
+    for (const entry of fitments) {
+      height += 3;
+      if (entry.models.length) height += 2.8;
+    }
+  } else if (item.vehicle_model) {
+    height += 3;
+  }
+  return height;
+}
+
 function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const code = item.qr_id;
   const fitments = normalizeVehicleFitments(item);
@@ -147,7 +160,14 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const innerW = SMALL_LABEL_MM - pad * 2;
   const contentW = innerW - SMALL_CODE_STRIP_W;
   const centerX = pad + contentW / 2;
-  let cursorY = pad + 2.5;
+  const barH = SMALL_BAR_H;
+  const qrGap = 1.5;
+  const headerH = getSmallLabelHeaderHeight(item, fitments);
+  const qrMaxH = SMALL_LABEL_MM - pad * 2 - headerH - qrGap - barH;
+  const qrSize = Math.min(contentW * 0.85, Math.max(10, qrMaxH), 24);
+  const blockH = headerH + qrSize + qrGap + barH;
+  let cursorY = pad + Math.max(0, (SMALL_LABEL_MM - pad * 2 - blockH) / 2);
+  const blockStartY = cursorY;
 
   doc.setFontSize(SMALL_NAME_FONT);
   doc.setFont('helvetica', 'bold');
@@ -183,10 +203,6 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     cursorY += 3;
   }
 
-  const barH = SMALL_BAR_H;
-  const qrGap = 1.5;
-  const qrMaxH = SMALL_LABEL_MM - pad - barH - cursorY - qrGap - pad;
-  const qrSize = Math.min(contentW * 0.85, Math.max(10, qrMaxH), 24);
   const qrX = pad + (contentW - qrSize) / 2;
   const qrY = cursorY;
   if (qrData) {
@@ -204,7 +220,7 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     doc,
     code,
     SMALL_LABEL_MM - pad - 0.4,
-    pad + 1,
+    blockStartY,
     barY + barH
   );
 }

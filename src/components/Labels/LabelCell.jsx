@@ -47,8 +47,8 @@ export function LabelCell({
       className={`label-cell border border-dashed border-slate-300 bg-white overflow-hidden text-center ${
         isSmall
           ? preview
-            ? 'relative flex flex-col p-1 gap-0.5 w-[54mm] max-w-[54mm] aspect-square'
-            : 'relative flex flex-col p-0.5 gap-0'
+            ? 'relative flex flex-col justify-center p-1 gap-0.5 w-[54mm] h-[54mm] max-w-[54mm]'
+            : 'relative flex flex-col justify-center p-0.5 gap-0 w-[54mm] h-[54mm]'
           : 'flex flex-col items-center justify-center ' +
             (preview ? 'p-4 gap-1.5 max-w-[220px] gap-0.5' : 'p-1.5 gap-0.5')
       }`}
@@ -60,7 +60,7 @@ export function LabelCell({
       {isSmall ? (
         <>
           <p
-            className={`label-code-vertical absolute right-[1px] top-1 bottom-7 z-10 flex items-center justify-center font-mono text-slate-600 leading-none max-h-full overflow-hidden ${smallCodeClass}`}
+            className={`label-code-vertical absolute right-[1px] inset-y-1 z-10 flex items-center justify-center font-mono text-slate-600 leading-none max-h-full overflow-hidden ${smallCodeClass}`}
             style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
             title={code}
           >
