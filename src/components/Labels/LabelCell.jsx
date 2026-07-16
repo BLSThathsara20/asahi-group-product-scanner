@@ -19,7 +19,7 @@ export function LabelCell({
   const fitments = vehicleFitments !== undefined
     ? normalizeVehicleFitments({ vehicle_fitments: vehicleFitments })
     : normalizeVehicleFitments({ vehicle_model: vehicleModel });
-  const qrSize = isSmall ? (preview ? 72 : 36) : preview ? 120 : 56;
+  const qrSize = isSmall ? (preview ? 92 : 36) : preview ? 120 : 56;
   const barcodeHeight = isSmall ? (preview ? 28 : 14) : preview ? 48 : 24;
   const barcodeWidth = isSmall ? (preview ? 1.1 : 0.9) : preview ? 1.8 : 1.2;
 
@@ -66,7 +66,7 @@ export function LabelCell({
           >
             {code}
           </p>
-          <div className="flex flex-col items-center w-full min-w-0 flex-1 pr-2.5">
+          <div className="flex flex-col items-center w-full min-w-0 pr-2.5 gap-0.5">
             <p
               className={`font-semibold text-slate-800 leading-tight line-clamp-2 w-full px-0.5 ${
                 preview ? 'text-[15px]' : 'text-[10px]'
@@ -94,12 +94,12 @@ export function LabelCell({
                 {vehicleModel}
               </p>
             ) : null}
-            <div className="label-qr shrink-0 mt-0.5">
+            <div className="label-qr shrink-0">
               <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
             </div>
             <canvas
               ref={barcodeRef}
-              className={`label-barcode max-w-full mt-auto ${preview ? 'h-7' : 'h-3.5'}`}
+              className={`label-barcode max-w-full shrink-0 ${preview ? 'h-7' : 'h-3.5'}`}
             />
           </div>
         </>

@@ -184,19 +184,20 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   }
 
   const barH = SMALL_BAR_H;
-  const remainingH = SMALL_LABEL_MM - cursorY - barH - 1.5;
-  const qrSize = Math.min(contentW * 0.72, Math.max(12, remainingH * 0.95), 20);
+  const qrGap = 0.8;
+  const qrMaxH = SMALL_LABEL_MM - pad - barH - cursorY - qrGap - pad;
+  const qrSize = Math.min(contentW * 0.85, Math.max(10, qrMaxH), 24);
   const qrX = pad + (contentW - qrSize) / 2;
   const qrY = cursorY;
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
-  cursorY = qrY + qrSize + 1;
 
+  const barY = qrY + qrSize + qrGap;
   const barW = contentW * 0.92;
   const barX = pad + (contentW - barW) / 2;
   if (barcodeData) {
-    doc.addImage(barcodeData, 'PNG', barX, cursorY, barW, barH);
+    doc.addImage(barcodeData, 'PNG', barX, barY, barW, barH);
   }
 
   drawVerticalCode(
@@ -204,7 +205,7 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     code,
     SMALL_LABEL_MM - pad - 0.4,
     pad + 1,
-    SMALL_LABEL_MM - barH - 2
+    barY + barH
   );
 }
 
