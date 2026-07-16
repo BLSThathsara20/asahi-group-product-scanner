@@ -19,9 +19,9 @@ export function LabelCell({
   const fitments = vehicleFitments !== undefined
     ? normalizeVehicleFitments({ vehicle_fitments: vehicleFitments })
     : normalizeVehicleFitments({ vehicle_model: vehicleModel });
-  const qrSize = isSmall ? (preview ? 72 : 36) : preview ? 120 : 56;
-  const barcodeHeight = isSmall ? (preview ? 28 : 14) : preview ? 48 : 24;
-  const barcodeWidth = isSmall ? (preview ? 1.1 : 0.9) : preview ? 1.8 : 1.2;
+  const qrSize = isSmall ? (preview ? 58 : 30) : preview ? 120 : 56;
+  const barcodeHeight = isSmall ? (preview ? 24 : 12) : preview ? 48 : 24;
+  const barcodeWidth = isSmall ? (preview ? 1 : 0.85) : preview ? 1.8 : 1.2;
 
   useEffect(() => {
     if (!code || !barcodeRef.current) return;
@@ -42,14 +42,14 @@ export function LabelCell({
 
   return (
     <div
-      className={`label-cell flex flex-col items-center justify-center border border-dashed border-slate-300 bg-white overflow-hidden text-center ${
+      className={`label-cell flex flex-col items-center border border-dashed border-slate-300 bg-white overflow-hidden text-center box-border ${
         isSmall
           ? preview
-            ? 'p-1 gap-0.5 w-[54mm] max-w-[54mm] aspect-square'
-            : 'p-0.5 gap-0'
+            ? 'p-1 gap-0.5 w-[54mm] h-[50mm] max-w-[54mm] justify-start'
+            : 'p-0.5 gap-px w-[54mm] h-[50mm] max-w-[54mm] justify-start'
           : preview
-            ? 'p-4 gap-1.5 max-w-[220px] gap-0.5'
-            : 'p-1.5 gap-0.5'
+            ? 'p-4 gap-1.5 max-w-[220px] justify-center'
+            : 'p-1.5 gap-0.5 justify-center'
       }`}
       data-label-code={code}
       data-item-id={itemId}
@@ -64,14 +64,14 @@ export function LabelCell({
         {name}
       </p>
       {isSmall && fitments.length > 0 ? (
-        <div className="w-full px-0.5 space-y-0.5">
+        <div className="w-full px-0.5 space-y-0.5 shrink-0">
           {fitments.map((entry) => (
             <div key={entry.make}>
-              <p className={`font-bold text-slate-800 leading-tight line-clamp-1 ${preview ? 'text-[12px]' : 'text-[8px]'}`}>
+              <p className={`font-bold text-slate-800 leading-tight line-clamp-1 ${preview ? 'text-[11px]' : 'text-[7px]'}`}>
                 {entry.make}
               </p>
               {entry.models.length > 0 ? (
-                <p className={`text-slate-700 leading-tight line-clamp-2 ${preview ? 'text-[11px]' : 'text-[7px]'}`}>
+                <p className={`text-slate-700 leading-tight line-clamp-1 ${preview ? 'text-[10px]' : 'text-[6px]'}`}>
                   {entry.models.map((model) => model.name).join(', ')}
                 </p>
               ) : null}
@@ -87,26 +87,28 @@ export function LabelCell({
           {isSmall ? vehicleModel : `Vehicle: ${vehicleModel}`}
         </p>
       ) : null}
-      <div className="label-qr shrink-0 mt-0.5">
-        <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
+      <div className={`flex flex-col items-center w-full shrink-0 ${isSmall ? 'mt-auto pt-0.5' : 'mt-0.5'}`}>
+        <div className="label-qr shrink-0 leading-none">
+          <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
+        </div>
+        <p
+          className={`label-code font-mono text-slate-600 leading-tight truncate w-full px-0.5 shrink-0 ${
+            isSmall
+              ? preview
+                ? 'text-[9px] mt-1'
+                : 'text-[5px] mt-0.5'
+              : preview
+                ? 'text-xs mt-0.5'
+                : 'text-[6px] mt-0.5'
+          }`}
+        >
+          {code}
+        </p>
+        <canvas
+          ref={barcodeRef}
+          className={`label-barcode max-w-full shrink-0 ${isSmall ? (preview ? 'h-6 mt-0.5' : 'h-3 mt-px') : preview ? 'h-12 mt-0.5' : 'h-6 mt-0.5'}`}
+        />
       </div>
-      <p
-        className={`font-mono text-slate-600 leading-none truncate w-full px-0.5 ${
-          isSmall
-            ? preview
-              ? 'text-[10px]'
-              : 'text-[6px]'
-            : preview
-              ? 'text-xs'
-              : 'text-[6px]'
-        }`}
-      >
-        {code}
-      </p>
-      <canvas
-        ref={barcodeRef}
-        className={`label-barcode max-w-full ${isSmall ? (preview ? 'h-7' : 'h-3.5') : preview ? 'h-12' : 'h-6'}`}
-      />
     </div>
   );
 }

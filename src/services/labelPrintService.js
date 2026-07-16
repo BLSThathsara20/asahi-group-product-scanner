@@ -119,34 +119,41 @@ export async function downloadLabelsPdf(items, maxRows = 4) {
   doc.save(`labels-${slug}.pdf`);
 }
 
-const SMALL_LABEL_MM = 54;
-const SMALL_NAME_FONT = 10;
-const SMALL_MAKE_FONT = 8;
-const SMALL_MODELS_FONT = 7;
-const SMALL_CODE_FONT = 5;
-const SMALL_BAR_H = 8;
-const SMALL_CODE_H = 2.5;
+const SMALL_LABEL_W = 54;
+const SMALL_LABEL_H = 50;
+const SMALL_NAME_FONT = 9;
+const SMALL_MAKE_FONT = 7.5;
+const SMALL_MODELS_FONT = 6.5;
+const SMALL_CODE_FONT = 4.5;
+const SMALL_BAR_H = 7;
+const SMALL_QR_CODE_GAP = 2.2;
+const SMALL_CODE_BAR_GAP = 1.2;
 
 function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const code = item.qr_id;
   const fitments = normalizeVehicleFitments(item);
-  const pad = 1.5;
-  const innerW = SMALL_LABEL_MM - pad * 2;
-  let cursorY = pad + 2.5;
+  const pad = 1.2;
+  const innerW = SMALL_LABEL_W - pad * 2;
+
+  const barY = SMALL_LABEL_H - pad - SMALL_BAR_H;
+  const codeBaseline = barY - SMALL_CODE_BAR_GAP;
+  const qrBottom = codeBaseline - SMALL_QR_CODE_GAP - SMALL_CODE_FONT * 0.35;
+
+  let cursorY = pad + 2;
 
   doc.setFontSize(SMALL_NAME_FONT);
   doc.setFont('helvetica', 'bold');
   const title = truncateText(doc, item.name || code, innerW - 1);
-  doc.text(title, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-  cursorY += 4;
+  doc.text(title, SMALL_LABEL_W / 2, cursorY, { align: 'center', maxWidth: innerW });
+  cursorY += 3.5;
 
   if (fitments.length) {
     for (const entry of fitments) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(SMALL_MAKE_FONT);
       const makeLine = truncateText(doc, entry.make, innerW - 1);
-      doc.text(makeLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-      cursorY += 3;
+      doc.text(makeLine, SMALL_LABEL_W / 2, cursorY, { align: 'center', maxWidth: innerW });
+      cursorY += 2.6;
 
       if (entry.models.length) {
         doc.setFont('helvetica', 'normal');
@@ -156,44 +163,41 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
           entry.models.map((model) => model.name).join(', '),
           innerW - 1
         );
-        doc.text(modelsLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-        cursorY += 2.8;
+        doc.text(modelsLine, SMALL_LABEL_W / 2, cursorY, { align: 'center', maxWidth: innerW });
+        cursorY += 2.4;
       }
     }
   } else if (item.vehicle_model) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(SMALL_MAKE_FONT);
     const vehicleLine = truncateText(doc, formatVehicleFitments(item), innerW - 1);
-    doc.text(vehicleLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
-    cursorY += 3;
+    doc.text(vehicleLine, SMALL_LABEL_W / 2, cursorY, { align: 'center', maxWidth: innerW });
+    cursorY += 2.6;
   }
 
-  const barH = SMALL_BAR_H;
-  const remainingH = SMALL_LABEL_MM - cursorY - barH - SMALL_CODE_H - 1.5;
-  const qrSize = Math.min(innerW * 0.62, Math.max(12, remainingH * 0.9), 18);
-  const qrX = (SMALL_LABEL_MM - qrSize) / 2;
-  const qrY = cursorY;
+  const availableQrH = Math.max(8, qrBottom - cursorY - 0.4);
+  const qrSize = Math.min(availableQrH, innerW * 0.52, 14);
+  const qrY = qrBottom - qrSize;
+  const qrX = (SMALL_LABEL_W - qrSize) / 2;
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
-  cursorY = qrY + qrSize + 1;
 
   doc.setFont('courier', 'normal');
   doc.setFontSize(SMALL_CODE_FONT);
-  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_MM / 2, cursorY, {
+  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_W / 2, codeBaseline, {
     align: 'center',
     maxWidth: innerW,
   });
-  cursorY += SMALL_CODE_H;
 
   const barW = innerW * 0.92;
-  const barX = (SMALL_LABEL_MM - barW) / 2;
+  const barX = (SMALL_LABEL_W - barW) / 2;
   if (barcodeData) {
-    doc.addImage(barcodeData, 'PNG', barX, cursorY, barW, barH);
+    doc.addImage(barcodeData, 'PNG', barX, barY, barW, SMALL_BAR_H);
   }
 }
 
-/** Single 54 x 54 mm label PDF for small thermal printers. */
+/** Single 54 x 50 mm label PDF for small thermal printers. */
 export async function downloadSmallLabelPdf(item) {
   if (!item?.qr_id) return;
 
@@ -203,7 +207,7 @@ export async function downloadSmallLabelPdf(item) {
 
   const doc = new jsPDF({
     unit: 'mm',
-    format: [SMALL_LABEL_MM, SMALL_LABEL_MM],
+    format: [SMALL_LABEL_W, SMALL_LABEL_H],
     orientation: 'portrait',
   });
   drawSmallLabelPage(doc, item, qrData, barcodeData);
