@@ -38,11 +38,6 @@ function drawLabelInCell(doc, item, qrData, barcodeData, col, row, cols, rows) {
   doc.setDrawColor(180);
   doc.rect(x, y, w, h);
 
-  doc.setFont('courier', 'normal');
-  doc.setFontSize(5);
-  doc.text(truncateText(doc, code, innerW - 2), innerX + innerW / 2, cursorY, { align: 'center', maxWidth: innerW });
-  cursorY += 2.5;
-
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   const title = truncateText(doc, item.name || code, innerW - 2);
@@ -123,24 +118,14 @@ const SMALL_LABEL_MM = 54;
 const SMALL_NAME_FONT = 10;
 const SMALL_MAKE_FONT = 8;
 const SMALL_MODELS_FONT = 7;
-const SMALL_CODE_FONT = 5;
 const SMALL_BAR_H = 8;
-const SMALL_CODE_H = 2.5;
 
 function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const code = item.qr_id;
   const fitments = normalizeVehicleFitments(item);
   const pad = 1.5;
   const innerW = SMALL_LABEL_MM - pad * 2;
-  let cursorY = pad + 1.5;
-
-  doc.setFont('courier', 'normal');
-  doc.setFontSize(SMALL_CODE_FONT);
-  doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_MM / 2, cursorY, {
-    align: 'center',
-    maxWidth: innerW,
-  });
-  cursorY += SMALL_CODE_H + 0.5;
+  let cursorY = pad + 2.5;
 
   doc.setFontSize(SMALL_NAME_FONT);
   doc.setFont('helvetica', 'bold');
@@ -184,7 +169,7 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
-  cursorY = qrY + qrSize + 1;
+  cursorY = qrY + qrSize + 1.5;
 
   const barW = innerW * 0.92;
   const barX = (SMALL_LABEL_MM - barW) / 2;

@@ -57,19 +57,6 @@ export function LabelCell({
       data-label-variant={variant}
     >
       <p
-        className={`font-mono text-slate-600 leading-none truncate w-full px-0.5 ${
-          isSmall
-            ? preview
-              ? 'text-[10px]'
-              : 'text-[6px]'
-            : preview
-              ? 'text-xs'
-              : 'text-[6px]'
-        }`}
-      >
-        {code}
-      </p>
-      <p
         className={`font-semibold text-slate-800 leading-tight line-clamp-2 w-full px-0.5 ${
           isSmall ? (preview ? 'text-[15px]' : 'text-[10px]') : preview ? 'text-sm' : 'text-[9px] sm:text-[10px]'
         }`}
