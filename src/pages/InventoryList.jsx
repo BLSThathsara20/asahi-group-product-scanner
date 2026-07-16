@@ -75,7 +75,11 @@ export function InventoryList() {
   const handleExportPDF = async () => {
     setExporting('pdf');
     try {
-      await exportInventoryPDF(filtered);
+      await exportInventoryPDF(
+        filtered,
+        null,
+        profile?.full_name?.trim() || user?.email || 'Unknown user'
+      );
       success(`PDF exported (${filtered.length} items)`);
     } catch (err) {
       notifyError(err.message || 'Export failed');

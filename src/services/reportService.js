@@ -118,13 +118,13 @@ function drawPageChrome(doc) {
   doc.rect(0, 0, w, 6, 'F');
 }
 
-function addPageFooters(doc, reportDate) {
+function addPageFooters(doc, reportDate, exportedBy) {
   const total = doc.getNumberOfPages();
   for (let i = 1; i <= total; i += 1) {
     doc.setPage(i);
     const w = pageWidth(doc);
     const h = pageHeight(doc);
-    const y = h - 8;
+    const y = h - (exportedBy && i === total ? 11 : 8);
     doc.setDrawColor(...PDF_THEME.slate200);
     doc.setLineWidth(0.2);
     doc.line(PDF_THEME.margin, y - 3, w - PDF_THEME.margin, y - 3);
@@ -134,6 +134,12 @@ function addPageFooters(doc, reportDate) {
     doc.text('Asahi Motors UK Group · Spare Parts Inventory', PDF_THEME.margin, y);
     doc.text(`Page ${i} of ${total}`, w - PDF_THEME.margin, y, { align: 'right' });
     doc.text(reportDate, w / 2, y, { align: 'center' });
+
+    if (exportedBy && i === total) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(...PDF_THEME.slate600);
+      doc.text(`Exported by: ${exportedBy}`, w / 2, h - 5, { align: 'center' });
+    }
   }
 }
 
@@ -445,7 +451,7 @@ async function drawCompanyHeader(doc, title, subtitleLines = []) {
   return y + 4;
 }
 
-export async function exportDailyReportPDF(items) {
+export async function exportDailyReportPDF(items, exportedBy = '') {
   const stock = items || [];
   const { checkIns, checkOuts, dateLabel } = await getTodayStockMovements();
   const lowStockItems = stock
@@ -543,11 +549,11 @@ export async function exportDailyReportPDF(items) {
     highlightLowStock: true,
   });
 
-  addPageFooters(doc, dateLabel);
+  addPageFooters(doc, dateLabel, exportedBy);
   doc.save(`daily-report-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-export async function exportInventoryPDF(items, categoryFilter = null) {
+export async function exportInventoryPDF(items, categoryFilter = null, exportedBy = '') {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -628,6 +634,8 @@ export async function exportInventoryPDF(items, categoryFilter = null) {
     });
     y += 6;
   });
+
+  addPageFooters(doc, new Date().toLocaleDateString(), exportedBy);
 
   const filename = categoryFilter
     ? `spare-parts-${categoryFilter.replace(/[^a-z0-9]/gi, '-')}-${new Date().toISOString().slice(0, 10)}.pdf`

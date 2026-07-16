@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useItems } from '../hooks/useItems';
-import { exportInventoryPDF, exportInventoryCSV } from '../services/reportService';
+import { useAuth } from '../context/AuthContext';
+import { exportInventoryPDF, exportInventoryCSV, exportDailyReportPDF } from '../services/reportService';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useNotification } from '../context/NotificationContext';
@@ -13,9 +14,12 @@ import {
 
 export function Reports() {
   const { items, loading } = useItems();
+  const { profile, user } = useAuth();
   const { success, error } = useNotification();
   const [exporting, setExporting] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('');
+
+  const exportedBy = profile?.full_name?.trim() || user?.email || 'Unknown user';
 
   const categoriesWithCount = useMemo(() => {
     const counts = {};
@@ -37,7 +41,7 @@ export function Reports() {
   const handlePDF = async () => {
     setExporting('pdf');
     try {
-      await exportInventoryPDF(filteredItems, categoryFilter || null);
+      await exportInventoryPDF(filteredItems, categoryFilter || null, exportedBy);
       success('PDF downloaded');
     } catch (err) {
       error(err.message || 'Export failed');
@@ -58,6 +62,23 @@ export function Reports() {
     }
   };
 
+  const handleDailyPDF = async () => {
+    setExporting('daily');
+    try {
+      await exportDailyReportPDF(items || [], exportedBy);
+      success('Daily report downloaded');
+    } catch (err) {
+      error(err.message || 'Daily report export failed');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const lowStockCount = useMemo(
+    () => (items || []).filter((item) => (item.quantity ?? 0) < 2).length,
+    [items]
+  );
+
   if (loading) {
     return <PageSkeleton />;
   }
@@ -66,11 +87,34 @@ export function Reports() {
     <PageContainer>
       <PageHeader
         title="Reports"
-        subtitle="Export spare parts inventory as PDF or CSV"
+        subtitle="Export spare parts inventory and daily stock summaries"
       />
+
+      <Card className="p-5 sm:p-6 mb-4">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">Daily report</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              PDF with today&apos;s check-ins and check-outs, current stock, and low-stock items
+              (quantity below 2 highlighted in red).
+            </p>
+          </div>
+          <p className="text-sm text-slate-500">
+            <strong className="text-slate-700">{lowStockCount}</strong> low stock item
+            {lowStockCount === 1 ? '' : 's'} right now.
+          </p>
+          <Button onClick={handleDailyPDF} disabled={exporting || (items || []).length === 0}>
+            {exporting === 'daily' ? 'Generating…' : 'Download daily report PDF'}
+          </Button>
+        </div>
+      </Card>
 
       <Card className="p-5 sm:p-6">
         <div className="space-y-5">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">Full inventory export</h2>
+            <p className="text-sm text-slate-500 mt-1">Download the full spare parts list as PDF or CSV.</p>
+          </div>
           <div>
             <label className="block text-sm font-medium text-slate-600 mb-2">Category</label>
             <select
