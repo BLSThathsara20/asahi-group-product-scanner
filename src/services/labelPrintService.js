@@ -119,7 +119,8 @@ export async function downloadLabelsPdf(items, maxRows = 4) {
   doc.save(`labels-${slug}.pdf`);
 }
 
-const SMALL_LABEL_MM = 54;
+const SMALL_LABEL_W = 54;
+const SMALL_LABEL_H = 50;
 const SMALL_NAME_FONT = 10;
 const SMALL_MAKE_FONT = 8;
 const SMALL_MODELS_FONT = 7;
@@ -157,17 +158,19 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const code = item.qr_id;
   const fitments = normalizeVehicleFitments(item);
   const pad = 1.5;
-  const innerW = SMALL_LABEL_MM - pad * 2;
+  const innerW = SMALL_LABEL_W - pad * 2;
   const contentW = innerW - SMALL_CODE_STRIP_W;
   const centerX = pad + contentW / 2;
   const barH = SMALL_BAR_H;
   const qrGap = 1.5;
+  const headerTop = pad + 1;
   const headerH = getSmallLabelHeaderHeight(item, fitments);
-  const qrMaxH = SMALL_LABEL_MM - pad * 2 - headerH - qrGap - barH;
-  const qrSize = Math.min(contentW * 0.85, Math.max(10, qrMaxH), 24);
-  const blockH = headerH + qrSize + qrGap + barH;
-  let cursorY = pad + Math.max(0, (SMALL_LABEL_MM - pad * 2 - blockH) / 2);
-  const blockStartY = cursorY;
+  const barY = SMALL_LABEL_H - pad - barH;
+  const maxQr = barY - qrGap - headerTop - headerH - 0.5;
+  const qrSize = Math.min(contentW * 0.85, Math.max(10, maxQr), 24);
+  const qrY = barY - qrGap - qrSize;
+  let cursorY = headerTop;
+  const blockStartY = headerTop;
 
   doc.setFontSize(SMALL_NAME_FONT);
   doc.setFont('helvetica', 'bold');
@@ -204,12 +207,10 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   }
 
   const qrX = pad + (contentW - qrSize) / 2;
-  const qrY = cursorY;
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
 
-  const barY = qrY + qrSize + qrGap;
   const barW = contentW * 0.92;
   const barX = pad + (contentW - barW) / 2;
   if (barcodeData) {
@@ -219,13 +220,13 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   drawVerticalCode(
     doc,
     code,
-    SMALL_LABEL_MM - pad - 0.4,
+    SMALL_LABEL_W - pad - 0.4,
     blockStartY,
     barY + barH
   );
 }
 
-/** Single 54 x 54 mm label PDF for small thermal printers. */
+/** Single 54 x 50 mm label PDF for small thermal printers. */
 export async function downloadSmallLabelPdf(item) {
   if (!item?.qr_id) return;
 
@@ -235,7 +236,7 @@ export async function downloadSmallLabelPdf(item) {
 
   const doc = new jsPDF({
     unit: 'mm',
-    format: [SMALL_LABEL_MM, SMALL_LABEL_MM],
+    format: [SMALL_LABEL_W, SMALL_LABEL_H],
     orientation: 'portrait',
   });
   drawSmallLabelPage(doc, item, qrData, barcodeData);
