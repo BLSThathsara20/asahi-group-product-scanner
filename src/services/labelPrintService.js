@@ -134,10 +134,8 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   const fitments = normalizeVehicleFitments(item);
   const pad = 1.2;
   const innerW = SMALL_LABEL_W - pad * 2;
-
-  const barY = SMALL_LABEL_H - pad - SMALL_BAR_H;
-  const codeBaseline = barY - SMALL_CODE_BAR_GAP;
-  const qrBottom = codeBaseline - SMALL_QR_CODE_GAP - SMALL_CODE_FONT * 0.35;
+  const footerH =
+    SMALL_QR_CODE_GAP + SMALL_CODE_FONT * 0.35 + SMALL_CODE_BAR_GAP + SMALL_BAR_H;
 
   let cursorY = pad + 2;
 
@@ -175,14 +173,16 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     cursorY += 2.6;
   }
 
-  const availableQrH = Math.max(8, qrBottom - cursorY - 0.4);
-  const qrSize = Math.min(availableQrH, innerW * 0.52, 14);
-  const qrY = qrBottom - qrSize;
+  cursorY += 0.8;
+  const maxQrH = SMALL_LABEL_H - pad - cursorY - footerH;
+  const qrSize = Math.min(Math.max(10, maxQrH), innerW * 0.52, 15);
+  const qrY = cursorY;
   const qrX = (SMALL_LABEL_W - qrSize) / 2;
   if (qrData) {
     doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
   }
 
+  const codeBaseline = qrY + qrSize + SMALL_QR_CODE_GAP + SMALL_CODE_FONT * 0.35;
   doc.setFont('courier', 'normal');
   doc.setFontSize(SMALL_CODE_FONT);
   doc.text(truncateText(doc, code, innerW - 1), SMALL_LABEL_W / 2, codeBaseline, {
@@ -190,6 +190,7 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
     maxWidth: innerW,
   });
 
+  const barY = codeBaseline + SMALL_CODE_BAR_GAP;
   const barW = innerW * 0.92;
   const barX = (SMALL_LABEL_W - barW) / 2;
   if (barcodeData) {

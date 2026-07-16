@@ -19,7 +19,7 @@ export function LabelCell({
   const fitments = vehicleFitments !== undefined
     ? normalizeVehicleFitments({ vehicle_fitments: vehicleFitments })
     : normalizeVehicleFitments({ vehicle_model: vehicleModel });
-  const qrSize = isSmall ? (preview ? 58 : 30) : preview ? 120 : 56;
+  const qrSize = isSmall ? (preview ? 64 : 32) : preview ? 120 : 56;
   const barcodeHeight = isSmall ? (preview ? 24 : 12) : preview ? 48 : 24;
   const barcodeWidth = isSmall ? (preview ? 1 : 0.85) : preview ? 1.8 : 1.2;
 
@@ -45,8 +45,8 @@ export function LabelCell({
       className={`label-cell flex flex-col items-center border border-dashed border-slate-300 bg-white overflow-hidden text-center box-border ${
         isSmall
           ? preview
-            ? 'p-1 gap-0.5 w-[54mm] h-[50mm] max-w-[54mm] justify-start'
-            : 'p-0.5 gap-px w-[54mm] h-[50mm] max-w-[54mm] justify-start'
+            ? 'p-1 gap-1 w-[54mm] h-[50mm] max-w-[54mm] justify-start'
+            : 'p-0.5 gap-0.5 w-[54mm] h-[50mm] max-w-[54mm] justify-start'
           : preview
             ? 'p-4 gap-1.5 max-w-[220px] justify-center'
             : 'p-1.5 gap-0.5 justify-center'
@@ -87,28 +87,26 @@ export function LabelCell({
           {isSmall ? vehicleModel : `Vehicle: ${vehicleModel}`}
         </p>
       ) : null}
-      <div className={`flex flex-col items-center w-full shrink-0 ${isSmall ? 'mt-auto pt-0.5' : 'mt-0.5'}`}>
-        <div className="label-qr shrink-0 leading-none">
-          <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
-        </div>
-        <p
-          className={`label-code font-mono text-slate-600 leading-tight truncate w-full px-0.5 shrink-0 ${
-            isSmall
-              ? preview
-                ? 'text-[9px] mt-1'
-                : 'text-[5px] mt-0.5'
-              : preview
-                ? 'text-xs mt-0.5'
-                : 'text-[6px] mt-0.5'
-          }`}
-        >
-          {code}
-        </p>
-        <canvas
-          ref={barcodeRef}
-          className={`label-barcode max-w-full shrink-0 ${isSmall ? (preview ? 'h-6 mt-0.5' : 'h-3 mt-px') : preview ? 'h-12 mt-0.5' : 'h-6 mt-0.5'}`}
-        />
+      <div className="label-qr shrink-0 leading-none">
+        <QRCodeCanvas value={getQrCodeUrl(code)} size={qrSize} level="H" includeMargin={false} />
       </div>
+      <p
+        className={`label-code font-mono text-slate-600 leading-tight truncate w-full px-0.5 shrink-0 ${
+          isSmall
+            ? preview
+              ? 'text-[9px]'
+              : 'text-[5px]'
+            : preview
+              ? 'text-xs'
+              : 'text-[6px]'
+        }`}
+      >
+        {code}
+      </p>
+      <canvas
+        ref={barcodeRef}
+        className={`label-barcode max-w-full shrink-0 ${isSmall ? (preview ? 'h-6' : 'h-3') : preview ? 'h-12' : 'h-6'}`}
+      />
     </div>
   );
 }
