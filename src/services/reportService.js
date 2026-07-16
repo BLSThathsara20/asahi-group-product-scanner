@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { LOGO_URL } from '../lib/branding';
+import { getItemPageUrl } from '../lib/utils';
 import { formatVehicleFitments } from '../lib/vehicleFitments';
 import { getTodayStockMovements } from './analyticsService';
 
@@ -24,6 +25,7 @@ const PDF_THEME = {
   amberLight: [255, 251, 235],
   green: [5, 150, 105],
   greenLight: [236, 253, 245],
+  link: [37, 99, 235],
 };
 
 function loadLogoImage(url) {
@@ -103,6 +105,20 @@ function truncateForPdf(doc, text, maxWidth) {
 
 function wrapText(doc, text, maxWidth) {
   return doc.splitTextToSize(String(text || '—'), maxWidth);
+}
+
+function drawPdfText(doc, text, x, y, { align = 'left', url, color }) {
+  if (color) doc.setTextColor(...color);
+  const value = String(text || '—');
+  if (url && typeof doc.textWithLink === 'function') {
+    let linkX = x;
+    const textWidth = doc.getTextWidth(value);
+    if (align === 'center') linkX = x - textWidth / 2;
+    else if (align === 'right') linkX = x - textWidth;
+    doc.textWithLink(value, linkX, y, { url });
+    return;
+  }
+  doc.text(value, x, y, { align });
 }
 
 function ensurePageSpace(doc, y, needed = 20) {
@@ -342,12 +358,21 @@ function drawDataTable(doc, y, { columns, rows, emptyMessage, highlightLowStock 
       lines.forEach((line, lineIndex) => {
         const lineY = y + rowPad + 3 + lineIndex * 3.8;
         const textX = col.align === 'center' ? x + col.width / 2 : col.align === 'right' ? x + col.width - 2 : x + 2;
+        const linkUrl = col.linkKey && lineIndex === 0 ? row[col.linkKey] : null;
         if (col.bold && lineIndex > 0) {
           doc.setFontSize(fontSize - 0.5);
           doc.setTextColor(...(isLowStock ? PDF_THEME.red : PDF_THEME.slate500));
           doc.setFont(undefined, 'normal');
         }
-        doc.text(line, textX, lineY, { align: col.align || 'left' });
+        if (linkUrl) {
+          drawPdfText(doc, line, textX, lineY, {
+            align: col.align || 'left',
+            url: linkUrl,
+            color: isLowStock ? PDF_THEME.red : PDF_THEME.link,
+          });
+        } else {
+          doc.text(line, textX, lineY, { align: col.align || 'left' });
+        }
         if (col.bold && lineIndex > 0) {
           doc.setFontSize(fontSize);
           doc.setTextColor(...(isLowStock ? PDF_THEME.red : PDF_THEME.slate800));
@@ -370,7 +395,7 @@ const MOVEMENT_COLUMNS = (doc) => {
   return [
     { key: 'time', label: 'Time', width: w * 0.12 },
     { key: 'item', label: 'Item', width: w * 0.24, bold: true },
-    { key: 'qr', label: 'QR ID', width: w * 0.18 },
+    { key: 'qr', label: 'QR ID', width: w * 0.18, linkKey: 'qrLink' },
     { key: 'qty', label: 'Qty', width: w * 0.08, align: 'center' },
     { key: 'details', label: 'Details', width: w * 0.38 },
   ];
@@ -380,7 +405,7 @@ const STOCK_COLUMNS = (doc) => {
   const w = contentWidth(doc);
   return [
     { key: 'item', label: 'Item / Vehicle', width: w * 0.34, bold: true },
-    { key: 'qr', label: 'QR ID', width: w * 0.16 },
+    { key: 'qr', label: 'QR ID', width: w * 0.16, linkKey: 'qrLink' },
     { key: 'category', label: 'Category', width: w * 0.14 },
     { key: 'location', label: 'Location', width: w * 0.16 },
     { key: 'qty', label: 'Qty', width: w * 0.08, align: 'center' },
@@ -397,6 +422,7 @@ function mapMovementRow(tx) {
     time: formatMovementTime(tx.created_at),
     item: itemLabel,
     qr: tx.item?.qr_id || '—',
+    qrLink: tx.item?.id ? getItemPageUrl(tx.item.id) : '',
     qty: String(tx.quantity ?? 1),
     details: formatMovementDetail(tx),
   };
@@ -409,6 +435,7 @@ function mapStockRow(item) {
     _lowStock: (item.quantity ?? 0) < LOW_STOCK_QTY_THRESHOLD,
     item: itemLabel,
     qr: item.qr_id || '—',
+    qrLink: item.id ? getItemPageUrl(item.id) : '',
     category: item.category || '—',
     location: item.store_location || '—',
     qty: String(item.quantity ?? 0),
@@ -629,7 +656,16 @@ export async function exportInventoryPDF(items, categoryFilter = null, exportedB
       formatVehicleFitments(item).slice(0, 10) || '-',
     ];
     row.forEach((val, i) => {
-      doc.text(val, x, y);
+      if (i === 1 && item.id) {
+        const qrText = (item.qr_id || '').slice(0, 10);
+        drawPdfText(doc, qrText, x, y, {
+          url: getItemPageUrl(item.id),
+          color: PDF_THEME.link,
+        });
+        doc.setTextColor(0, 0, 0);
+      } else {
+        doc.text(val, x, y);
+      }
       x += colWidths[i];
     });
     y += 6;

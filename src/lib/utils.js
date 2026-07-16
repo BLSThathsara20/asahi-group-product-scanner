@@ -11,6 +11,13 @@ export function getQrCodeUrl(qrId) {
   return `${base}/scan?barcode=${encodeURIComponent(qrId)}`;
 }
 
+/** Direct link to a spare part detail page in the app */
+export function getItemPageUrl(itemId) {
+  if (!itemId || typeof window === 'undefined') return '';
+  const base = `${window.location.origin}${import.meta.env.BASE_URL}`.replace(/\/$/, '');
+  return `${base}/inventory/${encodeURIComponent(itemId)}`;
+}
+
 /** Format amount in British pounds */
 export function formatGbp(amount) {
   if (amount == null || Number.isNaN(Number(amount))) return '—';
