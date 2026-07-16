@@ -184,7 +184,7 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   }
 
   const barH = SMALL_BAR_H;
-  const qrGap = 0.8;
+  const qrGap = 1.5;
   const qrMaxH = SMALL_LABEL_MM - pad - barH - cursorY - qrGap - pad;
   const qrSize = Math.min(contentW * 0.85, Math.max(10, qrMaxH), 24);
   const qrX = pad + (contentW - qrSize) / 2;

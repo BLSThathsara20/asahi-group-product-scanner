@@ -99,7 +99,7 @@ export function LabelCell({
             </div>
             <canvas
               ref={barcodeRef}
-              className={`label-barcode max-w-full shrink-0 ${preview ? 'h-7' : 'h-3.5'}`}
+              className={`label-barcode max-w-full shrink-0 ${preview ? 'h-7 mt-1.5' : 'h-3.5 mt-0.5'}`}
             />
           </div>
         </>
