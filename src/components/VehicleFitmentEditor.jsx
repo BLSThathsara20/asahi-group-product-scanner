@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { VEHICLE_BRANDS } from './VehicleModelSelect';
 import { getVehicleModelsForMake } from '../services/vehicleCatalogService';
-import { NOT_SPECIFIED_MODEL, normalizeVehicleFitments } from '../lib/vehicleFitments';
+import {
+  NOT_SPECIFIED_MODEL,
+  commitPendingVehicleMake,
+  normalizeVehicleFitments,
+} from '../lib/vehicleFitments';
 import { formInputClass, formSelectClass } from '../lib/formFieldStyles';
 
 function applyMakeToState(make, setSelectedMake, setCustomMake) {
@@ -26,12 +30,12 @@ function getMakeStateFromFitments(fitments) {
   return { selectedMake: 'Other', customMake: activeMake };
 }
 
-export function VehicleFitmentEditor({
+export const VehicleFitmentEditor = forwardRef(function VehicleFitmentEditor({
   value = [],
   onChange,
   label = null,
   required = false,
-}) {
+}, ref) {
   const fitments = useMemo(() => normalizeVehicleFitments({ vehicle_fitments: value }), [value]);
   const fitmentsKey = useMemo(
     () => fitments.map((entry) => `${entry.make}:${entry.models.map((m) => m.name).join(',')}`).join('|'),
@@ -89,6 +93,32 @@ export function VehicleFitmentEditor({
     onChange(normalizeVehicleFitments({ vehicle_fitments: next }));
   };
 
+  const ensureMakeInFitments = (make) => {
+    const trimmed = String(make || '').trim();
+    if (!trimmed) return;
+
+    const next = fitments.map((entry) => ({
+      ...entry,
+      models: [...entry.models],
+    }));
+    if (next.some((entry) => entry.make.toLowerCase() === trimmed.toLowerCase())) return;
+
+    if (next.length === 1 && next[0].models.length === 0) {
+      updateFitments([{ make: trimmed, models: [] }]);
+      return;
+    }
+
+    updateFitments([...next, { make: trimmed, models: [] }]);
+  };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getFitmentsForSave: () => commitPendingVehicleMake(fitments, effectiveMake),
+    }),
+    [fitments, effectiveMake]
+  );
+
   const addModel = (useNotSpecified = false) => {
     const make = effectiveMake;
     if (!make) return;
@@ -141,8 +171,12 @@ export function VehicleFitmentEditor({
         <select
           value={selectedMake}
           onChange={(e) => {
-            setSelectedMake(e.target.value);
-            if (e.target.value !== 'Other') setCustomMake('');
+            const nextMake = e.target.value;
+            setSelectedMake(nextMake);
+            if (nextMake !== 'Other') {
+              setCustomMake('');
+              if (nextMake) ensureMakeInFitments(nextMake);
+            }
           }}
           className={formSelectClass('vehicle')}
         >
@@ -158,7 +192,11 @@ export function VehicleFitmentEditor({
           <input
             type="text"
             value={customMake}
-            onChange={(e) => setCustomMake(e.target.value)}
+            onChange={(e) => {
+              const nextCustomMake = e.target.value;
+              setCustomMake(nextCustomMake);
+              if (nextCustomMake.trim()) ensureMakeInFitments(nextCustomMake.trim());
+            }}
             placeholder="Enter vehicle make"
             className={`mt-2 ${formInputClass('vehicle')}`}
           />
@@ -230,22 +268,28 @@ export function VehicleFitmentEditor({
                 {entry.make}
               </button>
               <div className="mt-1 flex flex-wrap gap-2">
-                {entry.models.map((model) => (
-                  <span
-                    key={`${entry.make}-${model.name}`}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-asahi/10 text-asahi text-sm font-medium"
-                  >
-                    {model.name}
-                    <button
-                      type="button"
-                      onClick={() => removeModel(entry.make, model.name)}
-                      className="rounded-full hover:bg-asahi/20 p-0.5"
-                      aria-label={`Remove ${entry.make} ${model.name}`}
+                {entry.models.length > 0 ? (
+                  entry.models.map((model) => (
+                    <span
+                      key={`${entry.make}-${model.name}`}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-asahi/10 text-asahi text-sm font-medium"
                     >
-                      <span className="text-xs leading-none">×</span>
-                    </button>
+                      {model.name}
+                      <button
+                        type="button"
+                        onClick={() => removeModel(entry.make, model.name)}
+                        className="rounded-full hover:bg-asahi/20 p-0.5"
+                        aria-label={`Remove ${entry.make} ${model.name}`}
+                      >
+                        <span className="text-xs leading-none">×</span>
+                      </button>
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-slate-500 italic">
+                    No models yet — save to keep make only, or add a model above
                   </span>
-                ))}
+                )}
               </div>
             </div>
           ))}
@@ -257,9 +301,9 @@ export function VehicleFitmentEditor({
         </div>
       )}
 
-      {required && !fitments.some((entry) => entry.make) && (
+      {required && !fitments.some((entry) => entry.make) && !effectiveMake && (
         <p className="text-xs text-slate-500">Select at least one vehicle make.</p>
       )}
     </div>
   );
-}
+});

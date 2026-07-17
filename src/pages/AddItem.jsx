@@ -67,6 +67,7 @@ export function AddItem() {
   const barcodeInputRefs = useRef([]);
   const lastFocusedBarcodeIndex = useRef(0);
   const barcodeSanitizeTimers = useRef({});
+  const fitmentEditorRef = useRef(null);
 
   const photoPreviewUrl = useMemo(
     () => (form.photo ? URL.createObjectURL(form.photo) : null),
@@ -323,7 +324,11 @@ export function AddItem() {
       setError('AGL number is required');
       return;
     }
-    if (!hasRequiredVehicleFitments(form.vehicle_fitments, form.category, categories)) {
+    if (!hasRequiredVehicleFitments(
+      fitmentEditorRef.current?.getFitmentsForSave?.() ?? form.vehicle_fitments,
+      form.category,
+      categories
+    )) {
       setError('Select at least one vehicle make');
       return;
     }
@@ -376,7 +381,9 @@ export function AddItem() {
         photoUrl = await compressAndUploadImage(form.photo);
       }
 
-      const vehicle_fitments = finalizeVehicleFitments(form.vehicle_fitments);
+      const pendingFitments =
+        fitmentEditorRef.current?.getFitmentsForSave?.() ?? form.vehicle_fitments;
+      const vehicle_fitments = finalizeVehicleFitments(pendingFitments);
 
       const item = await createItem({
         qr_id: qrId,
@@ -734,6 +741,7 @@ export function AddItem() {
             hint={vehicleMakeRequired ? undefined : 'Vehicle make/model is optional for this category.'}
           >
           <VehicleFitmentEditor
+            ref={fitmentEditorRef}
             value={form.vehicle_fitments}
             onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
             required={vehicleMakeRequired}

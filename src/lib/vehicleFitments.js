@@ -86,6 +86,17 @@ export function finalizeVehicleFitments(fitments) {
 	});
 }
 
+/** Include a selected make that was not yet added via the model controls. */
+export function commitPendingVehicleMake(fitments, pendingMake) {
+	const make = cleanMake(pendingMake);
+	const normalized = normalizeVehicleFitments({ vehicle_fitments: fitments });
+	if (!make) return normalized;
+	if (normalized.some((entry) => entry.make.toLowerCase() === make.toLowerCase())) {
+		return normalized;
+	}
+	return [...normalized, { make, models: [] }];
+}
+
 export function fitmentSelectionKey(make, modelName) {
 	return `${cleanMake(make)}|${cleanModelName(modelName)}`;
 }

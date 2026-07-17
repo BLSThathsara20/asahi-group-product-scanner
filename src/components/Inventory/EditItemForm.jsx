@@ -21,6 +21,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
   const { categories } = useCategories();
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const fitmentEditorRef = useRef(null);
   const [form, setForm] = useState({
     name: item.name || '',
     description: item.description || '',
@@ -165,7 +166,9 @@ export function EditItemForm({ item, onSave, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (vehicleMakeRequired && !hasRequiredVehicleFitments(form.vehicle_fitments, form.category, categories)) {
+    const pendingFitments =
+      fitmentEditorRef.current?.getFitmentsForSave?.() ?? form.vehicle_fitments;
+    if (vehicleMakeRequired && !hasRequiredVehicleFitments(pendingFitments, form.category, categories)) {
       notifyError('Select at least one vehicle make');
       return;
     }
@@ -182,7 +185,9 @@ export function EditItemForm({ item, onSave, onCancel }) {
         const parsed = Number(form.unit_price);
         if (Number.isFinite(parsed) && parsed >= 0) unitPrice = parsed;
       }
-      const vehicle_fitments = finalizeVehicleFitments(form.vehicle_fitments);
+      const pendingFitments =
+        fitmentEditorRef.current?.getFitmentsForSave?.() ?? form.vehicle_fitments;
+      const vehicle_fitments = finalizeVehicleFitments(pendingFitments);
       await onSave({
         name: form.name.trim(),
         description: form.description?.trim() || null,
@@ -245,6 +250,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         hint={vehicleMakeRequired ? undefined : 'Vehicle make/model is optional for this category.'}
       >
         <VehicleFitmentEditor
+          ref={fitmentEditorRef}
           key={item.id}
           value={form.vehicle_fitments}
           onChange={(fitments) => setForm((prev) => ({ ...prev, vehicle_fitments: fitments }))}
