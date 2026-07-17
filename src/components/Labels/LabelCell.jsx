@@ -9,6 +9,7 @@ export function LabelCell({
   labelKey,
   name,
   code,
+  category,
   vehicleModel,
   vehicleFitments,
   preview = false,
@@ -80,7 +81,7 @@ export function LabelCell({
         </div>
       ) : isSmall ? (
         <p className={`font-bold text-slate-800 leading-tight line-clamp-1 w-full px-0.5 ${preview ? 'text-[12px]' : 'text-[8px]'}`}>
-          {vehicleModel ? `${vehicleModel} | ${code}` : code}
+          {category?.trim() ? `${category.trim()} | ${code}` : code}
         </p>
       ) : vehicleModel ? (
         <p

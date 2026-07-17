@@ -156,8 +156,8 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
   } else {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(SMALL_MAKE_FONT);
-    const vehicleText = formatVehicleFitments(item);
-    const idLine = vehicleText ? `${vehicleText} | ${code}` : code;
+    const category = String(item.category || '').trim();
+    const idLine = category ? `${category} | ${code}` : code;
     const makeLine = truncateText(doc, idLine, innerW - 1);
     doc.text(makeLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
     cursorY += 3;
