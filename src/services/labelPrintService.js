@@ -153,11 +153,13 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
         cursorY += 2.8;
       }
     }
-  } else if (item.vehicle_model) {
+  } else {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(SMALL_MAKE_FONT);
-    const vehicleLine = truncateText(doc, `${formatVehicleFitments(item)} | ${code}`, innerW - 1);
-    doc.text(vehicleLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
+    const vehicleText = formatVehicleFitments(item);
+    const idLine = vehicleText ? `${vehicleText} | ${code}` : code;
+    const makeLine = truncateText(doc, idLine, innerW - 1);
+    doc.text(makeLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
     cursorY += 3;
   }
 

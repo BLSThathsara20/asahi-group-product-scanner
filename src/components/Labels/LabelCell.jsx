@@ -78,15 +78,15 @@ export function LabelCell({
             </div>
           ))}
         </div>
+      ) : isSmall ? (
+        <p className={`font-bold text-slate-800 leading-tight line-clamp-1 w-full px-0.5 ${preview ? 'text-[12px]' : 'text-[8px]'}`}>
+          {vehicleModel ? `${vehicleModel} | ${code}` : code}
+        </p>
       ) : vehicleModel ? (
         <p
-          className={`leading-tight line-clamp-1 w-full px-0.5 ${
-            isSmall
-              ? `font-bold text-slate-800 ${preview ? 'text-[12px]' : 'text-[8px]'}`
-              : `text-slate-600 ${preview ? 'text-xs' : 'text-[7px]'}`
-          }`}
+          className={`text-slate-600 leading-tight line-clamp-1 w-full px-0.5 ${preview ? 'text-xs' : 'text-[7px]'}`}
         >
-          {isSmall ? `${vehicleModel} | ${code}` : `Vehicle: ${vehicleModel}`}
+          {`Vehicle: ${vehicleModel}`}
         </p>
       ) : null}
       <div className="label-qr shrink-0 mt-0.5">
