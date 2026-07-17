@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { formatVehicleFitments, normalizeVehicleFitments } from '../lib/vehicleFitments';
+import { formatVehicleFitments, normalizeVehicleFitments, NOT_SPECIFIED_MODEL } from '../lib/vehicleFitments';
 
 const A4_W = 210;
 const A4_H = 297;
@@ -141,12 +141,13 @@ function drawSmallLabelPage(doc, item, qrData, barcodeData) {
       doc.text(makeLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });
       cursorY += 3;
 
-      if (entry.models.length) {
+      const displayModels = entry.models.filter((model) => model.name !== NOT_SPECIFIED_MODEL);
+      if (displayModels.length) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(SMALL_MODELS_FONT);
         const modelsLine = truncateText(
           doc,
-          entry.models.map((model) => model.name).join(', '),
+          displayModels.map((model) => model.name).join(', '),
           innerW - 1
         );
         doc.text(modelsLine, SMALL_LABEL_MM / 2, cursorY, { align: 'center', maxWidth: innerW });

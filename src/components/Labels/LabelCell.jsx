@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import JsBarcode from 'jsbarcode';
 import { getQrCodeUrl } from '../../lib/utils';
-import { normalizeVehicleFitments } from '../../lib/vehicleFitments';
+import { normalizeVehicleFitments, NOT_SPECIFIED_MODEL } from '../../lib/vehicleFitments';
 
 export function LabelCell({
   itemId,
@@ -66,18 +66,21 @@ export function LabelCell({
       </p>
       {isSmall && fitments.length > 0 ? (
         <div className="w-full px-0.5 space-y-0.5">
-          {fitments.map((entry) => (
+          {fitments.map((entry) => {
+            const displayModels = entry.models.filter((model) => model.name !== NOT_SPECIFIED_MODEL);
+            return (
             <div key={entry.make}>
               <p className={`font-bold text-slate-800 leading-tight line-clamp-1 ${preview ? 'text-[12px]' : 'text-[8px]'}`}>
                 {entry.make} | {code}
               </p>
-              {entry.models.length > 0 ? (
+              {displayModels.length > 0 ? (
                 <p className={`text-slate-700 leading-tight line-clamp-2 ${preview ? 'text-[11px]' : 'text-[7px]'}`}>
-                  {entry.models.map((model) => model.name).join(', ')}
+                  {displayModels.map((model) => model.name).join(', ')}
                 </p>
               ) : null}
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : isSmall ? (
         <p className={`font-bold text-slate-800 leading-tight line-clamp-1 w-full px-0.5 ${preview ? 'text-[12px]' : 'text-[8px]'}`}>
