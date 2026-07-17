@@ -10,7 +10,7 @@ import { StatusBadge } from './ui/StatusBadge';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { sanitizeBarcodeInput } from '../lib/barcodeUtils';
-import { matchesItemSearch } from '../lib/itemSearch';
+import { matchesItemSearch, getItemSearchSubtitle } from '../lib/itemSearch';
 
 const PAGE_SIZE = 10;
 
@@ -82,7 +82,7 @@ export function HeaderSearch({ open, onClose }) {
               } catch {}
             }
           }}
-          placeholder="Search or scan barcode (name, code, category...)"
+          placeholder="Search keywords (name, make, model, description, code...)"
           className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-asahi/30 outline-none mb-4"
         />
         <div className="flex-1 overflow-y-auto min-h-0">
@@ -93,7 +93,9 @@ export function HeaderSearch({ open, onClose }) {
               <p className="text-slate-500 text-sm py-8 text-center">No items found</p>
             ) : (
               <ul className="space-y-2">
-                {paginated.map((item) => (
+                {paginated.map((item) => {
+                  const subtitle = getItemSearchSubtitle(item);
+                  return (
                   <li key={item.id}>
                     <Link
                       to={`/inventory/${item.id}`}
@@ -103,8 +105,8 @@ export function HeaderSearch({ open, onClose }) {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-slate-800 truncate">{item.name}</p>
-                          {item.category && (
-                            <p className="text-xs text-slate-500 mt-0.5">{item.category}</p>
+                          {subtitle && (
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">{subtitle}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -119,7 +121,8 @@ export function HeaderSearch({ open, onClose }) {
                       )}
                     </Link>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )
           ) : (
