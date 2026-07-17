@@ -94,6 +94,7 @@ export function mapCategory(doc) {
 		name: doc.name,
 		parent_id: refId(doc.parent),
 		sort_order: doc.sortOrder ?? 0,
+		require_vehicle_fitment: doc.requireVehicleFitment !== false,
 		created_at: doc._createdAt,
 	};
 }

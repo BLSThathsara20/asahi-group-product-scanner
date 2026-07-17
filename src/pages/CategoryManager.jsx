@@ -29,7 +29,7 @@ export function CategoryManager() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', parent_id: '' });
+  const [form, setForm] = useState({ name: '', parent_id: '', require_vehicle_fitment: true });
 
   const load = async () => {
     setLoading(true);
@@ -67,10 +67,12 @@ export function CategoryManager() {
       return;
     }
     try {
-      await createCategory(form.name.trim(), form.parent_id || null);
+      await createCategory(form.name.trim(), form.parent_id || null, {
+        requireVehicleFitment: form.require_vehicle_fitment,
+      });
       success('Category added');
       setShowAdd(false);
-      setForm({ name: '', parent_id: '' });
+      setForm({ name: '', parent_id: '', require_vehicle_fitment: true });
       load();
     } catch (err) {
       error(err.message);
@@ -84,6 +86,7 @@ export function CategoryManager() {
       await updateCategory(editing.id, {
         name: editing.name.trim(),
         parent_id: editing.parent_id || null,
+        require_vehicle_fitment: editing.require_vehicle_fitment,
       });
       success('Category updated');
       setEditing(null);
@@ -120,9 +123,14 @@ export function CategoryManager() {
 
   const CategoryRow = ({ cat, isChild, count }) => (
     <div className={`flex items-center justify-between gap-2 py-3 ${isChild ? 'pl-8' : ''} ${!isChild ? 'border-b border-slate-100 last:border-0' : ''}`}>
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-wrap">
         {!isChild && <NavIcon name="folder" className="w-4 h-4 text-asahi shrink-0" />}
         <span className={isChild ? 'text-slate-600' : 'font-medium text-slate-800'}>{cat.name}</span>
+        {cat.require_vehicle_fitment === false && (
+          <span className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+            Vehicle optional
+          </span>
+        )}
         {count > 0 && (
           <span className="text-xs text-slate-400 shrink-0">{count} item{count !== 1 ? 's' : ''}</span>
         )}
@@ -130,7 +138,12 @@ export function CategoryManager() {
       <div className="flex gap-1 shrink-0">
         <button
           type="button"
-          onClick={() => setEditing({ id: cat.id, name: cat.name, parent_id: cat.parent_id || null })}
+          onClick={() => setEditing({
+            id: cat.id,
+            name: cat.name,
+            parent_id: cat.parent_id || null,
+            require_vehicle_fitment: cat.require_vehicle_fitment !== false,
+          })}
           className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
           aria-label="Edit"
         >
@@ -184,7 +197,7 @@ export function CategoryManager() {
       </Card>
 
       {showAdd && (
-        <Modal onBackdropClick={() => { setShowAdd(false); setForm({ name: '', parent_id: '' }); }}>
+        <Modal onBackdropClick={() => { setShowAdd(false); setForm({ name: '', parent_id: '', require_vehicle_fitment: true }); }}>
           <Card className="p-6">
             <h3 className="font-semibold text-slate-800 mb-4">Add Category</h3>
             <form onSubmit={handleAdd} className="space-y-4">
@@ -208,9 +221,23 @@ export function CategoryManager() {
                 placeholder="e.g. Audio, Speakers"
                 required
               />
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.require_vehicle_fitment}
+                  onChange={(e) => setForm((p) => ({ ...p, require_vehicle_fitment: e.target.checked }))}
+                  className="mt-1 w-4 h-4 rounded border-slate-300 text-asahi focus:ring-asahi/30"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-slate-700">Make and model required</span>
+                  <span className="block text-xs text-slate-500 mt-0.5">
+                    Uncheck for categories like TV Unit where vehicle fitment is not needed.
+                  </span>
+                </span>
+              </label>
               <div className="flex gap-2">
                 <Button type="submit">Add</Button>
-                <Button type="button" variant="secondary" onClick={() => { setShowAdd(false); setForm({ name: '', parent_id: '' }); }}>
+                <Button type="button" variant="secondary" onClick={() => { setShowAdd(false); setForm({ name: '', parent_id: '', require_vehicle_fitment: true }); }}>
                   Cancel
                 </Button>
               </div>
@@ -245,6 +272,20 @@ export function CategoryManager() {
                 placeholder="e.g. Audio"
                 required
               />
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editing.require_vehicle_fitment}
+                  onChange={(e) => setEditing((p) => ({ ...p, require_vehicle_fitment: e.target.checked }))}
+                  className="mt-1 w-4 h-4 rounded border-slate-300 text-asahi focus:ring-asahi/30"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-slate-700">Make and model required</span>
+                  <span className="block text-xs text-slate-500 mt-0.5">
+                    When unchecked, parts in this category can be saved without vehicle make/model.
+                  </span>
+                </span>
+              </label>
               <div className="flex gap-2">
                 <Button type="submit">Save</Button>
                 <Button type="button" variant="secondary" onClick={() => setEditing(null)}>

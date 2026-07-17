@@ -6,15 +6,19 @@ import { FormField } from '../ui/FormField';
 import { formInputClass, formTextareaClass } from '../../lib/formFieldStyles';
 import { ProductImage } from '../ui/ProductImage';
 import { VehicleFitmentEditor } from '../VehicleFitmentEditor';
-import { normalizeVehicleFitments, finalizeVehicleFitments, isVehicleMakeRequired } from '../../lib/vehicleFitments';
+import { normalizeVehicleFitments, finalizeVehicleFitments, isVehicleMakeRequired, hasRequiredVehicleFitments } from '../../lib/vehicleFitments';
+import { useCategories } from '../../hooks/useCategories';
 import { StoreLocationSelect } from '../StoreLocationSelect';
 import { CategorySelect } from '../CategorySelect';
 import { NavIcon } from '../icons/NavIcons';
 import { sanitizeBarcodeInput, BARCODE_MAX_LENGTH } from '../../lib/barcodeUtils';
 import { compressAndUploadImage } from '../../services/imageService';
 import { getItemBarcodes } from '../../services/itemService';
+import { useNotification } from '../../context/NotificationContext';
 
 export function EditItemForm({ item, onSave, onCancel }) {
+  const { error: notifyError } = useNotification();
+  const { categories } = useCategories();
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [form, setForm] = useState({
@@ -155,12 +159,16 @@ export function EditItemForm({ item, onSave, onCancel }) {
   };
 
   const vehicleMakeRequired = useMemo(
-    () => isVehicleMakeRequired(form.category),
-    [form.category]
+    () => isVehicleMakeRequired(form.category, categories),
+    [form.category, categories]
   );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (vehicleMakeRequired && !hasRequiredVehicleFitments(form.vehicle_fitments, form.category, categories)) {
+      notifyError('Select at least one vehicle make');
+      return;
+    }
     setSaving(true);
     try {
       let photoUrl = item.photo_url;
@@ -234,7 +242,7 @@ export function EditItemForm({ item, onSave, onCancel }) {
         variant="vehicle"
         label="Vehicle compatibility"
         required={vehicleMakeRequired}
-        hint={vehicleMakeRequired ? undefined : 'Not required for TV Unit parts.'}
+        hint={vehicleMakeRequired ? undefined : 'Vehicle make/model is optional for this category.'}
       >
         <VehicleFitmentEditor
           key={item.id}

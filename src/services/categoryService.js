@@ -29,13 +29,15 @@ export function buildCategoryOptions(categories) {
 	return options;
 }
 
-export async function createCategory(name, parentId = null) {
+export async function createCategory(name, parentId = null, options = {}) {
+	const { requireVehicleFitment = true } = options;
 	const doc = await sanityClient.create({
 		_type: "category",
 		name: name.trim(),
 		parent: parentId
 			? { _type: "reference", _ref: parentId }
 			: undefined,
+		requireVehicleFitment: requireVehicleFitment !== false,
 		sortOrder: 0,
 	});
 	return mapCategory(doc);
@@ -52,6 +54,9 @@ export async function updateCategory(id, updates) {
 		});
 	}
 	if ("sort_order" in updates) patch.set({ sortOrder: updates.sort_order ?? 0 });
+	if ("require_vehicle_fitment" in updates) {
+		patch.set({ requireVehicleFitment: updates.require_vehicle_fitment !== false });
+	}
 	const doc = await patch.commit();
 	return mapCategory(doc);
 }
