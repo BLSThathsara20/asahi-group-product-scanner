@@ -67,5 +67,12 @@ export default {
 		{ name: "reminderCount", title: "Low Stock Alert At (legacy)", type: "number", hidden: true },
 		{ name: "addedBy", title: "Added By", type: "reference", to: [{ type: "appUser" }] },
 		{ name: "lastUsedBy", title: "Last Used By", type: "reference", to: [{ type: "appUser" }] },
+		{
+			name: "isFaulty",
+			title: "Faulty Item",
+			type: "boolean",
+			initialValue: false,
+			description: "Set when check-in notes indicate the item may be faulty.",
+		},
 	],
 };

@@ -9,6 +9,7 @@ import { updateItem, createTransaction, logItemAction, getItemBarcodes, syncItem
 import { buildItemEditSummary } from '../lib/itemActions';
 import { recordQuantityEditMovement } from '../lib/stockMovements';
 import { matchesItemSearch } from '../lib/itemSearch';
+import { noteIndicatesFault } from '../lib/faultDetection';
 import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -185,6 +186,7 @@ export function InventoryList() {
         status: targetStatus,
         last_used_date: recordedAt,
         last_used_by: user?.id,
+        is_faulty: noteIndicatesFault(data.notes),
       });
       success('Item checked in');
       setCheckinItem(null);
@@ -319,9 +321,16 @@ export function InventoryList() {
             </thead>
             <tbody>
               {paginated.map((item) => (
-                <tr key={item.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                <tr
+                  key={item.id}
+                  className={`border-b border-slate-50 last:border-0 ${
+                    item.is_faulty
+                      ? 'bg-red-50/90 hover:bg-red-50'
+                      : 'hover:bg-slate-50/50'
+                  }`}
+                >
                   <td className="px-4 py-2.5">
-                    <Link to={`/inventory/${item.id}`} className="flex items-center gap-2.5">
+                    <Link to={`/inventory/${item.id}`} className="flex items-center gap-2.5 min-w-0">
                       {item.photo_url ? (
                         <ProductImage
                           src={item.photo_url}
@@ -334,7 +343,14 @@ export function InventoryList() {
                           <NavIcon name="package" className="w-4 h-4" />
                         </div>
                       )}
-                      <span className="font-medium text-slate-800">{item.name}</span>
+                      <div className="min-w-0">
+                        <span className="font-medium text-slate-800">{item.name}</span>
+                        {item.is_faulty && (
+                          <span className="ml-2 inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-800">
+                            Faulty
+                          </span>
+                        )}
+                      </div>
                     </Link>
                   </td>
                   <td className="px-4 py-2.5 text-slate-500 font-mono text-xs">{item.qr_id}</td>

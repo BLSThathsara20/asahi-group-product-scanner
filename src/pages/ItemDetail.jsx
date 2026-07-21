@@ -26,6 +26,7 @@ import {
 	parseFitmentSelectionKey,
 	modelLabel,
 } from "../lib/vehicleFitments";
+import { noteIndicatesFault } from "../lib/faultDetection";
 import { MAX_ITEM_ACTIONS } from "../lib/itemActionLimits";
 import { Card } from "../components/ui/Card";
 import { Pagination } from "../components/ui/Pagination";
@@ -256,6 +257,7 @@ export function ItemDetail() {
 				status: "in_stock",
 				last_used_date: recordedAt,
 				last_used_by: user?.id,
+				is_faulty: noteIndicatesFault(data.notes),
 			});
 			notifySuccess("Item checked in");
 			setShowCheckIn(false);
@@ -362,6 +364,17 @@ export function ItemDetail() {
 				onBack={() => navigate(-1)}
 				action={actionButtons}
 			/>
+
+			{item.is_faulty && (
+				<div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5">
+					<span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-red-800">
+						Faulty item
+					</span>
+					<span className="text-sm text-red-700">
+						Marked faulty from check-in notes — inspect before use
+					</span>
+				</div>
+			)}
 
 			{/* Section 1: Item overview - ordered for clarity */}
 			<Card className="p-6">

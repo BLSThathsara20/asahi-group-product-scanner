@@ -56,6 +56,7 @@ export function mapItem(doc) {
 		reminder_count: doc.reminderCount ?? null,
 		added_by: refId(doc.addedBy),
 		last_used_by: refId(doc.lastUsedBy),
+		is_faulty: doc.isFaulty === true,
 		created_at: doc._createdAt,
 		updated_at: doc._updatedAt,
 	};
@@ -201,6 +202,7 @@ export function itemToSanity(item) {
 	if (item.reminder_count != null) doc.reminderCount = item.reminder_count;
 	if (item.added_by) doc.addedBy = { _type: "reference", _ref: item.added_by };
 	if (item.last_used_by) doc.lastUsedBy = { _type: "reference", _ref: item.last_used_by };
+	if (item.is_faulty !== undefined) doc.isFaulty = item.is_faulty === true;
 	if (item.photo) doc.photo = item.photo;
 	return doc;
 }
